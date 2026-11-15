@@ -2,7 +2,7 @@
 
 Kit v2 de agentes para o Claude Code: Maestro, times de Desenvolvimento, QA e Revisão, guardrails, monitoramento contra fuga e alucinação, e autoaprimoramento das skills.
 
-Status: **F1 concluída** (plugin, manifesto e instalador). Plano completo em [modo-deus/PLANO.md](modo-deus/PLANO.md).
+Status: **F2 concluída** (hooks: cerca V9, território V2, trava de fase, contexto e telemetria). Plano completo em [modo-deus/PLANO.md](modo-deus/PLANO.md).
 
 ## Instalar
 
@@ -56,7 +56,7 @@ Remover de um projeto: `node instalar.mjs --remover /caminho/do/repo`. O que era
 | `skills/proprias/` | skills do kit (F3 em diante) |
 | `agents/` | Maestro e times (F3–F4) |
 | `commands/` | `/spec`, `/plan`, `/build`, `/review`, `/ship`, `/auditar` |
-| `hooks/` | hooks em node (F2) |
+| `hooks/` | `hooks.json` do plugin e `src/` em node: cerca, território, trava, contexto, telemetria |
 | `mods/` | status line e painel (F5) |
 | `modelos/` | `CLAUDE.md` base, `REGRAS.md`, deny-list |
 | `testes/` | `npm test` (node:test, sem dependências) |

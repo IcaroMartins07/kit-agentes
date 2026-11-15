@@ -23,7 +23,7 @@
   },
 
   "perfis": {
-    "leve":    { "descricao": "Só a trava de fase. Sem monitor.", "trava": true, "cerca": true, "monitor": "desligado", "auditor_de_fatos": false },
+    "leve":    { "descricao": "Trava de fase e cerca de segurança (V9). Sem monitor.", "trava": true, "cerca": true, "monitor": "desligado", "auditor_de_fatos": false },
     "estrito": { "descricao": "v1 + cercas + monitor em modo alerta.", "trava": true, "cerca": true, "monitor": "alerta", "auditor_de_fatos": false },
     "deus":    { "descricao": "Autonomia alta com monitor completo e auditor de fatos.", "trava": true, "cerca": true, "monitor": "completo", "auditor_de_fatos": true }
   },

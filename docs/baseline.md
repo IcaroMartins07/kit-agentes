@@ -53,3 +53,17 @@ Meta da F2: caso comum ≤ 60 ms.
 | REGRAS.md preservado na reinstalação | `reinstalação preserva REGRAS.md editado e não duplica deny` |
 
 Os 32 cenários da trava continuam valendo para a porta em node na F2.
+
+## Trava v1 → v2 (F2)
+
+Os 32 cenários estão em `testes/hooks.test.mjs` (prefixo "v1 ·") e passam. Uma mudança de semântica: os dois cenários de `git merge` rodam fora da branch principal, porque na v2 merge e rebase na principal são bloqueados pela V9.
+
+| Medição (Windows 11, mediana de 9) | v1 (bash) | v2 (node) |
+|---|---|---|
+| `ls` | ~40 ms | ~68 ms |
+| edição de `.md` | — | ~67 ms |
+| edição de `.ts` com skill | ~130 ms | ~72 ms |
+| commit | ~300 ms | não medido |
+| `node` vazio, só para referência | — | ~50 ms |
+
+A meta da F2 (≤ 60 ms no caso comum) **não foi atingida**: o piso é a partida do node (~50 ms), e o hook soma ~18 ms. Ficou mais rápido que a v1 nos casos que leem a transcrição e mais lento no caso trivial.

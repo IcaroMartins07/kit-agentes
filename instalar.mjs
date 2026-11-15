@@ -12,6 +12,7 @@ import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { comandosDe, camposAbertos } from "./hooks/src/comum.mjs";
 
 const KIT = path.dirname(fileURLToPath(import.meta.url));
 const lerJson = (f) => JSON.parse(fs.readFileSync(f, "utf8"));
@@ -223,8 +224,6 @@ function renderRegras(raiz, d, times) {
   return t;
 }
 
-const camposAbertos = (texto) =>
-  texto.replace(/<a definir>/g, "").replace(/<!--[\s\S]*?-->/g, "").match(/<(?:\.\.\.|[A-Za-zÀ-ÿ][^>\n]*)>/g) || [];
 
 // ---------- settings.local.json ----------
 function lerSettings(raiz) {
@@ -235,6 +234,18 @@ function lerSettings(raiz) {
   } catch {
     throw new ErroUso(`${SETTINGS} não é JSON válido; não alterei nada`);
   }
+}
+
+// ---------- allowlist ----------
+// Comandos do REGRAS.md e consultas que só leem: liberados sem pergunta. A cerca (V9) continua valendo.
+const ALLOW_FIXO = [
+  "Bash(graphify query:*)", "Bash(graphify explain:*)", "Bash(graphify path:*)", "Bash(graphify affected:*)",
+  "Bash(graphify god-nodes:*)", "Bash(graphify update:*)",
+  "Bash(git status:*)", "Bash(git diff:*)", "Bash(git log:*)", "Bash(git show:*)", "Bash(git branch --show-current)",
+];
+export function allowlist(regrasTexto) {
+  const cmds = Object.values(comandosDe(regrasTexto || "")).filter((c) => !/[;&|><`$]/.test(c)); // nada composto
+  return [...new Set([...cmds.map((c) => `Bash(${c}:*)`), ...ALLOW_FIXO])];
 }
 
 // ---------- exclude ----------
@@ -281,9 +292,12 @@ export function instalar(caminho, { perfil = null, times = {}, dryRun = false, s
   });
 
   const regrasF = path.join(pasta, "REGRAS.md");
-  if (fs.existsSync(regrasF)) log("regras   REGRAS.md já existe, mantido");
-  else {
-    const texto = renderRegras(raiz, d, config.times);
+  let regrasTexto;
+  if (fs.existsSync(regrasF)) {
+    regrasTexto = fs.readFileSync(regrasF, "utf8");
+    log("regras   REGRAS.md já existe, mantido");
+  } else {
+    const texto = (regrasTexto = renderRegras(raiz, d, config.times));
     const n = camposAbertos(texto).length;
     fazer(`regras   REGRAS.md criado com o que foi detectado (${n} campo(s) <...> para preencher)`, () => fs.writeFileSync(regrasF, texto));
   }
@@ -292,25 +306,34 @@ export function instalar(caminho, { perfil = null, times = {}, dryRun = false, s
     fs.writeFileSync(configF, JSON.stringify(config, null, 2) + "\n"),
   );
 
-  // deny-list: só registra o que o kit acrescentou, para remover depois sem tocar no que é do usuário
-  let denyNovos = anterior?.deny || [];
+  // Permissões: deny-list fixo e allowlist (comandos do REGRAS.md + consultas ao grafo e ao git).
+  // Só registra o que o kit acrescentou, para remover depois sem tocar no que é do usuário.
+  const registro = { deny: anterior?.deny || [], allow: anterior?.allow || [] };
   let criouSettings = anterior?.criou_settings || false;
   if (versionado(raiz, SETTINGS)) {
-    log(`AVISO    ${SETTINGS} é versionado pelo projeto; deny-list não aplicado`);
+    log(`AVISO    ${SETTINGS} é versionado pelo projeto; deny-list e allowlist não aplicados`);
   } else {
     const s = lerSettings(raiz);
-    const deny = lerJson(path.join(KIT, "modelos", "settings.deny.json")).deny;
-    const atual = s.dados.permissions?.deny || [];
-    const faltam = deny.filter((r) => !atual.includes(r));
-    denyNovos = [...new Set([...denyNovos.filter((r) => atual.includes(r)), ...faltam])];
     criouSettings ||= !s.existe;
-    if (faltam.length) {
-      fazer(`settings ${SETTINGS}: ${faltam.length} regra(s) de deny acrescentada(s)`, () => {
-        s.dados.permissions = { ...s.dados.permissions, deny: [...atual, ...faltam] };
+    const desejado = { deny: lerJson(path.join(KIT, "modelos", "settings.deny.json")).deny, allow: allowlist(regrasTexto) };
+    const mudancas = [];
+    for (const chave of ["deny", "allow"]) {
+      const atual = s.dados.permissions?.[chave] || [];
+      const meus = registro[chave].filter((r) => atual.includes(r));
+      const saem = chave === "allow" ? meus.filter((r) => !desejado.allow.includes(r)) : []; // comando que saiu do REGRAS.md
+      const faltam = desejado[chave].filter((r) => !atual.includes(r));
+      registro[chave] = [...new Set([...meus.filter((r) => !saem.includes(r)), ...faltam])];
+      if (faltam.length || saem.length) {
+        s.dados.permissions = { ...s.dados.permissions, [chave]: [...atual.filter((r) => !saem.includes(r)), ...faltam] };
+        mudancas.push(`${chave} +${faltam.length}${saem.length ? ` -${saem.length}` : ""}`);
+      }
+    }
+    if (mudancas.length) {
+      fazer(`settings ${SETTINGS}: ${mudancas.join(", ")}`, () => {
         fs.mkdirSync(path.dirname(path.join(raiz, SETTINGS)), { recursive: true });
         fs.writeFileSync(path.join(raiz, SETTINGS), JSON.stringify(s.dados, null, 2) + "\n");
       });
-    } else log(`settings ${SETTINGS}: deny-list já completo`);
+    } else log(`settings ${SETTINGS}: deny-list e allowlist em dia`);
   }
 
   // Grafo do projeto: base de mapeamento para os agentes. Só código (AST), sem LLM e sem custo de tokens.
@@ -339,7 +362,7 @@ export function instalar(caminho, { perfil = null, times = {}, dryRun = false, s
     fs.writeFileSync(exc, blocoExclude(atual, [`${PASTA}/`, SETTINGS, ...(grafoVersionado ? [] : [`${GRAFO}/`])]));
   });
 
-  const manifesto = { versao_kit: kit.versao, deny: denyNovos, criou_settings: criouSettings, criou_grafo: criouGrafo };
+  const manifesto = { versao_kit: kit.versao, deny: registro.deny, allow: registro.allow, criou_settings: criouSettings, criou_grafo: criouGrafo };
   fazer("manifesto instalados.json", () => fs.writeFileSync(manifestoF, JSON.stringify(manifesto, null, 2) + "\n"));
 
   log("");
@@ -365,10 +388,13 @@ export function remover(caminho, { dryRun = false, log = console.log } = {}) {
 
   if (!versionado(raiz, SETTINGS) && fs.existsSync(path.join(raiz, SETTINGS))) {
     const s = lerSettings(raiz);
-    fazer(`settings ${SETTINGS}: ${manifesto.deny.length} regra(s) do kit removida(s)`, () => {
-      const deny = (s.dados.permissions?.deny || []).filter((r) => !manifesto.deny.includes(r));
-      if (deny.length) s.dados.permissions.deny = deny;
-      else if (s.dados.permissions) delete s.dados.permissions.deny;
+    const meus = { deny: manifesto.deny || [], allow: manifesto.allow || [] };
+    fazer(`settings ${SETTINGS}: ${meus.deny.length + meus.allow.length} regra(s) do kit removida(s)`, () => {
+      for (const chave of ["deny", "allow"]) {
+        const resta = (s.dados.permissions?.[chave] || []).filter((r) => !meus[chave].includes(r));
+        if (resta.length) s.dados.permissions[chave] = resta;
+        else if (s.dados.permissions) delete s.dados.permissions[chave];
+      }
       if (s.dados.permissions && !Object.keys(s.dados.permissions).length) delete s.dados.permissions;
       if (manifesto.criou_settings && !Object.keys(s.dados).length) fs.rmSync(path.join(raiz, SETTINGS));
       else fs.writeFileSync(path.join(raiz, SETTINGS), JSON.stringify(s.dados, null, 2) + "\n");
@@ -440,6 +466,9 @@ export function doctor(caminho, { log = console.log } = {}) {
         const deny = lerJson(path.join(KIT, "modelos", "settings.deny.json")).deny;
         const faltam = deny.filter((r) => !(s.dados.permissions?.deny || []).includes(r));
         faltam.length ? erro(`deny-list incompleto: faltam ${faltam.length} regra(s)`) : ok("deny-list aplicado");
+        const regras = fs.existsSync(path.join(pasta, "REGRAS.md")) ? fs.readFileSync(path.join(pasta, "REGRAS.md"), "utf8") : "";
+        const semAllow = allowlist(regras).filter((r) => !(s.dados.permissions?.allow || []).includes(r));
+        semAllow.length ? aviso(`allowlist fora de sincronia com o REGRAS.md (${semAllow.length} regra(s)): rode o instalador de novo`) : ok("allowlist em dia com o REGRAS.md");
       }
 
       const exc = arquivoExclude(raiz);

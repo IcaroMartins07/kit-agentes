@@ -1,6 +1,6 @@
 # Plano de implementação: kit-agentes / modo-deus
 
-Versão 0.4 · 2026-11-15 · status: **F0 e F1 implementadas** (branch fase/f1)
+Versão 0.4 · 2026-11-15 · status: **F0, F1 e F2 implementadas**
 
 Mudanças da 0.1: organização em **times** (Maestro, Desenvolvimento, QA, Revisão) com modelo e esforço por papel, Cypress para E2E, e autonomia, skills, monitoramento e fases reorganizados em torno dos times.
 

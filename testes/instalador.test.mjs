@@ -98,7 +98,9 @@ test("settings do usuário é preservado na instalação e na remoção", () => 
   escrever(".claude/settings.local.json", JSON.stringify({ permissions: { allow: ["Bash(npm test)"], deny: ["Read(./segredo.txt)", "Bash(git reset --hard:*)"] }, model: "sonnet" }));
   instalar(repo, { log: silencio });
   let s = lerJson(".claude/settings.local.json");
-  assert.deepEqual(s.permissions.allow, ["Bash(npm test)"]);
+  assert.equal(s.permissions.allow[0], "Bash(npm test)", "entrada do usuário mantida, na frente");
+  assert.ok(s.permissions.allow.includes("Bash(npm run test:*)"), "comando do REGRAS.md liberado");
+  assert.ok(s.permissions.allow.includes("Bash(graphify query:*)"));
   assert.ok(s.permissions.deny.includes("Read(./segredo.txt)"));
   assert.ok(s.permissions.deny.includes("Read(./.env)"));
   remover(repo, { log: silencio });
@@ -349,4 +351,25 @@ test("revisão 2b: REGRAS.md com todos os campos preenchidos sai como preenchido
   escrever(f, ler(f).replace(/<(?!a definir>)(?:\.\.\.|[A-Za-zÀ-ÿ][^>\n]*)>/g, "preenchido"));
   const r = doctor(repo, { log: silencio });
   assert.ok(r.resultados.some(([n, m]) => n === "ok" && m === "REGRAS.md preenchido"), JSON.stringify(r.resultados.filter(([, m]) => /REGRAS/.test(m))));
+});
+
+test("allowlist acompanha o REGRAS.md: comando trocado sai, novo entra, o do usuário fica", () => {
+  escrever(".claude/settings.local.json", JSON.stringify({ permissions: { allow: ["Bash(make:*)"] } }));
+  instalar(repo, { log: silencio });
+  const f = ".claude/modo-deus/REGRAS.md";
+  escrever(f, ler(f).replace("`npm run test`", "`npm run test:unit`"));
+  instalar(repo, { log: silencio });
+  const allow = lerJson(".claude/settings.local.json").permissions.allow;
+  assert.ok(allow.includes("Bash(make:*)"));
+  assert.ok(allow.includes("Bash(npm run test:unit:*)"));
+  assert.ok(!allow.includes("Bash(npm run test:*)"));
+  remover(repo, { log: silencio });
+  assert.deepEqual(lerJson(".claude/settings.local.json"), { permissions: { allow: ["Bash(make:*)"] } });
+});
+
+test("allowlist ignora comando composto do REGRAS.md", async () => {
+  const { allowlist } = await import("../instalar.mjs");
+  const r = allowlist("## Comandos\n\n| Ação | Comando |\n|---|---|\n| Testes | `npm test && rm -rf x` |\n| Lint | `npm run lint` |\n");
+  assert.ok(r.includes("Bash(npm run lint:*)"));
+  assert.ok(!r.some((x) => x.includes("rm -rf")));
 });
