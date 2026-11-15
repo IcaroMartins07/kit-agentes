@@ -1,0 +1,23 @@
+{
+  "$comentario": "Deny-list aplicado pelo instalar.mjs em todo perfil. .env.example fica legível de propósito; variantes de .env fora desta lista são barradas pela cerca (F2).",
+  "deny": [
+    "Bash(git push --force:*)",
+    "Bash(git push -f:*)",
+    "Bash(git push --force-with-lease:*)",
+    "Bash(git reset --hard:*)",
+    "Bash(git clean -fd:*)",
+    "Bash(git clean -fdx:*)",
+    "Bash(git clean -ffdx:*)",
+    "Read(./.env)",
+    "Read(./**/.env)",
+    "Read(./**/.env.local)",
+    "Read(./**/.env.development)",
+    "Read(./**/.env.production)",
+    "Read(./**/.env.staging)",
+    "Read(./**/.env.test)",
+    "Read(./**/*.pem)",
+    "Read(./**/*.key)",
+    "Read(./**/*.pfx)",
+    "Read(./**/*.p12)"
+  ]
+}

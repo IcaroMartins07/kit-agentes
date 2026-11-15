@@ -1,0 +1,37 @@
+{
+  "name": "modo-deus",
+  "version": "0.1.0",
+  "description": "Kit de agentes: Maestro, times de Desenvolvimento, QA e Revisão, guardrails, monitoramento contra fuga e alucinação e autoaprimoramento das skills.",
+  "author": {
+    "name": "kit-agentes"
+  },
+  "license": "UNLICENSED",
+  "keywords": [
+    "agentes",
+    "orquestracao",
+    "qa",
+    "cypress",
+    "guardrails",
+    "monitoramento"
+  ],
+  "skills": [
+    "./skills/terceiros/agent-skills/interview-me",
+    "./skills/terceiros/agent-skills/idea-refine",
+    "./skills/terceiros/agent-skills/spec-driven-development",
+    "./skills/terceiros/agent-skills/incremental-implementation",
+    "./skills/terceiros/agent-skills/api-and-interface-design",
+    "./skills/terceiros/agent-skills/source-driven-development",
+    "./skills/terceiros/agent-skills/security-and-hardening",
+    "./skills/terceiros/agent-skills/ci-cd-and-automation",
+    "./skills/terceiros/agent-skills/documentation-and-adrs",
+    "./skills/terceiros/agent-skills/frontend-ui-engineering",
+    "./skills/terceiros/agent-skills/git-workflow-and-versioning",
+    "./skills/terceiros/agent-skills/code-review-and-quality",
+    "./skills/terceiros/agent-skills/shipping-and-launch",
+    "./skills/terceiros/humanizer/humanizer",
+    "./skills/terceiros/playwright/playwright-skill",
+    "./skills/terceiros/impeccable/impeccable",
+    "./skills/terceiros/taste-skill/design-taste-frontend",
+    "./skills/terceiros/ponytail/ponytail-audit"
+  ]
+}

@@ -1,6 +1,7 @@
 # Regras do projeto <nome>
 
-Só o que é específico deste projeto. As regras gerais de trabalho, código, segurança e entrega já vêm do AGENTS.md global; não repita aqui.
+Só o que é específico deste projeto. As regras gerais vêm do `CLAUDE.md` base do modo-deus; não repita aqui.
+Campos `<...>` precisam ser preenchidos. Escreva `<a definir>` no que ainda não se sabe: vira pendência assumida e não gera aviso.
 
 ## Visão
 
@@ -10,26 +11,30 @@ Só o que é específico deste projeto. As regras gerais de trabalho, código, s
 
 ## Stack
 
-- Linguagem e versão: <ex.: TypeScript 5.x, Node 22>
-- Framework: <ex.: Next.js 15>
-- Banco: <ex.: PostgreSQL via Supabase>
-- Confirme versões em: <package.json, pyproject.toml...>
+<!-- modo-deus:stack -->
 
 ## Comandos
 
-| Ação | Comando |
-|---|---|
-| Instalar | `<...>` |
-| Rodar local | `<...>` |
-| Testes | `<...>` |
-| Lint | `<...>` |
-| Tipos | `<...>` |
-| Build | `<...>` |
+Os agentes rodam exatamente estes comandos. O monitor acusa comando inventado fora desta tabela e do manifesto do projeto.
 
-## Estrutura
+<!-- modo-deus:comandos -->
 
-- `<pasta>`: <o que fica lá>
-- `<pasta>`: <o que fica lá>
+## Times
+
+Fixos: Maestro, dev-front, dev-back, dev-db, dev-devops, QA (unit, integração, E2E, UI, regressão) e Revisão.
+Sob demanda: só acionados quando a tarefa toca o território deles. Mude `auto` para `ligado` ou `desligado` para forçar.
+
+<!-- modo-deus:times -->
+
+## Territórios
+
+O que cada time pode editar. Fora disso, o agente pede ao Maestro. Ajuste à estrutura real do projeto.
+
+<!-- modo-deus:territorios -->
+
+## Testes
+
+<!-- modo-deus:testes -->
 
 ## Convenções do projeto
 
@@ -40,17 +45,13 @@ Só o que é específico deste projeto. As regras gerais de trabalho, código, s
 ## Telas (se houver interface)
 
 - Design de referência: <Figma, sistema de design, pasta de componentes>
-- Validação visual: <ex.: playwright-cli nas telas alteradas>
-
-## Fluxo
-
-`/spec` → `/plan` → `/build` → `/review` → `/ship`. Tarefas pequenas (typo, ajuste de texto) podem ir direto para `/build`.
 
 ## Definition of Done
 
-- [ ] Comportamento confere com a fonte de verdade
-- [ ] Testes, lint, tipos e build passando (comandos acima)
-- [ ] `/review` feito e problemas graves resolvidos
+- [ ] Comportamento confere com a fonte de verdade e com os critérios de aceite
+- [ ] Testes do território, lint, tipos e build passando (comandos acima)
+- [ ] E2E Cypress dos fluxos afetados passando
+- [ ] Revisão aprovada, sem item grave aberto
 - [ ] Documentação e `.env.example` atualizados, se mudou configuração
 - [ ] <critério específico do projeto>
 

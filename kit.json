@@ -1,0 +1,105 @@
+{
+  "$comentario": "Fonte de verdade do kit. Lida pelo instalar.mjs, pelos hooks (F2) e pelo Maestro (F3). Modelos usam alias (opus/sonnet/haiku), que resolvem para a geração atual (5.5).",
+  "nome": "modo-deus",
+  "versao": "0.1.0",
+  "node_minimo": 18,
+
+  "dependencias": {
+    "plugins": ["superpowers@claude-plugins-official", "claude-security@claude-plugins-official"],
+    "opcionais": ["frontend-design@claude-plugins-official", "playwright"],
+    "cli": { "agent-browser": "opcional", "cypress": "por projeto, com sua confirmação" }
+  },
+
+  "perfis": {
+    "leve":    { "descricao": "Só a trava de fase. Sem monitor.", "trava": true, "cerca": true, "monitor": "desligado", "auditor_de_fatos": false },
+    "estrito": { "descricao": "v1 + cercas + monitor em modo alerta.", "trava": true, "cerca": true, "monitor": "alerta", "auditor_de_fatos": false },
+    "deus":    { "descricao": "Autonomia alta com monitor completo e auditor de fatos.", "trava": true, "cerca": true, "monitor": "completo", "auditor_de_fatos": true }
+  },
+  "perfil_padrao": "estrito",
+
+  "agentes": {
+    "maestro":           { "time": "maestro", "modelo": "opus",   "esforco": "medium", "papel": "principal" },
+    "dev-front":         { "time": "dev",     "modelo": "sonnet", "esforco": "medium", "esforco_complexa": "high", "territorio": "front" },
+    "dev-back":          { "time": "dev",     "modelo": "sonnet", "esforco": "medium", "esforco_complexa": "high", "territorio": "back" },
+    "dev-db":            { "time": "dev",     "modelo": "sonnet", "esforco": "medium", "esforco_complexa": "high", "territorio": "db" },
+    "dev-devops":        { "time": "dev",     "modelo": "sonnet", "esforco": "medium", "esforco_complexa": "high", "territorio": "devops" },
+    "dev-mobile":        { "time": "dev",     "modelo": "sonnet", "esforco": "medium", "esforco_complexa": "high", "territorio": "mobile", "sob_demanda": true },
+    "dev-dados":         { "time": "dev",     "modelo": "sonnet", "esforco": "medium", "esforco_complexa": "high", "territorio": "dados",  "sob_demanda": true },
+    "dev-docs":          { "time": "dev",     "modelo": "sonnet", "esforco": "medium", "esforco_complexa": "high", "territorio": "docs",   "sob_demanda": true },
+    "qa-unit":           { "time": "qa",      "modelo": "sonnet", "esforco": "medium", "esforco_complexa": "high", "territorio": "testes" },
+    "qa-integracao":     { "time": "qa",      "modelo": "sonnet", "esforco": "medium", "esforco_complexa": "high", "territorio": "testes" },
+    "qa-e2e":            { "time": "qa",      "modelo": "sonnet", "esforco": "medium", "esforco_complexa": "high", "territorio": "testes" },
+    "qa-ui":             { "time": "qa",      "modelo": "sonnet", "esforco": "medium", "esforco_complexa": "high", "territorio": "testes" },
+    "qa-regressao":      { "time": "qa",      "modelo": "sonnet", "esforco": "medium", "esforco_complexa": "high", "territorio": "testes" },
+    "revisor":           { "time": "revisao", "modelo": "sonnet", "esforco": "high", "somente_leitura": true },
+    "revisor-seguranca": { "time": "revisao", "modelo": "sonnet", "esforco": "high", "somente_leitura": true },
+    "auditor-de-fatos":  { "time": "revisao", "modelo": "haiku",  "somente_leitura": true }
+  },
+
+  "territorios": {
+    "$comentario": "Padrão sugerido. O instalador grava só os que existem no projeto no REGRAS.md, onde você ajusta.",
+    "front":  ["src/components/**", "src/pages/**", "src/app/**", "src/views/**", "src/styles/**", "src/hooks/**", "app/**", "pages/**", "components/**", "public/**", "frontend/**", "web/**"],
+    "back":   ["src/server/**", "src/api/**", "src/services/**", "src/lib/**", "server/**", "api/**", "backend/**", "src/routes/**", "src/controllers/**"],
+    "db":     ["migrations/**", "prisma/**", "drizzle/**", "supabase/migrations/**", "db/**", "database/**", "src/db/**", "**/*.sql"],
+    "devops": [".github/**", ".gitlab-ci.yml", "Dockerfile*", "docker-compose*.yml", "compose*.yml", "infra/**", "terraform/**", "k8s/**", "scripts/**", ".env.example"],
+    "mobile": ["android/**", "ios/**", "mobile/**", "lib/**", "app.json", "eas.json", "pubspec.yaml"],
+    "dados":  ["dags/**", "notebooks/**", "**/*.ipynb", "models/**", "pipelines/**", "etl/**", "dbt_project.yml"],
+    "docs":   ["README*", "docs/**", "CHANGELOG*", "**/*.md", "adr/**"],
+    "testes": ["cypress/**", "tests/**", "test/**", "__tests__/**", "e2e/**", "**/*.test.*", "**/*.spec.*", "**/*.cy.*", "cypress.config.*", "fixtures/**"]
+  },
+
+  "sinais_sob_demanda": {
+    "dev-mobile": ["android", "ios", "pubspec.yaml", "app.json", "eas.json", "capacitor.config.ts", "capacitor.config.json"],
+    "dev-dados":  ["dbt_project.yml", "dags", "airflow.cfg", "notebooks", "*.ipynb"],
+    "dev-docs":   ["docs", "adr", "mkdocs.yml", "docusaurus.config.js", "docusaurus.config.ts"]
+  },
+
+  "complexidade": {
+    "simples":  ["ajuste de texto ou estilo", "campo novo em formulário", "CRUD seguindo padrão existente", "teste unitário de função pura"],
+    "complexa": ["mudança de contrato entre camadas", "migração de dados", "concorrência ou cache", "autenticação ou autorização", "bug sem causa óbvia", "refatoração entre módulos", "pipeline de CI ou deploy"],
+    "na_duvida": "complexa",
+    "reprovada_na_revisao": "complexa"
+  },
+
+  "skills": {
+    "$comentario": "Caminhos relativos à raiz do kit. 'dono' = fase ou time que usa. Duplicatas cobertas pelo superpowers ficam em 'excluidas'.",
+    "incluidas": {
+      "interview-me":               { "caminho": "skills/terceiros/agent-skills/interview-me",               "dono": "maestro" },
+      "idea-refine":                { "caminho": "skills/terceiros/agent-skills/idea-refine",                "dono": "maestro" },
+      "spec-driven-development":    { "caminho": "skills/terceiros/agent-skills/spec-driven-development",    "dono": "maestro" },
+      "incremental-implementation": { "caminho": "skills/terceiros/agent-skills/incremental-implementation", "dono": "dev" },
+      "api-and-interface-design":   { "caminho": "skills/terceiros/agent-skills/api-and-interface-design",   "dono": "dev-back" },
+      "source-driven-development":  { "caminho": "skills/terceiros/agent-skills/source-driven-development",  "dono": "dev" },
+      "security-and-hardening":     { "caminho": "skills/terceiros/agent-skills/security-and-hardening",     "dono": "dev-db, dev-back, revisor-seguranca" },
+      "ci-cd-and-automation":       { "caminho": "skills/terceiros/agent-skills/ci-cd-and-automation",       "dono": "dev-devops" },
+      "documentation-and-adrs":     { "caminho": "skills/terceiros/agent-skills/documentation-and-adrs",     "dono": "dev-docs" },
+      "frontend-ui-engineering":    { "caminho": "skills/terceiros/agent-skills/frontend-ui-engineering",    "dono": "dev-front" },
+      "git-workflow-and-versioning":{ "caminho": "skills/terceiros/agent-skills/git-workflow-and-versioning","dono": "maestro" },
+      "code-review-and-quality":    { "caminho": "skills/terceiros/agent-skills/code-review-and-quality",    "dono": "revisor" },
+      "shipping-and-launch":        { "caminho": "skills/terceiros/agent-skills/shipping-and-launch",        "dono": "maestro, dev-devops" },
+      "humanizer":                  { "caminho": "skills/terceiros/humanizer/humanizer",                     "dono": "maestro" },
+      "playwright-skill":           { "caminho": "skills/terceiros/playwright/playwright-skill",             "dono": "qa" },
+      "impeccable":                 { "caminho": "skills/terceiros/impeccable/impeccable",                   "dono": "dev-front, qa-ui" },
+      "design-taste-frontend":      { "caminho": "skills/terceiros/taste-skill/design-taste-frontend",       "dono": "dev-front" },
+      "ponytail-audit":             { "caminho": "skills/terceiros/ponytail/ponytail-audit",                 "dono": "revisor" }
+    },
+    "do_superpowers": ["brainstorming", "writing-plans", "subagent-driven-development", "test-driven-development", "systematic-debugging", "verification-before-completion", "using-git-worktrees", "writing-skills"],
+    "excluidas": {
+      "test-driven-development":      "coberta por superpowers:test-driven-development",
+      "debugging-and-error-recovery": "coberta por superpowers:systematic-debugging",
+      "planning-and-task-breakdown":  "coberta por superpowers:writing-plans",
+      "using-agent-skills":           "substituída pela skill própria modo-deus (F3)",
+      "caveman":                      "coberta pelo ponytail"
+    }
+  },
+
+  "trava": {
+    "$comentario": "Skills que liberam edição de código (F2). Nome sem prefixo de plugin.",
+    "construcao": ["incremental-implementation", "test-driven-development", "frontend-ui-engineering", "systematic-debugging", "debugging-and-error-recovery", "subagent-driven-development", "executing-plans"],
+    "pr": ["code-review-and-quality", "humanizer"]
+  },
+
+  "versoes_fixas": {
+    "@playwright/mcp": "0.0.84"
+  }
+}

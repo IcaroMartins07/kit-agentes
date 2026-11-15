@@ -2,6 +2,15 @@
 
 ## [não lançado]
 
+### F1 · Plugin, manifesto e instalador (2026-11-15)
+- `kit.json`: perfis (leve, estrito, deus), 16 agentes com modelo e esforço, territórios, sinais dos times sob demanda, skills incluídas e excluídas.
+- Plugin `modo-deus` com marketplace local `kit-agentes`; `claude plugin validate --strict` passa. 18 skills + 6 comandos, ~2,7 mil tokens fixos por sessão.
+- Skills duplicadas com o superpowers saem (TDD, debugging, planning); `using-agent-skills` sai até a skill própria da F3.
+- Comandos apontam para `.claude/modo-deus/REGRAS.md` e para as skills do superpowers.
+- `instalar.mjs`: detecção de stack, comandos, territórios e times sob demanda; `--perfil`, `--times`, `--dry-run`, `--remover` com backup, `doctor`.
+- `modelos/CLAUDE.md` base (do AGENTS.md da v1, com times, evidência e esforço); `REGRAS.md` v2; deny-list v2 que deixa `.env.example` legível.
+- 24 testes em node:test.
+
 ### F0 · Fundação (2026-11-15)
 - Repositório criado a partir do `fluxo-agentes` v1.
 - Skills de terceiros migradas para `skills/terceiros/` sem alteração; `_legado/` não foi trazido.

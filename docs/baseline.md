@@ -37,3 +37,19 @@ Meta da F2: caso comum ≤ 60 ms.
 
 - `_legado/` inteiro (duplicatas de skills, strix, security-audit, ai-memory, playwright-cli, ponytail completo). Continua disponível no `fluxo-agentes`.
 - Exceções guardadas como referência: `modelos/settings.deny.v1.json` (deny-list) e `docs/referencia/AGENTS.v1.md` (base do `CLAUDE.md` da F1).
+
+## Cobertura dos cenários do instalador v1 na v2 (F1)
+
+| Cenário v1 | Na v2 |
+|---|---|
+| instalação termina sem erro | `instalação termina e deixa git status limpo` |
+| comandos copiados | entregues pelo plugin; `comandos não apontam para caminhos ou skills da v1` |
+| skill global copiada | entregue pelo plugin; `plugin.json lista exatamente as skills incluídas` + `cada skill incluída existe` |
+| skill do usuário intocada (2×) | o instalador não toca `~/.claude/skills`; o doctor só avisa sobre duplicatas |
+| git status limpo | `instalação termina e deixa git status limpo` |
+| worktree também ignora | `worktree também ignora os arquivos do kit` |
+| skill que saiu da LISTA é removida | atualização do plugin (`claude plugin update`) |
+| comando que saiu do kit é removido | idem |
+| REGRAS.md preservado na reinstalação | `reinstalação preserva REGRAS.md editado e não duplica deny` |
+
+Os 32 cenários da trava continuam valendo para a porta em node na F2.

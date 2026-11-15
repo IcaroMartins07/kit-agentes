@@ -1,0 +1,16 @@
+{
+  "name": "kit-agentes",
+  "description": "Marketplace local do kit-agentes.",
+  "owner": {
+    "name": "kit-agentes"
+  },
+  "plugins": [
+    {
+      "name": "modo-deus",
+      "description": "Kit de agentes: Maestro, times de Desenvolvimento, QA e Revisão, guardrails, monitoramento contra fuga e alucinação e autoaprimoramento das skills.",
+      "version": "0.1.0",
+      "source": "./",
+      "category": "development"
+    }
+  ]
+}
