@@ -6,7 +6,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
-import { instalar, remover, doctor } from "../instalar.mjs";
+import { instalar, remover, doctor, planoDependencias } from "../instalar.mjs";
 
 let tmp, repo;
 const silencio = () => {};
@@ -22,6 +22,12 @@ const commitar = (msg = "c") => {
   git(repo, "add", "-A");
   git(repo, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "--allow-empty", "-m", msg);
 };
+const skillGraphifyFake = () => {
+  const d = path.join(process.env.MODO_DEUS_HOME, ".claude", "skills", "graphify");
+  fs.mkdirSync(d, { recursive: true });
+  fs.writeFileSync(path.join(d, "SKILL.md"), "x");
+};
+const temGraphify = (() => { try { execFileSync("graphify", ["--version"], { stdio: "ignore", shell: process.platform === "win32" }); return true; } catch { return false; } })();
 const pluginsFake = (...ids) => {
   const f = path.join(process.env.MODO_DEUS_HOME, ".claude", "plugins", "installed_plugins.json");
   fs.mkdirSync(path.dirname(f), { recursive: true });
@@ -31,6 +37,7 @@ const pluginsFake = (...ids) => {
 beforeEach(() => {
   tmp = fs.mkdtempSync(path.join(os.tmpdir(), "modo-deus-"));
   process.env.MODO_DEUS_HOME = path.join(tmp, "home");
+  process.env.MODO_DEUS_SEM_GRAPHIFY = "1"; // rápido e independente da máquina; o teste do grafo real liga de volta
   repo = path.join(tmp, "repo");
   fs.mkdirSync(repo);
   git(repo, "init", "-q");
@@ -42,6 +49,7 @@ beforeEach(() => {
 
 afterEach(() => {
   delete process.env.MODO_DEUS_HOME;
+  delete process.env.MODO_DEUS_SEM_GRAPHIFY;
   fs.rmSync(tmp, { recursive: true, force: true });
 });
 
@@ -179,10 +187,11 @@ test("perfil: padrão estrito, troca persiste", () => {
 
 test("doctor: projeto sem kit tem erro; instalado e com plugins não tem", () => {
   assert.ok(doctor(repo, { log: silencio }).erros > 0);
-  pluginsFake("modo-deus@kit-agentes", "superpowers@claude-plugins-official", "claude-security@claude-plugins-official");
+  pluginsFake("modo-deus@kit-agentes", "superpowers@claude-plugins-official", "claude-security@claude-plugins-official", "frontend-design@claude-plugins-official");
   instalar(repo, { log: silencio });
   const r = doctor(repo, { log: silencio });
-  assert.equal(r.erros, 0, JSON.stringify(r.resultados));
+  const erros = r.resultados.filter(([n]) => n === "ERRO").map(([, m]) => m);
+  assert.deepEqual(erros.filter((m) => !/graphify/.test(m)), [], JSON.stringify(r.resultados));
   assert.ok(r.resultados.some(([n, m]) => n === "aviso" && /campo\(s\) <\.\.\.>/.test(m)));
 });
 
@@ -198,4 +207,69 @@ test("doctor: deny-list removido à mão é erro", () => {
   instalar(repo, { log: silencio });
   escrever(".claude/settings.local.json", "{}");
   assert.ok(doctor(repo, { log: silencio }).resultados.some(([n, m]) => n === "ERRO" && /deny-list/.test(m)));
+});
+
+test("sem graphify: instalação avisa, segue, e o doctor acusa", () => {
+  const linhas = [];
+  instalar(repo, { log: (l) => linhas.push(l) });
+  assert.ok(linhas.some((l) => /graphify não encontrado/.test(l)));
+  assert.equal(status(), "");
+  assert.ok(doctor(repo, { log: silencio }).resultados.some(([n, m]) => n === "ERRO" && /graphify não encontrado/.test(m)));
+});
+
+test("--sem-grafo não tenta o graphify", () => {
+  const linhas = [];
+  instalar(repo, { semGrafo: true, log: (l) => linhas.push(l) });
+  assert.ok(linhas.some((l) => /pulado \(--sem-grafo\)/.test(l)));
+  assert.ok(!linhas.some((l) => /graphify não encontrado/.test(l)));
+});
+
+test("graphify real: grafo criado fora do git, doctor ok, remoção apaga o grafo", { skip: !temGraphify && "graphify ausente" }, () => {
+  delete process.env.MODO_DEUS_SEM_GRAPHIFY;
+  escrever("src/lib/mat.ts", "export function soma(a: number, b: number) { return a + b }\n");
+  escrever("src/components/Botao.tsx", 'import { soma } from "../lib/mat";\nexport function Botao() { return soma(1, 2) }\n');
+  commitar();
+  instalar(repo, { log: silencio });
+  assert.ok(fs.existsSync(path.join(repo, "graphify-out", "graph.json")));
+  assert.equal(status(), "", "graphify-out/ fica no exclude");
+  assert.ok(!fs.existsSync(path.join(repo, ".gitattributes")), "nada de merge driver versionado");
+  skillGraphifyFake();
+  pluginsFake("superpowers@claude-plugins-official", "claude-security@claude-plugins-official", "frontend-design@claude-plugins-official");
+  const r = doctor(repo, { log: silencio });
+  assert.equal(r.erros, 0, JSON.stringify(r.resultados));
+  assert.ok(r.resultados.some(([n, m]) => n === "ok" && /grafo do projeto atualizado/.test(m)));
+  remover(repo, { log: silencio });
+  assert.ok(!fs.existsSync(path.join(repo, "graphify-out")));
+  assert.equal(status(), "");
+});
+
+test("grafo versionado pelo projeto não é tocado nem excluído", () => {
+  escrever("graphify-out/graph.json", "{}");
+  commitar();
+  delete process.env.MODO_DEUS_SEM_GRAPHIFY;
+  const linhas = [];
+  instalar(repo, { log: (l) => linhas.push(l) });
+  assert.equal(ler("graphify-out/graph.json"), "{}");
+  assert.ok(linhas.some((l) => /é versionado pelo projeto; mantido/.test(l)));
+  assert.ok(!fs.readFileSync(path.join(repo, ".git", "info", "exclude"), "utf8").includes("graphify-out"));
+});
+
+test("dependências: instala só o que falta e nunca o caveman", () => {
+  const passos = planoDependencias({ instalados: ["superpowers@claude-plugins-official"], marketplaces: [], graphify: null, skillGraphify: false, ferramentas: { uv: false, pipx: true } });
+  const linhas = passos.map((p) => [p.bin, ...p.args].join(" "));
+  assert.deepEqual(linhas, [
+    "claude plugin marketplace add anthropics/claude-plugins-official",
+    "claude plugin install claude-security@claude-plugins-official",
+    "claude plugin install frontend-design@claude-plugins-official",
+    "pipx install graphifyy",
+    "graphify install --platform claude",
+  ]);
+  assert.ok(!linhas.some((l) => /caveman|claude-code-setup/.test(l)));
+});
+
+test("dependências: tudo instalado não gera passo; graphify antigo é atualizado", () => {
+  const todos = ["superpowers@claude-plugins-official", "claude-security@claude-plugins-official", "frontend-design@claude-plugins-official"];
+  assert.deepEqual(planoDependencias({ instalados: todos, marketplaces: ["claude-plugins-official"], graphify: "9.9.9", skillGraphify: true, ferramentas: {} }), []);
+  const p = planoDependencias({ instalados: todos, marketplaces: ["claude-plugins-official"], graphify: "0.1.0", skillGraphify: true, ferramentas: { uv: true } });
+  assert.deepEqual(p.map((x) => [x.bin, ...x.args].join(" ")), ["uv tool upgrade graphifyy"]);
 });

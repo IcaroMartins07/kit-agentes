@@ -5,8 +5,20 @@
   "node_minimo": 18,
 
   "dependencias": {
-    "plugins": ["superpowers@claude-plugins-official", "claude-security@claude-plugins-official"],
-    "opcionais": ["frontend-design@claude-plugins-official", "playwright"],
+    "$comentario": "Instaladas por `node instalar.mjs dependencias`. O doctor acusa erro se faltar alguma obrigatória.",
+    "marketplaces": { "claude-plugins-official": "anthropics/claude-plugins-official" },
+    "plugins": ["superpowers@claude-plugins-official", "claude-security@claude-plugins-official", "frontend-design@claude-plugins-official"],
+    "fora": {
+      "caveman": "coberto pelo ponytail; não instalar",
+      "claude-code-setup": "fora do kit por enquanto"
+    },
+    "graphify": {
+      "$comentario": "Base de mapeamento dos projetos: agentes consultam o grafo antes de varrer arquivos. Grafo de código por AST, sem LLM.",
+      "pacote": "graphifyy",
+      "minimo": "0.9.96",
+      "skill": "graphify",
+      "obrigatorio": true
+    },
     "cli": { "agent-browser": "opcional", "cypress": "por projeto, com sua confirmação" }
   },
 

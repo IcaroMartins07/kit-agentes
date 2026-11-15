@@ -8,6 +8,12 @@ Status: **F1 concluída** (plugin, manifesto e instalador). Plano completo em [m
 
 Duas partes: o **plugin** (skills, comandos e, nas próximas fases, agentes e hooks) e a **parte por projeto** (regras, perfil, deny-list), que nunca entra no git.
 
+0. Dependências, uma vez por máquina (plugins `superpowers`, `claude-security`, `frontend-design` e o graphify; nunca o caveman):
+
+   ```bash
+   node C:/Users/ALMA/Claude/kit-agentes/instalar.mjs dependencias
+   ```
+
 1. Plugin, uma vez por máquina:
 
    ```bash
@@ -15,15 +21,13 @@ Duas partes: o **plugin** (skills, comandos e, nas próximas fases, agentes e ho
    claude plugin install modo-deus@kit-agentes
    ```
 
-   Dependências: `superpowers` e `claude-security` do marketplace oficial.
-
 2. Em cada projeto:
 
    ```bash
    node C:/Users/ALMA/Claude/kit-agentes/instalar.mjs /caminho/do/repo --perfil estrito
    ```
 
-   Opções: `--perfil leve|estrito|deus`, `--times dev-mobile=ligado,dev-docs=desligado`, `--dry-run`.
+   Opções: `--perfil leve|estrito|deus`, `--times dev-mobile=ligado,dev-docs=desligado`, `--sem-grafo`, `--dry-run`.
    Depois revise `.claude/modo-deus/REGRAS.md` (já vem com stack, comandos e territórios detectados).
 
 3. Conferir:
@@ -38,6 +42,7 @@ Remover de um projeto: `node instalar.mjs --remover /caminho/do/repo`. O que era
 
 - Cria `.claude/modo-deus/` com `REGRAS.md`, `config.json` (perfil e times sob demanda), `telemetria/` e `retro/`.
 - Acrescenta o deny-list de `modelos/settings.deny.json` ao `.claude/settings.local.json`, registrando só o que acrescentou para remover depois sem tocar no que é seu.
+- Monta o mapa do projeto em `graphify-out/` com `graphify update .` (só código, por AST, sem LLM). Os agentes consultam o grafo antes de varrer pastas, o que corta boa parte do custo de tokens.
 - Põe tudo no `.git/info/exclude` comum, que vale também para worktrees.
 - Não mexe em nada que o projeto versiona; JSON inválido aborta sem alterar.
 

@@ -6,6 +6,7 @@
 //   node instalar.mjs [caminho] [--perfil leve|estrito|deus] [--times dev-mobile=ligado,...] [--dry-run]
 //   node instalar.mjs --remover [caminho] [--dry-run]
 //   node instalar.mjs doctor [caminho]
+//   node instalar.mjs dependencias [--dry-run]     plugins obrigatórios e graphify (nunca o caveman)
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -32,16 +33,48 @@ function git(dir, ...args) {
   }
 }
 
+// Roda um executável externo (claude, graphify, uv...). null se não existir ou falhar.
+function rodar(bin, argv, cwd) {
+  try {
+    return execFileSync(bin, argv, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], shell: process.platform === "win32", timeout: 600000 }).trim();
+  } catch {
+    return null;
+  }
+}
+const existeBin = (bin) => rodar(bin, ["--version"]) !== null;
+
+// ---------- graphify ----------
+const GRAFO = "graphify-out";
+const cmpVersao = (a, b) => {
+  const pa = a.split(".").map(Number), pb = b.split(".").map(Number);
+  for (let i = 0; i < 3; i++) if ((pa[i] || 0) !== (pb[i] || 0)) return (pa[i] || 0) - (pb[i] || 0);
+  return 0;
+};
+function graphifyVersao() {
+  if (process.env.MODO_DEUS_SEM_GRAPHIFY) return null; // testes simulam ausência
+  const v = rodar("graphify", ["--version"]);
+  return v?.match(/(\d+\.\d+\.\d+)/)?.[1] || null;
+}
+// Grafo velho: algum commit é mais novo que o graph.json.
+function grafoDesatualizado(raiz) {
+  const f = path.join(raiz, GRAFO, "graph.json");
+  if (!fs.existsSync(f)) return null;
+  const ultimo = Number(git(raiz, "log", "-1", "--format=%ct") || 0) * 1000;
+  return fs.statSync(f).mtimeMs < ultimo;
+}
+
 class ErroUso extends Error {}
 
 function args(argv) {
-  const o = { comando: "instalar", caminho: process.cwd(), perfil: null, times: {}, dryRun: false };
+  const o = { comando: "instalar", caminho: process.cwd(), perfil: null, times: {}, dryRun: false, semGrafo: false };
   const resto = [...argv];
   while (resto.length) {
     const a = resto.shift();
     if (a === "doctor") o.comando = "doctor";
+    else if (a === "dependencias") o.comando = "dependencias";
     else if (a === "--remover") o.comando = "remover";
     else if (a === "--dry-run") o.dryRun = true;
+    else if (a === "--sem-grafo") o.semGrafo = true;
     else if (a === "--perfil") o.perfil = resto.shift();
     else if (a === "--times") {
       for (const par of (resto.shift() || "").split(",").filter(Boolean)) {
@@ -207,7 +240,7 @@ function executor(dryRun, log) {
   };
 }
 
-export function instalar(caminho, { perfil = null, times = {}, dryRun = false, log = console.log } = {}) {
+export function instalar(caminho, { perfil = null, times = {}, dryRun = false, semGrafo = false, log = console.log } = {}) {
   const raiz = raizDoRepo(caminho);
   const pasta = path.join(raiz, PASTA);
   if (versionado(raiz, PASTA)) throw new ErroUso(`${PASTA} já é versionado pelo projeto; não vou sobrescrever`);
@@ -260,14 +293,33 @@ export function instalar(caminho, { perfil = null, times = {}, dryRun = false, l
     } else log(`settings ${SETTINGS}: deny-list já completo`);
   }
 
+  // Grafo do projeto: base de mapeamento para os agentes. Só código (AST), sem LLM e sem custo de tokens.
+  // Os hooks do próprio graphify não são usados: eles alteram o .gitattributes, que é versionado.
+  const grafoVersionado = versionado(raiz, GRAFO);
+  let criouGrafo = anterior?.criou_grafo || false;
+  if (semGrafo) log("grafo    pulado (--sem-grafo)");
+  else if (grafoVersionado) log(`grafo    ${GRAFO}/ é versionado pelo projeto; mantido como está`);
+  else {
+    const v = graphifyVersao();
+    if (!v) log("AVISO    graphify não encontrado: rode `node instalar.mjs dependencias` e instale de novo");
+    else if (cmpVersao(v, kit.dependencias.graphify.minimo) < 0) log(`AVISO    graphify ${v} é mais antigo que ${kit.dependencias.graphify.minimo}: atualize e instale de novo`);
+    else {
+      const novo = !fs.existsSync(path.join(raiz, GRAFO, "graph.json"));
+      fazer(`grafo    ${GRAFO}/ ${novo ? "criado" : "atualizado"} com graphify ${v} (código por AST, sem LLM)`, () => {
+        if (rodar("graphify", ["update", "."], raiz) === null) log("AVISO    graphify update falhou; rode `graphify update .` no projeto para ver o erro");
+        criouGrafo ||= novo && fs.existsSync(path.join(raiz, GRAFO, "graph.json"));
+      });
+    }
+  }
+
   const exc = arquivoExclude(raiz);
   fazer(`exclude  ${path.relative(raiz, exc).replace(/\\/g, "/")} (vale também para worktrees)`, () => {
     fs.mkdirSync(path.dirname(exc), { recursive: true });
     const atual = fs.existsSync(exc) ? fs.readFileSync(exc, "utf8") : "";
-    fs.writeFileSync(exc, blocoExclude(atual, [`${PASTA}/`, SETTINGS]));
+    fs.writeFileSync(exc, blocoExclude(atual, [`${PASTA}/`, SETTINGS, ...(grafoVersionado ? [] : [`${GRAFO}/`])]));
   });
 
-  const manifesto = { versao_kit: kit.versao, deny: denyNovos, criou_settings: criouSettings };
+  const manifesto = { versao_kit: kit.versao, deny: denyNovos, criou_settings: criouSettings, criou_grafo: criouGrafo };
   fazer("manifesto instalados.json", () => fs.writeFileSync(manifestoF, JSON.stringify(manifesto, null, 2) + "\n"));
 
   log("");
@@ -304,6 +356,9 @@ export function remover(caminho, { dryRun = false, log = console.log } = {}) {
   }
 
   fazer(`pasta    ${PASTA}/ removida`, () => fs.rmSync(pasta, { recursive: true, force: true }));
+  if (manifesto.criou_grafo && !versionado(raiz, GRAFO) && fs.existsSync(path.join(raiz, GRAFO))) {
+    fazer(`grafo    ${GRAFO}/ removido (criado pelo kit; recriável com graphify update .)`, () => fs.rmSync(path.join(raiz, GRAFO), { recursive: true, force: true }));
+  }
 
   const exc = arquivoExclude(raiz);
   if (fs.existsSync(exc)) fazer("exclude  bloco do modo-deus removido", () => fs.writeFileSync(exc, blocoExclude(fs.readFileSync(exc, "utf8"), null)));
@@ -327,7 +382,14 @@ export function doctor(caminho, { log = console.log } = {}) {
   try { plugins = Object.keys(lerJson(plugF).plugins || {}); } catch { /* sem plugins */ }
   const temPlugin = (id) => plugins.some((p) => p === id || p.startsWith(id.split("@")[0] + "@"));
   temPlugin("modo-deus@kit-agentes") ? ok("plugin modo-deus instalado") : aviso("plugin modo-deus não instalado (claude plugin marketplace add <kit> && claude plugin install modo-deus@kit-agentes)");
-  for (const dep of kit.dependencias.plugins) temPlugin(dep) ? ok(`plugin ${dep.split("@")[0]}`) : erro(`plugin ${dep} ausente`);
+  for (const dep of kit.dependencias.plugins) temPlugin(dep) ? ok(`plugin ${dep.split("@")[0]}`) : erro(`plugin ${dep} ausente (node instalar.mjs dependencias)`);
+
+  const gv = graphifyVersao();
+  const gmin = kit.dependencias.graphify.minimo;
+  if (!gv) erro("graphify não encontrado (node instalar.mjs dependencias)");
+  else if (cmpVersao(gv, gmin) < 0) erro(`graphify ${gv}; precisa de ${gmin}+`);
+  else ok(`graphify ${gv}`);
+  fs.existsSync(path.join(home(), ".claude", "skills", kit.dependencias.graphify.skill, "SKILL.md")) ? ok("skill graphify") : erro("skill graphify ausente (graphify install --platform claude)");
 
   const globais = path.join(home(), ".claude", "skills");
   const dup = Object.keys(kit.skills.incluidas).filter((n) => fs.existsSync(path.join(globais, n)));
@@ -366,6 +428,11 @@ export function doctor(caminho, { log = console.log } = {}) {
       sujos.length ? erro(`arquivos do kit aparecem no git status: ${sujos.join("; ")}`) : ok("git status limpo dos arquivos do kit");
 
       detectar(raiz).cypress ? ok("Cypress configurado") : aviso("Cypress não configurado (o Maestro oferece na primeira tarefa de E2E)");
+
+      const velho = grafoDesatualizado(raiz);
+      if (velho === null) aviso(`grafo ausente: rode \`graphify update .\` no projeto (ou instale de novo)`);
+      else if (velho) aviso("grafo mais antigo que o último commit: rode `graphify update .` (sem LLM, segundos)");
+      else ok("grafo do projeto atualizado");
     }
   }
 
@@ -376,17 +443,67 @@ export function doctor(caminho, { log = console.log } = {}) {
   return { erros, resultados: res };
 }
 
+// Instala o que falta: marketplaces, plugins obrigatórios e graphify. Nunca o que está em dependencias.fora.
+export function planoDependencias({ instalados = null, marketplaces = null, graphify = graphifyVersao(), skillGraphify = null, ferramentas = null } = {}) {
+  const lerChaves = (f, sub) => { try { const j = lerJson(path.join(home(), ".claude", "plugins", f)); return Object.keys(sub ? j[sub] || {} : j); } catch { return []; } };
+  instalados ??= lerChaves("installed_plugins.json", "plugins");
+  marketplaces ??= lerChaves("known_marketplaces.json");
+  skillGraphify ??= fs.existsSync(path.join(home(), ".claude", "skills", kit.dependencias.graphify.skill, "SKILL.md"));
+  ferramentas ??= { uv: existeBin("uv"), pipx: existeBin("pipx") };
+  const passos = [];
+  for (const [nome, repo] of Object.entries(kit.dependencias.marketplaces)) {
+    if (!marketplaces.includes(nome)) passos.push({ descricao: `marketplace ${nome}`, bin: "claude", args: ["plugin", "marketplace", "add", repo] });
+  }
+  for (const id of kit.dependencias.plugins) {
+    if (Object.keys(kit.dependencias.fora).some((f) => id.startsWith(f + "@"))) continue;
+    if (!instalados.includes(id)) passos.push({ descricao: `plugin ${id}`, bin: "claude", args: ["plugin", "install", id] });
+  }
+  const pacote = kit.dependencias.graphify.pacote;
+  if (!graphify || cmpVersao(graphify, kit.dependencias.graphify.minimo) < 0) {
+    const verbo = graphify ? "upgrade" : "install";
+    passos.push(
+      ferramentas.uv ? { descricao: `graphify (${pacote}) via uv`, bin: "uv", args: ["tool", verbo === "install" ? "install" : "upgrade", pacote] }
+      : ferramentas.pipx ? { descricao: `graphify (${pacote}) via pipx`, bin: "pipx", args: [verbo, pacote] }
+      : { descricao: `graphify (${pacote}) via pip`, bin: "python", args: ["-m", "pip", "install", "--user", "--upgrade", pacote] },
+    );
+  }
+  if (!skillGraphify) passos.push({ descricao: "skill graphify no Claude Code", bin: "graphify", args: ["install", "--platform", "claude"] });
+  return passos;
+}
+
+export function dependencias({ dryRun = false, log = console.log } = {}) {
+  const passos = planoDependencias();
+  if (!passos.length) {
+    log("Todas as dependências já estão instaladas.");
+    return { falhas: 0, passos };
+  }
+  let falhas = 0;
+  for (const p of passos) {
+    const linha = `${p.bin} ${p.args.join(" ")}`;
+    if (dryRun) { log(`[simulação] ${p.descricao}: ${linha}`); continue; }
+    log(`...      ${p.descricao}: ${linha}`);
+    const saida = rodar(p.bin, p.args);
+    if (saida === null) { falhas++; log(`FALHOU   ${p.descricao}`); }
+    else log(`ok       ${p.descricao}`);
+  }
+  log("");
+  log(dryRun ? `${passos.length} passo(s) a executar.` : falhas ? `${falhas} falha(s).` : "Dependências instaladas. Abra uma sessão nova do Claude Code.");
+  log(`Fora do kit, de propósito: ${Object.entries(kit.dependencias.fora).map(([n, m]) => `${n} (${m})`).join("; ")}.`);
+  return { falhas, passos };
+}
+
 // ---------- CLI ----------
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
     const o = args(process.argv.slice(2));
     if (o.comando === "doctor") process.exitCode = doctor(o.caminho).erros ? 1 : 0;
+    else if (o.comando === "dependencias") process.exitCode = dependencias(o).falhas ? 1 : 0;
     else if (o.comando === "remover") remover(o.caminho, o);
     else instalar(o.caminho, o);
   } catch (e) {
     if (!(e instanceof ErroUso)) throw e;
     if (e.message) console.error(`erro: ${e.message}`);
-    console.error("uso: node instalar.mjs [caminho] [--perfil leve|estrito|deus] [--times dev-mobile=ligado,...] [--dry-run]\n     node instalar.mjs --remover [caminho] [--dry-run]\n     node instalar.mjs doctor [caminho]");
+    console.error("uso: node instalar.mjs [caminho] [--perfil leve|estrito|deus] [--times dev-mobile=ligado,...] [--sem-grafo] [--dry-run]\n     node instalar.mjs --remover [caminho] [--dry-run]\n     node instalar.mjs doctor [caminho]\n     node instalar.mjs dependencias [--dry-run]");
     process.exitCode = 1;
   }
 }

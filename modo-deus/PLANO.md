@@ -1,6 +1,6 @@
 # Plano de implementação: kit-agentes / modo-deus
 
-Versão 0.3 · 2026-11-15 · status: **proposta, nada implementado**
+Versão 0.4 · 2026-11-15 · status: **F0 e F1 implementadas** (branch fase/f1)
 
 Mudanças da 0.1: organização em **times** (Maestro, Desenvolvimento, QA, Revisão) com modelo e esforço por papel, Cypress para E2E, e autonomia, skills, monitoramento e fases reorganizados em torno dos times.
 
@@ -132,7 +132,18 @@ Perfis: `leve` (só trava de fase), `estrito` (v1 + cercas), `deus` (tabela acim
 - **Um dono por fase e por time.** Duplicatas saem: as cópias de TDD, debugging e planning do agent-skills dão lugar às do `superpowers`.
 - **Skills por agente, não globais.** Cada agente declara as suas no frontmatter; o contexto de cada um carrega só o que usa. Na sessão principal fica só a orquestradora.
 - **Skills próprias do kit:** `modo-deus` (pipeline, regras de divisão e esforço), `vigia` (como reagir aos alertas), `retrospectiva` (autoaprimoramento), `qa-cypress` (padrões de E2E e componente, seletores `data-cy`, sem `wait` fixo, fixtures, interceptação de rede).
-- **Ficam de fora:** caveman (coberto pelo ponytail); `_legado/` inteiro.
+- **Plugins obrigatórios:** `superpowers`, `claude-security`, `frontend-design`. Instalados por `node instalar.mjs dependencias`.
+- **Ficam de fora:** caveman (coberto pelo ponytail), `claude-code-setup` (por enquanto) e `_legado/` inteiro.
+
+### 5.1 Mapa do projeto: graphify
+
+O graphify é a base de mapeamento de todos os agentes e a principal economia de tokens do kit.
+
+- O instalador monta `graphify-out/` no projeto com `graphify update .`: só código, por AST, sem LLM, em segundos. Fica fora do git (exclude).
+- Regra para todos os agentes (`CLAUDE.md` base, seção 13): consultar o grafo (`query`, `explain`, `path`, `affected`, `god-nodes`) **antes** de varrer pastas; ler só o que o grafo apontou; confirmar no código.
+- Maestro usa `god-nodes` e `affected` para montar o escopo; QA usa `affected` para escolher a regressão; Revisão usa `affected` para achar consumidores fora do plano.
+- Os hooks git do graphify **não** são usados: alteram o `.gitattributes`, que é versionado. O hook de início de sessão do kit (F2) reconstrói o grafo quando está mais velho que o último commit, e o monitor (F5) mede quantas leituras o grafo evitou.
+- Na F6, `graphify save-result` e `graphify reflect` alimentam a retrospectiva com as consultas que foram úteis ou becos sem saída.
 
 ## 6. Monitoramento
 
@@ -212,7 +223,7 @@ Cada fase termina com testes verdes e commit. Nada da v1 é apagado antes da F7.
 |---|---|---|---|
 | **F0 · Fundação** | `git init`, migração de skills/commands/modelos, comparação com `~/.claude/kits/fluxo-agentes`, baseline dos testes da v1 | primeiro commit + `docs/baseline.md` | ½ dia |
 | **F1 · Plugin, manifesto e instalador** | `kit.json`, `plugin.json`, marketplace local, `instalar.mjs` com perfis, times e `doctor`, `CLAUDE.md` base | instalar/reinstalar/remover deixa `git status` limpo | 1 dia |
-| **F2 · Hooks e cercas** | porta da trava para node, V2 e V9, deny-list, allowlist pelo `REGRAS.md`, telemetria básica | 32 cenários da v1 + novos passam; caso comum ≤ 60 ms | 1–2 dias |
+| **F2 · Hooks e cercas** | porta da trava para node, V2 e V9, deny-list, allowlist pelo `REGRAS.md`, telemetria básica, grafo reconstruído no início da sessão quando velho | 32 cenários da v1 + novos passam; caso comum ≤ 60 ms | 1–2 dias |
 | **F3 · Maestro e Revisão** | `maestro`, `revisor`, `revisor-seguranca`, `auditor-de-fatos`, skill `modo-deus`, `plano.json`, `/deus` passos 1, 2, 6, 7 | Maestro gera plano válido no schema; revisão devolve itens corretamente | 1–2 dias |
 | **F4 · Times Dev e QA** | 4 agentes Dev fixos + 3 sob demanda com detecção, 5 agentes QA, territórios, worktrees por tarefa, skill `qa-cypress`, oferta de setup do Cypress | `/deus` completa uma feature de exemplo (front + back + db) com E2E Cypress verde e PR aberto; num projeto sem app, `dev-mobile` não é carregado; numa mudança de API, `dev-docs` é acionado | 3 dias |
 | **F5 · Monitoramento** | V1, V3–V8, V10, V11; status line; `/deus-status` e painel | um teste por detector (dispara no caso ruim, quieto no bom); falsos positivos medidos em 3 sessões reais | 2 dias |
