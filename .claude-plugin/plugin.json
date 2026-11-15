@@ -33,6 +33,7 @@
     "./skills/terceiros/impeccable/impeccable",
     "./skills/terceiros/taste-skill/design-taste-frontend",
     "./skills/terceiros/ponytail/ponytail-audit",
-    "./skills/proprias/modo-deus"
+    "./skills/proprias/modo-deus",
+    "./skills/proprias/qa-cypress"
   ]
 }

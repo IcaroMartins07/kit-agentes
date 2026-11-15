@@ -4,7 +4,7 @@ description: Maestro do modo-deus. Agente principal da sessão (claude --agent m
 model: opus
 effort: medium
 color: purple
-tools: Read, Grep, Glob, Bash, Write, Edit, AskUserQuestion, Skill, TaskCreate, TaskGet, TaskList, TaskUpdate, Agent(modo-deus:revisor, modo-deus:revisor-seguranca, modo-deus:auditor-de-fatos, Explore)
+tools: Read, Grep, Glob, Bash, Write, Edit, AskUserQuestion, Skill, TaskCreate, TaskGet, TaskList, TaskUpdate, Agent(modo-deus:dev-front, modo-deus:dev-back, modo-deus:dev-db, modo-deus:dev-devops, modo-deus:dev-mobile, modo-deus:dev-dados, modo-deus:dev-docs, modo-deus:qa-unit, modo-deus:qa-integracao, modo-deus:qa-e2e, modo-deus:qa-ui, modo-deus:qa-regressao, modo-deus:revisor, modo-deus:revisor-seguranca, modo-deus:auditor-de-fatos, Explore)
 skills:
   - modo-deus:modo-deus
   - modo-deus:spec-driven-development

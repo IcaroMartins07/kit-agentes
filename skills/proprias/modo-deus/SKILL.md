@@ -90,17 +90,31 @@ Status do plano: `rascunho → aprovado → executando → revisao → concluido
 
 ## 3 · Despacho
 
+**Branches.** Antes do primeiro despacho, crie a branch da feature a partir da principal (`git branch feat/login-google <principal>`), sem trocar a sua. Cada tarefa roda na branch `<feature>-T<n>` (ex.: `feat/login-google-T1`), criada pelo próprio agente na worktree dele com `git switch -C <feature>-T<n> <feature>`. O nome é fixo: o monitor usa o sufixo `-T<n>` para saber qual tarefa cada agente está fazendo.
+
+**Cypress.** Se o plano tem tarefa `qa-e2e` ou `qa-ui` e o `REGRAS.md` diz que o projeto não tem Cypress, o plano (passo 2, antes da aprovação) já começa com uma tarefa `dev-devops` "configurar Cypress": instala `cypress` (e `cypress-axe axe-core` se houver `qa-ui`), scripts e job de CI. A aprovação do plano é a confirmação para instalar. `cypress.config.ts` e `cypress/support/**` são do território `testes`: a primeira tarefa `qa-e2e` copia os modelos e `depende_de` a de configuração, assim como as demais tarefas E2E e UI. Quando ela terminar, grave os comandos de E2E e componente na tabela do `REGRAS.md`.
+
+**Despachar.**
+
 - Um subagente por tarefa, pelo nome do time (`modo-deus:dev-back`, `modo-deus:qa-e2e`…), com `effort` igual ao `esforco` da tarefa. Este manual é a instrução explícita para definir o esforço.
-- O prompt de cada tarefa leva: id, título, critérios de aceite completos, escopo, `pronto_quando`, `como_testar`, a branch da feature e o comando de teste do `REGRAS.md`. Nada de "veja o plano": o subagente começa do zero.
+- O prompt de cada tarefa leva: caminho absoluto da raiz do projeto, branch da feature, id, título, critérios de aceite completos, escopo, `pronto_quando`, `como_testar` e os comandos do `REGRAS.md`. Nada de "veja o plano": o subagente começa do zero, numa worktree sem `graphify-out/` (ele usa o grafo da raiz).
 - Prompt de QA não leva detalhes da implementação; leva só os critérios.
-- Paralelize tarefas sem dependência; cada Dev trabalha na própria worktree e commita na branch da tarefa.
+- Paralelize tarefas sem dependência. Marque `em_andamento` ao despachar.
 - Se o agente do time não existir nesta instalação, pare e diga ao usuário qual falta; não faça a tarefa você mesmo.
+
+**Ler a entrega.** Dev e QA terminam com um bloco ```json `{"tarefa", "status": "pronta"|"bloqueada", "branch", "commits", "arquivos", "testes", "observacoes"}`; o hook não deixa terminar sem ele.
+
+- `pronta`: tarefa vai para `pronta` no plano. Teste de QA com `falhou_esperado` é normal enquanto a tarefa Dev correspondente não foi integrada.
+- `bloqueada` por escopo ou território: decida (amplie o escopo, crie tarefa para o time dono, encadeie com `depende_de`) e despache de novo. Se a decisão muda o que o usuário aprovou, escale.
+- `bloqueada` com `BUG:` em `observacoes` (QA achou bug): integre os testes e abra item para a tarefa Dev indicada; ela volta a `em_andamento`.
+- `observacoes` pedindo algo a outro time (`data-cy`, export, rota de teste) vira item para esse time.
 
 ## 4–5 · Integração e regressão
 
-- Junte as branches das tarefas na branch da feature (nunca na principal: o hook bloqueia). Conflito: devolva à tarefa mais recente, não resolva no código.
+- Junte as branches `<feature>-T<n>` das tarefas prontas na branch da feature (nunca na principal: o hook bloqueia). Conflito: devolva à tarefa mais recente, não resolva no código.
+- Depois de integrar, remova a worktree da tarefa (`git worktree remove <caminho>`) para que a branch `<feature>-T<n>` possa ser reaberta se a tarefa voltar da revisão.
 - Rode a suíte do `REGRAS.md`. Falhou: item para o time dono, tarefa volta a `em_andamento`.
-- Despache `qa-regressao` com a lista de símbolos alterados; ele usa `graphify affected` para escolher a regressão.
+- Passo 5: despache `modo-deus:qa-regressao` com a raiz, a branch da feature, a principal, os símbolos alterados e as tarefas com escopo. Ele faz checkout destacado da feature, usa `graphify affected` para priorizar, roda todas as suítes e termina com `{"resultado": "verde"|"vermelho", "suites": [...], "falhas": [{"teste", "arquivo", "tarefa_provavel", "saida"}]}`. Vermelho: cada falha vira item para a `tarefa_provavel`; integre a correção e rode a regressão de novo. Só siga para a Revisão com verde.
 
 ## 6 · Revisão
 
