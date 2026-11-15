@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  testes:
+    name: testes (${{ matrix.os }}, node ${{ matrix.node }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: [18, 20, 22]
+    env:
+      # Sem graphify e sem o CLI claude no runner: os testes que dependem deles pulam ou simulam.
+      MODO_DEUS_SEM_GRAPHIFY: "1"
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Identidade do git para os repositórios temporários dos testes
+        run: |
+          git config --global user.email "ci@modo-deus.invalid"
+          git config --global user.name "CI modo-deus"
+          git config --global init.defaultBranch main
+
+      - name: Ambiente
+        run: |
+          node --version
+          git --version
+          command -v graphify || echo "graphify ausente (esperado)"
+          command -v claude || echo "claude ausente (esperado)"
+
+      # `npm test` passa o padrão "testes/*.test.mjs" entre aspas para o node, e só o node 21+
+      # expande glob no --test. No 18 e no 20 quem expande é o bash; os arquivos são os mesmos.
+      - name: Testes (npm test)
+        if: matrix.node >= 21
+        run: npm test
+
+      - name: Testes (node --test com glob do shell)
+        if: matrix.node < 21
+        run: node --test testes/*.test.mjs
