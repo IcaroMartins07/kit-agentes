@@ -165,11 +165,11 @@ test("Revisão é só leitura também nas ferramentas", () => {
 });
 
 test("skills pré-carregadas existem no plugin; o Maestro só despacha agentes que existem", () => {
-  const doPlugin = new Set(Object.keys(kit.skills.incluidas));
+  const existentes = { "modo-deus": new Set(Object.keys(kit.skills.incluidas)), superpowers: new Set(kit.skills.do_superpowers) };
   for (const f of agentes) for (const s of frontmatter(`agents/${f}`).skills || []) {
     const [plug, nome] = s.split(":");
-    assert.equal(plug, "modo-deus", s);
-    assert.ok(doPlugin.has(nome), `${f}: skill ${s} não está no plugin`);
+    assert.ok(existentes[plug], `${f}: skill ${s} precisa do prefixo modo-deus: ou superpowers:`);
+    assert.ok(existentes[plug].has(nome), `${f}: skill ${s} não existe em ${plug}`);
   }
   const despacha = frontmatter("agents/maestro.md").tools.match(/Agent\(([^)]*)\)/)[1].split(",").map((x) => x.trim());
   const nomes = new Set(agentes.map((f) => frontmatter(`agents/${f}`).name));
