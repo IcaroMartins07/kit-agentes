@@ -151,6 +151,71 @@ export function lerAuditoria(texto) {
   return { auditoria: a, erros: e };
 }
 
+// ---------- entrega de tarefa (Dev e QA) ----------
+// Bloco final: { tarefa, status: "pronta"|"bloqueada", branch, commits, arquivos, testes: [{comando, resultado, resumo}], observacoes }
+// "pronta" exige commit e teste rodado. Só o QA pode entregar com teste "falhou_esperado"
+// (teste de aceite escrito antes da implementação).
+const ultimoBloco = (texto) => {
+  const b = [...String(texto || "").matchAll(/```json\s*([\s\S]*?)```/g)].map((m) => m[1]);
+  if (!b.length) return { erro: "termine com um bloco ```json no formato combinado" };
+  try { return { valor: JSON.parse(b[b.length - 1]) }; } catch (x) { return { erro: `o bloco json final não é JSON válido: ${x.message}` }; }
+};
+
+export function lerEntrega(texto, { time = "dev" } = {}) {
+  const { valor: v, erro } = ultimoBloco(texto);
+  if (erro) return { erros: [erro] };
+  const e = [];
+  if (!/^T\d+$/.test(v.tarefa || "")) e.push("tarefa: id da tarefa (T1...)");
+  if (!["pronta", "bloqueada"].includes(v.status)) e.push('status: "pronta" ou "bloqueada"');
+  const resultados = time === "qa" ? ["passou", "falhou", "falhou_esperado"] : ["passou", "falhou"];
+  for (const [i, t] of lista(v.testes).entries()) {
+    if (!ehTexto(t?.comando)) e.push(`testes[${i}].comando: o comando exato que rodou`);
+    if (!resultados.includes(t?.resultado)) e.push(`testes[${i}].resultado: ${resultados.join(", ")}`);
+  }
+  if (v.status === "pronta") {
+    if (!ehTexto(v.branch)) e.push("pronta exige branch da tarefa");
+    if (!lista(v.commits).length) e.push("pronta exige pelo menos um commit na branch da tarefa");
+    if (!lista(v.arquivos).length) e.push("pronta exige a lista de arquivos alterados");
+    if (!lista(v.testes).length) e.push("pronta exige os testes rodados depois da última edição");
+    if (lista(v.testes).some((t) => t?.resultado === "falhou")) e.push("pronta com teste falhando: corrija ou entregue como bloqueada");
+  }
+  if (v.status === "bloqueada" && !ehTexto(v.observacoes)) e.push("bloqueada exige o motivo em observacoes");
+  return { entrega: v, erros: e };
+}
+
+// ---------- regressão ----------
+// { resultado: "verde"|"vermelho", suites: [{comando, resultado, resumo}], falhas: [{teste, arquivo, tarefa_provavel, saida}] }
+export function lerRegressao(texto) {
+  const { valor: v, erro } = ultimoBloco(texto);
+  if (erro) return { erros: [erro] };
+  const e = [];
+  if (!["verde", "vermelho"].includes(v.resultado)) e.push('resultado: "verde" ou "vermelho"');
+  if (!lista(v.suites).length) e.push("suites: cada suíte rodada, com comando e resultado");
+  for (const [i, s] of lista(v.suites).entries()) {
+    if (!ehTexto(s?.comando)) e.push(`suites[${i}].comando obrigatório`);
+    if (!["passou", "falhou"].includes(s?.resultado)) e.push(`suites[${i}].resultado: passou ou falhou`);
+  }
+  for (const [i, f] of lista(v.falhas).entries()) {
+    if (!ehTexto(f?.teste)) e.push(`falhas[${i}].teste obrigatório`);
+    if (!ehTexto(f?.saida)) e.push(`falhas[${i}].saida: trecho real da saída`);
+  }
+  const falhou = lista(v.suites).some((s) => s?.resultado === "falhou");
+  if (v.resultado === "verde" && (falhou || lista(v.falhas).length)) e.push("verde não pode ter suíte falhando nem falhas");
+  if (v.resultado === "vermelho" && !lista(v.falhas).length) e.push("vermelho exige as falhas");
+  return { regressao: v, erros: e };
+}
+
+// Contrato de saída de cada agente do kit (usado no SubagentStop).
+export function contratoDe(nome, kitDef = kitPadrao()) {
+  const def = kitDef.agentes[nome];
+  if (!def) return null;
+  if (nome === "auditor-de-fatos") return lerAuditoria;
+  if (def.time === "revisao") return lerVeredito;
+  if (nome === "qa-regressao") return lerRegressao;
+  if (def.time === "dev" || def.time === "qa") return (t) => lerEntrega(t, { time: def.time });
+  return null;
+}
+
 // ---------- CLI ----------
 if (process.argv[1] && path.resolve(process.argv[1]).toLowerCase() === fileURLToPath(import.meta.url).toLowerCase()) {
   const [cmd, arq] = process.argv.slice(2);

@@ -1,19 +1,20 @@
 // SubagentStart, SubagentStop e Stop: telemetria e contrato de saída da Revisão.
 // Os detectores V5–V8 entram na F5.
 import { lerEntrada, acharProjeto, lerConfig, registrar, monitorLigado } from "./comum.mjs";
-import { lerVeredito, lerAuditoria } from "./plano.mjs";
+import { contratoDe } from "./plano.mjs";
 
 const entrada = lerEntrada();
 const proj = acharProjeto(entrada);
 if (!proj) process.exit(0);
 const agente = (entrada.agent_type || "principal").split(":").pop() || "principal";
 
-// Revisão e auditor só encerram entregando o bloco no formato. Na segunda tentativa
-// (stop_hook_active) deixa encerrar, para não prender o subagente em laço, e registra.
-const CONTRATOS = { revisor: lerVeredito, "revisor-seguranca": lerVeredito, "auditor-de-fatos": lerAuditoria };
+// Agentes do kit só encerram entregando o bloco no formato do seu papel (entrega, regressão,
+// veredito, auditoria). Na segunda tentativa (stop_hook_active) deixa encerrar, para não
+// prender o subagente em laço, e registra.
+const ler = entrada.hook_event_name === "SubagentStop" && (entrada.agent_type || "").startsWith("modo-deus:") ? contratoDe(agente) : null;
 let contrato = null;
-if (entrada.hook_event_name === "SubagentStop" && CONTRATOS[agente]) {
-  const { erros } = CONTRATOS[agente](entrada.last_assistant_message);
+if (ler) {
+  const { erros } = ler(entrada.last_assistant_message);
   if (erros.length) {
     contrato = erros;
     if (!entrada.stop_hook_active) {
