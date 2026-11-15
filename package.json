@@ -2,9 +2,11 @@
   "name": "kit-agentes",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
-    "test": "node --test \"testes/*.test.mjs\"",
+    "test": "node scripts/testar.mjs",
     "doctor": "node instalar.mjs doctor"
   }
 }

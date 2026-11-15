@@ -60,7 +60,8 @@ test("claude plugin validate passa (pula se o CLI não existir)", (t) => {
   try {
     saida = execFileSync("claude", ["plugin", "validate", "--strict", path.join(KIT, ".claude-plugin", "plugin.json")], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], shell: process.platform === "win32" });
   } catch (e) {
-    if (e.code === "ENOENT" || /not recognized|não é reconhecido/.test(String(e.stderr))) return t.skip("claude CLI ausente");
+    // Windows em português manda a mensagem em cp850 ("n�o � reconhecido"): casa qualquer byte nos acentos.
+    if (e.code === "ENOENT" || e.status === 127 || /not recognized|n.o . reconhecido|command not found/i.test(String(e.stderr))) return t.skip("claude CLI ausente");
     assert.fail(String(e.stdout) + String(e.stderr));
   }
   assert.match(saida, /Validation passed/);

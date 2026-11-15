@@ -46,12 +46,6 @@ jobs:
           command -v graphify || echo "graphify ausente (esperado)"
           command -v claude || echo "claude ausente (esperado)"
 
-      # `npm test` passa o padrão "testes/*.test.mjs" entre aspas para o node, e só o node 21+
-      # expande glob no --test. No 18 e no 20 quem expande é o bash; os arquivos são os mesmos.
-      - name: Testes (npm test)
-        if: matrix.node >= 21
+      # scripts/testar.mjs monta a lista de arquivos: funciona do node 18 ao 22.
+      - name: Testes
         run: npm test
-
-      - name: Testes (node --test com glob do shell)
-        if: matrix.node < 21
-        run: node --test testes/*.test.mjs
