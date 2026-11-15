@@ -1,0 +1,52 @@
+# Segredos e credenciais
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+*.p12
+*.crt
+*.secret
+credentials*.json
+secrets.*
+
+# Configuração local do Claude Code (só desta máquina)
+.claude/settings.local.json
+
+# Restos da reorganização das skills
+_legado/
+
+# Saídas geradas por ferramentas
+graphify-out/
+coverage/
+test-results/
+playwright-report/
+*.log
+
+# Dependências e caches
+node_modules/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Temporários e backups
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+# Sistema operacional
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Editores
+.vscode/
+.idea/
+
+# Dados locais do modo-deus nos projetos de teste
+.claude/modo-deus/telemetria/

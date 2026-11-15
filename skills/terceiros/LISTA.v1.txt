@@ -1,0 +1,21 @@
+# Skills que o instalar.sh copia para o projeto, uma por linha.
+# O nome é o da pasta que contém o SKILL.md, em qualquer pacote de skills\.
+# Se uma não for encontrada, o instalador avisa e segue.
+using-agent-skills
+interview-me
+idea-refine
+spec-driven-development
+planning-and-task-breakdown
+incremental-implementation
+test-driven-development
+debugging-and-error-recovery
+code-review-and-quality
+shipping-and-launch
+source-driven-development
+git-workflow-and-versioning
+humanizer
+playwright-skill
+impeccable
+design-taste-frontend
+frontend-ui-engineering
+ponytail-audit

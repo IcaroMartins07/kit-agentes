@@ -1,0 +1,6 @@
+# Scripts precisam de LF para rodar no bash (Git Bash, Linux, macOS)
+* text=auto eol=lf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+*.png binary
+*.jpg binary
