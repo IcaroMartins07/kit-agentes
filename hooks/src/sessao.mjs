@@ -52,6 +52,21 @@ if (velho && !process.env.MODO_DEUS_SEM_GRAPHIFY) {
   }
 }
 
+// Marcador da F5: a sessão anterior teve alerta ou bloqueio e a retro (F6) ainda não rodou.
+try {
+  const p = JSON.parse(fs.readFileSync(path.join(raiz, PASTA, "retro", "PENDENTE.json"), "utf8"));
+  avisos.push(`retrospectiva pendente: rode /modo-deus:retro (${p.alertas || 0} alerta(s), ${p.bloqueios || 0} bloqueio(s)).`);
+} catch { /* sem marcador */ }
+
+// Estado do monitor (estado-*.json, ocorrencias-*.jsonl) de sessões com mais de 3 dias sai.
+try {
+  const tele = path.join(raiz, PASTA, "telemetria");
+  const limite = Date.now() - 3 * 86400000;
+  for (const f of fs.readdirSync(tele)) {
+    if (/^(estado-.*\.json|ocorrencias-.*\.jsonl)$/.test(f) && fs.statSync(path.join(tele, f)).mtimeMs < limite) fs.rmSync(path.join(tele, f), { force: true });
+  }
+} catch { /* sem telemetria */ }
+
 if (avisos.length) out.push("", "## Atenção", "", ...avisos.map((a) => `- ${a}`));
 process.stdout.write(out.join("\n") + "\n");
 

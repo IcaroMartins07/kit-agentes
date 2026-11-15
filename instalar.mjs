@@ -4,6 +4,7 @@
 //
 // Uso:
 //   node instalar.mjs [caminho] [--perfil leve|estrito|deus] [--times dev-mobile=ligado,...] [--dry-run]
+//   node instalar.mjs [caminho] --statusline       também grava a status line do kit no .claude/settings.local.json
 //   node instalar.mjs --remover [caminho] [--dry-run]
 //   node instalar.mjs doctor [caminho]
 //   node instalar.mjs dependencias [--dry-run]     plugins obrigatórios e graphify (nunca o caveman)
@@ -67,7 +68,7 @@ function grafoDesatualizado(raiz) {
 class ErroUso extends Error {}
 
 function args(argv) {
-  const o = { comando: "instalar", caminho: process.cwd(), perfil: null, times: {}, dryRun: false, semGrafo: false };
+  const o = { comando: "instalar", caminho: process.cwd(), perfil: null, times: {}, dryRun: false, semGrafo: false, statusline: false };
   const resto = [...argv];
   while (resto.length) {
     const a = resto.shift();
@@ -76,6 +77,7 @@ function args(argv) {
     else if (a === "--remover") o.comando = "remover";
     else if (a === "--dry-run") o.dryRun = true;
     else if (a === "--sem-grafo") o.semGrafo = true;
+    else if (a === "--statusline") o.statusline = true;
     else if (a === "--perfil") {
       o.perfil = resto.shift();
       if (!o.perfil || o.perfil.startsWith("-")) throw new ErroUso("--perfil precisa de um valor");
@@ -236,6 +238,9 @@ function lerSettings(raiz) {
   }
 }
 
+// ---------- status line ----------
+export const comandoStatusline = () => `node "${path.join(KIT, "mods", "statusline.mjs").replace(/\\/g, "/")}"`;
+
 // ---------- allowlist ----------
 // Comandos do REGRAS.md e consultas que só leem: liberados sem pergunta. A cerca (V9) continua valendo.
 const ALLOW_FIXO = [
@@ -271,7 +276,7 @@ function executor(dryRun, log) {
   };
 }
 
-export function instalar(caminho, { perfil = null, times = {}, dryRun = false, semGrafo = false, log = console.log } = {}) {
+export function instalar(caminho, { perfil = null, times = {}, dryRun = false, semGrafo = false, statusline = false, log = console.log } = {}) {
   const raiz = raizDoRepo(caminho);
   const pasta = path.join(raiz, PASTA);
   if (versionado(raiz, PASTA)) throw new ErroUso(`${PASTA} já é versionado pelo projeto; não vou sobrescrever`);
@@ -308,10 +313,10 @@ export function instalar(caminho, { perfil = null, times = {}, dryRun = false, s
 
   // Permissões: deny-list fixo e allowlist (comandos do REGRAS.md + consultas ao grafo e ao git).
   // Só registra o que o kit acrescentou, para remover depois sem tocar no que é do usuário.
-  const registro = { deny: anterior?.deny || [], allow: anterior?.allow || [] };
+  const registro = { deny: anterior?.deny || [], allow: anterior?.allow || [], statusline: anterior?.statusline || null };
   let criouSettings = anterior?.criou_settings || false;
   if (versionado(raiz, SETTINGS)) {
-    log(`AVISO    ${SETTINGS} é versionado pelo projeto; deny-list e allowlist não aplicados`);
+    log(`AVISO    ${SETTINGS} é versionado pelo projeto; deny-list e allowlist não aplicados${statusline ? " (nem a status line)" : ""}`);
   } else {
     const s = lerSettings(raiz);
     criouSettings ||= !s.existe;
@@ -327,6 +332,19 @@ export function instalar(caminho, { perfil = null, times = {}, dryRun = false, s
         s.dados.permissions = { ...s.dados.permissions, [chave]: [...atual.filter((r) => !saem.includes(r)), ...faltam] };
         mudancas.push(`${chave} +${faltam.length}${saem.length ? ` -${saem.length}` : ""}`);
       }
+    }
+    // Status line (opcional, --statusline): plugin não pode definir statusLine, então vai no settings.local.json.
+    // Só troca a que o próprio kit gravou; a do usuário fica.
+    if (statusline) {
+      const cmd = comandoStatusline();
+      const atual = s.dados.statusLine;
+      if (!atual || (registro.statusline && atual.command === registro.statusline)) {
+        if (atual?.command !== cmd) {
+          s.dados.statusLine = { type: "command", command: cmd, padding: 0 };
+          mudancas.push("statusLine");
+        }
+        registro.statusline = cmd;
+      } else log(`AVISO    ${SETTINGS} já tem statusLine do usuário; mantida (apague-a para usar a do kit)`);
     }
     if (mudancas.length) {
       fazer(`settings ${SETTINGS}: ${mudancas.join(", ")}`, () => {
@@ -362,7 +380,7 @@ export function instalar(caminho, { perfil = null, times = {}, dryRun = false, s
     fs.writeFileSync(exc, blocoExclude(atual, [`${PASTA}/`, SETTINGS, ...(grafoVersionado ? [] : [`${GRAFO}/`])]));
   });
 
-  const manifesto = { versao_kit: kit.versao, deny: registro.deny, allow: registro.allow, criou_settings: criouSettings, criou_grafo: criouGrafo };
+  const manifesto = { versao_kit: kit.versao, deny: registro.deny, allow: registro.allow, ...(registro.statusline ? { statusline: registro.statusline } : {}), criou_settings: criouSettings, criou_grafo: criouGrafo };
   fazer("manifesto instalados.json", () => fs.writeFileSync(manifestoF, JSON.stringify(manifesto, null, 2) + "\n"));
 
   log("");
@@ -389,12 +407,13 @@ export function remover(caminho, { dryRun = false, log = console.log } = {}) {
   if (!versionado(raiz, SETTINGS) && fs.existsSync(path.join(raiz, SETTINGS))) {
     const s = lerSettings(raiz);
     const meus = { deny: manifesto.deny || [], allow: manifesto.allow || [] };
-    fazer(`settings ${SETTINGS}: ${meus.deny.length + meus.allow.length} regra(s) do kit removida(s)`, () => {
+    fazer(`settings ${SETTINGS}: ${meus.deny.length + meus.allow.length} regra(s) do kit removida(s)${manifesto.statusline ? " e status line" : ""}`, () => {
       for (const chave of ["deny", "allow"]) {
         const resta = (s.dados.permissions?.[chave] || []).filter((r) => !meus[chave].includes(r));
         if (resta.length) s.dados.permissions[chave] = resta;
         else if (s.dados.permissions) delete s.dados.permissions[chave];
       }
+      if (manifesto.statusline && s.dados.statusLine?.command === manifesto.statusline) delete s.dados.statusLine;
       if (s.dados.permissions && !Object.keys(s.dados.permissions).length) delete s.dados.permissions;
       if (manifesto.criou_settings && !Object.keys(s.dados).length) fs.rmSync(path.join(raiz, SETTINGS));
       else fs.writeFileSync(path.join(raiz, SETTINGS), JSON.stringify(s.dados, null, 2) + "\n");
@@ -559,7 +578,7 @@ if (process.argv[1] && mesmoArquivo(process.argv[1], fileURLToPath(import.meta.u
   } catch (e) {
     if (!(e instanceof ErroUso)) throw e;
     if (e.message) console.error(`erro: ${e.message}`);
-    console.error("uso: node instalar.mjs [caminho] [--perfil leve|estrito|deus] [--times dev-mobile=ligado,...] [--sem-grafo] [--dry-run]\n     node instalar.mjs --remover [caminho] [--dry-run]\n     node instalar.mjs doctor [caminho]\n     node instalar.mjs dependencias [--dry-run]");
+    console.error("uso: node instalar.mjs [caminho] [--perfil leve|estrito|deus] [--times dev-mobile=ligado,...] [--sem-grafo] [--statusline] [--dry-run]\n     node instalar.mjs --remover [caminho] [--dry-run]\n     node instalar.mjs doctor [caminho]\n     node instalar.mjs dependencias [--dry-run]");
     process.exitCode = 1;
   }
 }

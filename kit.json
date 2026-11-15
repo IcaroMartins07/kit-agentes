@@ -79,6 +79,18 @@
     "reprovada_na_revisao": "complexa"
   },
 
+  "monitor": {
+    "$comentario": "Detectores da F5 (hooks/src/vigia.mjs). Perfil leve: desligados. estrito: só alertam. deus: bloqueiam as regras em bloqueia_no_deus. V2 e V9 bloqueiam sempre (F2).",
+    "tetos": {
+      "$comentario": "V8 por classe da tarefa (plano.json). Subagente sem tarefa usa o teto de complexa. Chamadas = ferramentas vistas pelo PreToolUse.",
+      "simples":  { "chamadas": 80,  "minutos": 30 },
+      "complexa": { "chamadas": 200, "minutos": 90 }
+    },
+    "v3": { "falhas": 3, "janela": 10 },
+    "v7": { "repeticoes": 4, "mesmo_erro": 3 },
+    "bloqueia_no_deus": ["V1", "V3", "V5", "V7", "V8"]
+  },
+
   "skills": {
     "$comentario": "Caminhos relativos à raiz do kit. 'dono' = fase ou time que usa. Duplicatas cobertas pelo superpowers ficam em 'excluidas'.",
     "incluidas": {
