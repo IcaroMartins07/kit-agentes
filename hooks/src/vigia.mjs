@@ -392,8 +392,11 @@ export function vigiarPlano(plano, ctx, sessao) {
 // ---------- marcador de retrospectiva (Stop) ----------
 // <raiz>/.claude/modo-deus/retro/PENDENTE.json = { sessao, ts, alertas, bloqueios, regras, sessoes }
 // Os totais somam as sessões ainda não consumidas pela retro (F6 lê e apaga o arquivo).
+// Corte: ocorrências até o último /retro concluído (retro/ULTIMA.json, gravado pela F6) já foram analisadas.
 export function marcarPendente(raiz, sessao) {
-  const r = resumoOcorrencias(lerOcorrencias(raiz, sessao));
+  let corte = "";
+  try { corte = JSON.parse(fs.readFileSync(path.join(raiz, PASTA, "retro", "ULTIMA.json"), "utf8")).ts || ""; } catch { /* nunca houve retro */ }
+  const r = resumoOcorrencias(lerOcorrencias(raiz, sessao).filter((o) => !corte || (o.ts || "") > corte));
   if (!r.alertas && !r.bloqueios) return null;
   const f = path.join(raiz, PASTA, "retro", "PENDENTE.json");
   let ant = null;

@@ -114,7 +114,8 @@
       "ponytail-audit":             { "caminho": "skills/terceiros/ponytail/ponytail-audit",                 "dono": "revisor" },
       "modo-deus":                  { "caminho": "skills/proprias/modo-deus",                                "dono": "maestro" },
       "qa-cypress":                 { "caminho": "skills/proprias/qa-cypress",                               "dono": "qa-e2e, qa-ui" },
-      "retrospectiva":              { "caminho": "skills/proprias/retrospectiva",                            "dono": "maestro (pós-sessão)" }
+      "retrospectiva":              { "caminho": "skills/proprias/retrospectiva",                            "dono": "maestro (pós-sessão)" },
+      "vigia":                      { "caminho": "skills/proprias/vigia",                                    "dono": "todos os agentes" }
     },
     "do_superpowers": ["brainstorming", "writing-plans", "subagent-driven-development", "test-driven-development", "systematic-debugging", "verification-before-completion", "using-git-worktrees", "writing-skills"],
     "excluidas": {

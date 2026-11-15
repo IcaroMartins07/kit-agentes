@@ -35,6 +35,7 @@
     "./skills/terceiros/ponytail/ponytail-audit",
     "./skills/proprias/modo-deus",
     "./skills/proprias/qa-cypress",
-    "./skills/proprias/retrospectiva"
+    "./skills/proprias/retrospectiva",
+    "./skills/proprias/vigia"
   ]
 }

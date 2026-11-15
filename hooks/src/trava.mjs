@@ -6,14 +6,16 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { createRequire } from "node:module";
-import { kit, ehCodigo, Bloqueio } from "./comum.mjs";
+import { kit, PASTA, ehCodigo, Bloqueio } from "./comum.mjs";
 
 // ---------- skills invocadas, com leitura incremental da transcrição ----------
-function skillsDa(arq) {
+// O cache fica em <raiz>/.claude/modo-deus/cache/: os hooks do kit não escrevem fora da pasta do kit.
+function skillsDa(arq, dirCache) {
   if (!arq || !fs.existsSync(arq)) return [];
   const { createHash } = awaitCrypto();
   const md5 = (x) => createHash("md5").update(x).digest("hex");
-  const cacheF = path.join(os.tmpdir(), "modo-deus-skills-" + md5(arq) + ".json");
+  fs.mkdirSync(dirCache, { recursive: true });
+  const cacheF = path.join(dirCache, "skills-" + md5(arq) + ".json");
   let c = { pos: 0, skills: [] };
   try { c = JSON.parse(fs.readFileSync(cacheF, "utf8")); } catch { /* sem cache */ }
   const tam = fs.statSync(arq).size;
@@ -67,13 +69,14 @@ function transcricoes(entrada) {
   return t;
 }
 
-export function criarInvocou(entrada) {
+export function criarInvocou(entrada, raiz) {
+  const dirCache = raiz ? path.join(raiz, PASTA, "cache") : path.join(os.tmpdir(), "modo-deus-cache");
   let lista = null;
   return (nome) => {
     if (!lista) {
       lista = new Set();
       try {
-        for (const t of transcricoes(entrada)) for (const s of skillsDa(t)) lista.add(s);
+        for (const t of transcricoes(entrada)) for (const s of skillsDa(t, dirCache)) lista.add(s);
       } catch {
         // sem crypto ou erro de leitura: volta ao grep frouxo da v1 em vez de bloquear tudo
         for (const t of transcricoes(entrada)) {

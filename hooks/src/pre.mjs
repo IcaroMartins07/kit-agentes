@@ -17,7 +17,7 @@ if (!proj) process.exit(0);
 const config = lerConfig(proj.raiz);
 const perfil = kit().perfis[config.perfil] || kit().perfis[kit().perfil_padrao];
 const agente = agenteDa(entrada);
-const ctx = { raiz: proj.raiz, trabalho: proj.trabalho, agente, config, invocou: criarInvocou(entrada) };
+const ctx = { raiz: proj.raiz, trabalho: proj.trabalho, agente, config, invocou: criarInvocou(entrada, proj.raiz) };
 const monitor = monitorLigado(config);
 
 let bloqueio = null;

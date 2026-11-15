@@ -162,7 +162,13 @@ export function lerGraphify(raiz) {
 export const arquivoPendente = (raiz) => path.join(raiz, PASTA, "retro", "PENDENTE.json");
 export const lerPendente = (raiz) => lerJson(arquivoPendente(raiz));
 
+// Apaga o marcador e grava o corte (retro/ULTIMA.json): o próximo Stop só conta ocorrências
+// posteriores, para a mesma sessão não recriar o PENDENTE com o que já foi analisado.
 export function concluir(raiz) {
+  try {
+    fs.mkdirSync(path.dirname(arquivoPendente(raiz)), { recursive: true });
+    fs.writeFileSync(path.join(path.dirname(arquivoPendente(raiz)), "ULTIMA.json"), JSON.stringify({ ts: new Date().toISOString() }) + "\n");
+  } catch { /* sem corte, o pior caso é a retro repetir ocorrências */ }
   try { fs.unlinkSync(arquivoPendente(raiz)); return true; } catch { return false; }
 }
 

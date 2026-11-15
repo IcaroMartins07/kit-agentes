@@ -161,11 +161,11 @@ test("num projeto com o kit, hooks só escrevem em <raiz>/.claude/modo-deus/", (
   assert.ok(codigos.includes(2), "algum hook devia ter bloqueado (rm -rf / ou edição sem skill)");
   assert.ok(codigos.every((c) => c === 0 || c === 2), String(codigos));
 
-  // Exceção conhecida: a trava guarda um cache da leitura da transcrição em os.tmpdir()
-  // (modo-deus-skills-<md5>.json). Fica isolada aqui porque TEMP/TMP/TMPDIR apontam para hooktmp.
-  const mudou = diferencas(antes, arvore(tmp, dentro));
-  const fora = mudou.filter((k) => !/^hooktmp\/modo-deus-skills-[0-9a-f]{32}\.json$/.test(k));
+  // Sem exceção: o cache da trava fica em .claude/modo-deus/cache/ (TEMP/TMP/TMPDIR apontam para
+  // hooktmp justamente para pegar qualquer escrita na pasta temporária do sistema).
+  const fora = diferencas(antes, arvore(tmp, dentro));
   assert.deepEqual(fora, [], "hook escreveu fora de .claude/modo-deus/");
+  assert.ok(fs.readdirSync(path.join(repo, ".claude", "modo-deus", "cache")).some((f) => /^skills-[0-9a-f]{32}\.json$/.test(f)), "cache da trava dentro da pasta do kit");
   assert.equal(fs.readFileSync(path.join(repo, ".git", "info", "exclude"), "utf8"), excludeAntes);
   assert.equal(fs.readFileSync(path.join(home, ".claude", "settings.json"), "utf8"), ORCA);
   // E escreveram de fato lá dentro (telemetria do perfil deus).

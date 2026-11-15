@@ -66,4 +66,6 @@ Os 32 cenários estão em `testes/hooks.test.mjs` (prefixo "v1 ·") e passam. Um
 | commit | ~300 ms | não medido |
 | `node` vazio, só para referência | — | ~50 ms |
 
+Depois da F5 (monitor), na integração: `ls` ~83 ms, edição `.md` ~81 ms, edição `.ts` com skill ~84 ms, fora do kit ~73 ms; node vazio ~52 ms. O monitor somou ~15 ms ao caso comum.
+
 A meta da F2 (≤ 60 ms no caso comum) **não foi atingida**: o piso é a partida do node (~50 ms), e o hook soma ~18 ms. Ficou mais rápido que a v1 nos casos que leem a transcrição e mais lento no caso trivial.

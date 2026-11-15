@@ -227,3 +227,19 @@ test("evals: cada caso tem prompt.md e pelo menos um grader com type válido", (
     }
   }
 });
+
+test("integração F5×F6: depois do /retro, o Stop da mesma sessão não recria o PENDENTE com o que já foi visto", async () => {
+  const { ocorrencia, marcarPendente } = await import("../hooks/src/vigia.mjs");
+  const raiz = projeto();
+  ocorrencia(raiz, "s9", { tipo: "bloqueio", regra: "V9", agente: "principal" });
+  assert.equal(marcarPendente(raiz, "s9").bloqueios, 1);
+  assert.equal(concluir(raiz), true);
+  assert.ok(fs.existsSync(path.join(raiz, ".claude", "modo-deus", "retro", "ULTIMA.json")));
+  await new Promise((r) => setTimeout(r, 5)); // ts de ocorrência e de corte são ISO com milissegundos
+  assert.equal(marcarPendente(raiz, "s9"), null, "nada novo desde a retro");
+  ocorrencia(raiz, "s9", { tipo: "alerta", regra: "V4", agente: "dev-back" });
+  const p = marcarPendente(raiz, "s9");
+  assert.equal(p.alertas, 1);
+  assert.equal(p.bloqueios, 0);
+  fs.rmSync(raiz, { recursive: true, force: true });
+});

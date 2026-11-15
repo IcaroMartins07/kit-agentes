@@ -2,6 +2,34 @@
 
 ## [não lançado]
 
+### Integração F4–F7 (2026-11-15)
+- As quatro fases foram feitas em paralelo por subagentes, cada um na própria worktree e branch (`fase/f4-times`, `fase/f5-monitor`, `fase/f6-retro`, `fase/f7-integracao`), e integradas em `fases/integracao` sem conflito de merge.
+- Ajustes da integração: skills `retrospectiva` e `vigia` registradas no plugin; `qa-cypress` alinhada às duas tarefas de configuração; cache da trava movido para `.claude/modo-deus/cache/` (nenhum hook escreve fora da pasta do kit); corte `retro/ULTIMA.json` para o Stop não recriar a retro pendente com ocorrências já analisadas; `npm test` via `scripts/testar.mjs` (node 18–22); teste do plugin pula sem o CLI em Windows pt-BR.
+- Plugin completo: 16 agentes, 22 skills + 9 comandos, 7 hooks; ~5,4 mil tokens fixos por sessão. 234 testes.
+
+### F7 · CI, migração e convivência (2026-11-15)
+- CI no GitHub Actions: ubuntu e windows × node 18, 20 e 22.
+- `scripts/atualizar-terceiros.mjs`: compara as skills de terceiros com a origem no commit pinado ou no último (simulação por padrão; `--aplicar` copia e atualiza a tabela).
+- `scripts/migrar-v1.mjs`: migração do fluxo-agentes v1 (global e por projeto, simulação por padrão, backup ao aplicar); guia em `docs/migracao.md`.
+- Testes de convivência: instalar e remover não tocam o `settings.json` global (com hooks no estilo do Orca); hooks não agem nem escrevem em projeto sem o kit.
+
+### F6 · Autoaprimoramento (2026-11-15)
+- `hooks/src/retro.mjs` (determinístico): `coletar` agrega telemetria e plano em causas (skill não disparou, instrução ambígua, passo pulado, esforço errado, fuga, alucinação, loop/estouro, falso positivo suspeito); `proposta` gera o esqueleto; `concluir` fecha a retro.
+- Skill `retrospectiva` e comando `/retro`: proposta com evidência → eval antes/depois com `claude plugin eval` → aprovação do usuário obrigatória → versão nova, CHANGELOG e caso de regressão em `evals/`.
+- `evals/modo-deus/`: 3 casos iniciais (classificar simples, classificar complexa, plano válido). Ainda não executados.
+
+### F5 · Monitoramento (2026-11-15)
+- `hooks/src/vigia.mjs`: detectores V1 (escopo da tarefa pela branch `-T<n>`), V3 (falhas de arquivo lidas da transcrição), V4 (comando inexistente), V5/V6 (entrega sem teste rodado ou com comando sem lastro), V7 (loop), V8 (teto de chamadas e tempo por classe), V10 (QA lendo implementação antes do teste), V11 (esforço errado). Perfil leve não roda; estrito só alerta; deus bloqueia V1, V3, V5, V7 e V8. Tetos em `kit.json` → `monitor`.
+- Alerta sem bloqueio chega ao agente por `additionalContext` (PreToolUse, PostToolUseFailure) ou `systemMessage` (SubagentStop, Stop).
+- Stop grava `retro/PENDENTE.json` quando houve alerta ou bloqueio; SessionStart avisa.
+- Status line (`mods/statusline.mjs`, opt-in com `instalar.mjs --statusline`: plugin não pode definir status line), `/deus-status` com resumo em texto e painel HTML autocontido.
+- Custo: o caso comum do PreToolUse foi de ~68 para ~83 ms (node vazio ~52 ms).
+
+### F4 · Times Dev e QA (2026-11-15)
+- 12 agentes com `isolation: worktree`: dev-front, dev-back, dev-db, dev-devops, dev-mobile, dev-dados, dev-docs (os três últimos sob demanda), qa-unit, qa-integracao, qa-e2e, qa-ui, qa-regressao. Sonnet, esforço medium por padrão e high por tarefa complexa.
+- Convenção de branch da tarefa `<feature>-T<n>`, criada pelo próprio agente a partir da branch da feature; entrega no contrato `lerEntrega`, regressão no `lerRegressao`; SubagentStop exige o bloco.
+- Skill `qa-cypress` (seletores `data-cy`, sem `wait` fixo, `cy.intercept`, `cy.session`, cypress-axe, quarentena) e modelos em `modelos/cypress/`. Configurar Cypress são duas tarefas: dev-devops instala, qa-e2e copia os modelos.
+
 ### F3 · Maestro e Revisão (2026-11-15)
 - Agentes `maestro` (Opus, medium; agente principal via `claude --agent modo-deus:maestro`), `revisor` e `revisor-seguranca` (Sonnet, high, só leitura) e `auditor-de-fatos` (Haiku, só leitura), com skills pré-carregadas.
 - Skill própria `modo-deus`: pipeline de 7 passos com duas paradas (plano e merge), classificação simples/complexa → esforço, despacho com `effort` por tarefa, escopos disjuntos para paralelo, máximo de 2 rodadas de revisão e escalada.
