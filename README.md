@@ -2,7 +2,7 @@
 
 Kit v2 de agentes para o Claude Code: Maestro, times de Desenvolvimento, QA e Revisão, guardrails, monitoramento contra fuga e alucinação, e autoaprimoramento das skills.
 
-Status: **F2 concluída** (hooks: cerca V9, território V2, trava de fase, contexto e telemetria). Plano completo em [modo-deus/PLANO.md](modo-deus/PLANO.md).
+Status: **F3 concluída** (Maestro, Revisão, contrato do plano e `/deus`). Times Dev e QA chegam na F4. Plano completo em [modo-deus/PLANO.md](modo-deus/PLANO.md).
 
 ## Instalar
 
@@ -53,14 +53,20 @@ Remover de um projeto: `node instalar.mjs --remover /caminho/do/repo`. O que era
 | `.claude-plugin/` | `plugin.json` e marketplace local |
 | `kit.json` | fonte de verdade: perfis, agentes (modelo e esforço), territórios, skills |
 | `skills/terceiros/` | skills vendorizadas com commit pinado |
-| `skills/proprias/` | skills do kit (F3 em diante) |
-| `agents/` | Maestro e times (F3–F4) |
-| `commands/` | `/spec`, `/plan`, `/build`, `/review`, `/ship`, `/auditar` |
+| `skills/proprias/` | `modo-deus` (manual do Maestro); vigia, retrospectiva e qa-cypress nas próximas fases |
+| `agents/` | `maestro`, `revisor`, `revisor-seguranca`, `auditor-de-fatos` (Dev e QA na F4) |
+| `commands/` | `/deus`, `/spec`, `/plan`, `/build`, `/review`, `/ship`, `/auditar` |
 | `hooks/` | `hooks.json` do plugin e `src/` em node: cerca, território, trava, contexto, telemetria |
 | `mods/` | status line e painel (F5) |
 | `modelos/` | `CLAUDE.md` base, `REGRAS.md`, deny-list |
 | `testes/` | `npm test` (node:test, sem dependências) |
 | `v1/` | fluxo-agentes v1, só referência |
+
+## Usar
+
+- Pedido pontual: `/deus <o que construir>` na sessão normal.
+- Sessão inteira como Maestro (Opus, território valendo): `claude --agent modo-deus:maestro`.
+- Fluxo manual, passo a passo: `/spec`, `/plan`, `/build`, `/review`, `/ship`.
 
 ## Testes
 

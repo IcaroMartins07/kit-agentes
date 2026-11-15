@@ -1,0 +1,174 @@
+// Contrato do plano (.claude/modo-deus/plano.json) e das respostas da Revisão.
+// Usado pelo hook (bloqueia gravar plano inválido), pelo Maestro (valida antes de pedir aprovação)
+// e pelo SubagentStop da Revisão (exige o veredito no formato).
+//
+// CLI: node plano.mjs validar <plano.json>      → lista de erros, exit 1 se houver
+//      node plano.mjs veredito <arquivo-texto>  → valida o bloco de veredito da Revisão
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { kit as kitPadrao, casaGlob } from "./comum.mjs";
+
+export const STATUS_PLANO = ["rascunho", "aprovado", "executando", "revisao", "concluido", "escalado"];
+export const STATUS_TAREFA = ["pendente", "em_andamento", "pronta", "em_revisao", "reprovada", "concluida"];
+export const MAX_RODADAS = 2;
+
+const ehTexto = (v) => typeof v === "string" && v.trim().length > 0;
+const lista = (v) => (Array.isArray(v) ? v : []);
+
+// Escopos se sobrepõem? Caminho igual, um prefixo do outro, ou glob de um casando com o caminho do outro.
+function sobrepoe(a, b) {
+  const limpa = (x) => x.replace(/\/\*\*$/, "").replace(/\/$/, "");
+  for (const x of a) for (const y of b) {
+    if (x === y) return `${x}`;
+    const [lx, ly] = [limpa(x), limpa(y)];
+    if (!/[*?]/.test(lx) && !/[*?]/.test(ly) && (lx.startsWith(ly + "/") || ly.startsWith(lx + "/") || lx === ly)) return `${x} × ${y}`;
+    if (/[*?]/.test(x) && !/[*?]/.test(y) && casaGlob(y, x)) return `${x} × ${y}`;
+    if (/[*?]/.test(y) && !/[*?]/.test(x) && casaGlob(x, y)) return `${x} × ${y}`;
+  }
+  return null;
+}
+
+export function validarPlano(plano, { kit = kitPadrao(), config = {} } = {}) {
+  const e = [];
+  if (!plano || typeof plano !== "object" || Array.isArray(plano)) return ["o plano precisa ser um objeto JSON"];
+  if (plano.versao !== 1) e.push("versao deve ser 1");
+  if (!ehTexto(plano.pedido)) e.push("pedido: descreva o pedido do usuário");
+  if (!STATUS_PLANO.includes(plano.status)) e.push(`status deve ser um de: ${STATUS_PLANO.join(", ")}`);
+  if (plano.status !== "rascunho" && !ehTexto(plano.aprovado_em)) e.push("aprovado_em: plano fora de rascunho precisa da data da aprovação do usuário");
+  if (plano.branch !== undefined && (!ehTexto(plano.branch) || ["main", "master"].includes(plano.branch))) e.push("branch: use uma branch de feature, nunca a principal");
+
+  const spec = plano.spec || {};
+  if (!ehTexto(spec.objetivo)) e.push("spec.objetivo é obrigatório");
+  const cas = lista(spec.criterios_aceite);
+  if (!cas.length) e.push("spec.criterios_aceite: pelo menos um critério verificável");
+  const idsCa = new Set();
+  for (const [i, c] of cas.entries()) {
+    if (!/^CA\d+$/.test(c?.id || "")) e.push(`spec.criterios_aceite[${i}].id deve ser CA1, CA2...`);
+    else if (idsCa.has(c.id)) e.push(`critério ${c.id} repetido`);
+    else idsCa.add(c.id);
+    if (!ehTexto(c?.texto)) e.push(`critério ${c?.id || i}: texto obrigatório`);
+  }
+
+  const tarefas = lista(plano.tarefas);
+  if (!tarefas.length) e.push("tarefas: o plano precisa de pelo menos uma tarefa");
+  const ids = new Map();
+  for (const [i, t] of tarefas.entries()) {
+    const nome = t?.id || `tarefas[${i}]`;
+    if (!/^T\d+$/.test(t?.id || "")) e.push(`${nome}: id deve ser T1, T2...`);
+    else if (ids.has(t.id)) e.push(`${t.id} repetida`);
+    else ids.set(t.id, t);
+    if (!ehTexto(t?.titulo)) e.push(`${nome}: titulo obrigatório`);
+
+    const ag = kit.agentes[t?.time];
+    if (!ag) e.push(`${nome}: time "${t?.time}" não existe no kit`);
+    else if (!["dev", "qa"].includes(ag.time)) e.push(`${nome}: tarefa só vai para Dev ou QA, não para ${t.time}`);
+    else if (ag.sob_demanda && (config.times || {})[t.time] === "desligado") e.push(`${nome}: ${t.time} está desligado no config do projeto`);
+
+    if (!["simples", "complexa"].includes(t?.classe)) e.push(`${nome}: classe deve ser simples ou complexa`);
+    const esperado = t?.classe === "complexa" || (t?.rodadas_revisao || 0) > 0 ? "high" : "medium";
+    if (t?.classe && t?.esforco !== esperado) e.push(`${nome}: esforco deve ser ${esperado} (classe ${t.classe}${t.rodadas_revisao ? ", já reprovada" : ""})`);
+
+    if (!lista(t?.escopo).length || !t.escopo.every(ehTexto)) e.push(`${nome}: escopo lista os arquivos ou globs que a tarefa pode tocar`);
+    if (lista(t?.escopo).some((p) => p.startsWith("/") || /^[A-Za-z]:/.test(p) || p.includes(".."))) e.push(`${nome}: escopo usa caminhos relativos à raiz, sem ..`);
+    if (!lista(t?.criterios).length) e.push(`${nome}: criterios liga a tarefa a pelo menos um CA`);
+    for (const c of lista(t?.criterios)) if (!idsCa.has(c)) e.push(`${nome}: critério ${c} não existe na spec`);
+    if (!ehTexto(t?.pronto_quando)) e.push(`${nome}: pronto_quando obrigatório`);
+    if (!ehTexto(t?.como_testar)) e.push(`${nome}: como_testar obrigatório`);
+    if (!STATUS_TAREFA.includes(t?.status)) e.push(`${nome}: status deve ser um de: ${STATUS_TAREFA.join(", ")}`);
+    if ((t?.rodadas_revisao || 0) > MAX_RODADAS && plano.status !== "escalado") e.push(`${nome}: passou de ${MAX_RODADAS} rodadas de revisão; o plano deve ir para "escalado" e o usuário decide`);
+  }
+
+  // dependências: existem e não formam ciclo
+  for (const t of tarefas) for (const d of lista(t?.depende_de)) if (!ids.has(d)) e.push(`${t.id}: depende de ${d}, que não existe`);
+  const alcanca = (de, para, vistos = new Set()) => {
+    if (vistos.has(de)) return false;
+    vistos.add(de);
+    return lista(ids.get(de)?.depende_de).some((d) => d === para || alcanca(d, para, vistos));
+  };
+  for (const t of tarefas) if (t?.id && alcanca(t.id, t.id)) e.push(`${t.id}: dependência circular`);
+
+  // tarefas que podem correr em paralelo (nenhuma depende da outra) precisam de escopos disjuntos
+  const ts = tarefas.filter((t) => ids.get(t?.id) === t);
+  for (let i = 0; i < ts.length; i++) for (let j = i + 1; j < ts.length; j++) {
+    const [a, b] = [ts[i], ts[j]];
+    if (alcanca(a.id, b.id) || alcanca(b.id, a.id)) continue;
+    const s = sobrepoe(lista(a.escopo), lista(b.escopo));
+    if (s) e.push(`${a.id} e ${b.id} rodam em paralelo com escopo sobreposto (${s}); adicione depende_de ou separe os arquivos`);
+  }
+
+  for (const [i, r] of lista(plano.itens_revisao).entries()) {
+    const n = r?.id || `itens_revisao[${i}]`;
+    if (!/^R\d+$/.test(r?.id || "")) e.push(`${n}: id deve ser R1, R2...`);
+    if (!ids.has(r?.tarefa)) e.push(`${n}: tarefa ${r?.tarefa} não existe`);
+    if (!["alta", "media", "baixa"].includes(r?.gravidade)) e.push(`${n}: gravidade alta, media ou baixa`);
+    if (!ehTexto(r?.motivo)) e.push(`${n}: motivo obrigatório`);
+    if (!["aberto", "resolvido", "descartado"].includes(r?.status)) e.push(`${n}: status aberto, resolvido ou descartado`);
+  }
+  return e;
+}
+
+// ---------- veredito da Revisão ----------
+// O revisor termina com um bloco ```json { "veredito": "aprovado" | "reprovado", "itens": [...] } ```.
+export function lerVeredito(texto) {
+  const blocos = [...String(texto || "").matchAll(/```json\s*([\s\S]*?)```/g)].map((m) => m[1]);
+  if (!blocos.length) return { erros: ["termine com um bloco ```json contendo veredito e itens"] };
+  let v;
+  try {
+    v = JSON.parse(blocos[blocos.length - 1]);
+  } catch (x) {
+    return { erros: [`o bloco json final não é JSON válido: ${x.message}`] };
+  }
+  const e = [];
+  if (!["aprovado", "reprovado"].includes(v.veredito)) e.push('veredito deve ser "aprovado" ou "reprovado"');
+  const itens = lista(v.itens);
+  if (!Array.isArray(v.itens)) e.push("itens deve ser uma lista (vazia se aprovado sem ressalvas)");
+  for (const [i, it] of itens.entries()) {
+    if (!/^T\d+$/.test(it?.tarefa || "")) e.push(`itens[${i}].tarefa: id da tarefa (T1...)`);
+    if (!["alta", "media", "baixa"].includes(it?.gravidade)) e.push(`itens[${i}].gravidade: alta, media ou baixa`);
+    if (!ehTexto(it?.arquivo)) e.push(`itens[${i}].arquivo obrigatório`);
+    if (it?.linha !== undefined && !Number.isInteger(it.linha)) e.push(`itens[${i}].linha deve ser número inteiro`);
+    if (!ehTexto(it?.motivo)) e.push(`itens[${i}].motivo obrigatório`);
+  }
+  if (v.veredito === "reprovado" && !itens.some((it) => it?.gravidade === "alta" || it?.gravidade === "media")) e.push("reprovado exige pelo menos um item de gravidade alta ou media");
+  if (v.veredito === "aprovado" && itens.some((it) => it?.gravidade === "alta")) e.push("aprovado não pode ter item de gravidade alta");
+  return { veredito: v, erros: e };
+}
+
+// ---------- relatório do auditor de fatos ----------
+export function lerAuditoria(texto) {
+  const blocos = [...String(texto || "").matchAll(/```json\s*([\s\S]*?)```/g)].map((m) => m[1]);
+  if (!blocos.length) return { erros: ["termine com um bloco ```json contendo afirmacoes"] };
+  let a;
+  try { a = JSON.parse(blocos[blocos.length - 1]); } catch (x) { return { erros: [`json inválido: ${x.message}`] }; }
+  const e = [];
+  if (!Array.isArray(a.afirmacoes)) e.push("afirmacoes deve ser uma lista");
+  for (const [i, f] of lista(a.afirmacoes).entries()) {
+    if (!ehTexto(f?.texto)) e.push(`afirmacoes[${i}].texto obrigatório`);
+    if (!["confirmada", "nao_confirmada", "falsa"].includes(f?.status)) e.push(`afirmacoes[${i}].status: confirmada, nao_confirmada ou falsa`);
+    if (f?.status === "confirmada" && !ehTexto(f?.evidencia)) e.push(`afirmacoes[${i}]: confirmada exige evidencia (arquivo:linha, comando e saída)`);
+  }
+  return { auditoria: a, erros: e };
+}
+
+// ---------- CLI ----------
+if (process.argv[1] && path.resolve(process.argv[1]).toLowerCase() === fileURLToPath(import.meta.url).toLowerCase()) {
+  const [cmd, arq] = process.argv.slice(2);
+  let erros;
+  try {
+    const txt = fs.readFileSync(arq, "utf8");
+    if (cmd === "validar") {
+      const cfgF = path.join(path.dirname(path.resolve(arq)), "config.json");
+      const config = fs.existsSync(cfgF) ? JSON.parse(fs.readFileSync(cfgF, "utf8")) : {};
+      erros = validarPlano(JSON.parse(txt), { config });
+    } else if (cmd === "veredito") erros = lerVeredito(txt).erros;
+    else if (cmd === "auditoria") erros = lerAuditoria(txt).erros;
+    else erros = ["uso: node plano.mjs validar|veredito|auditoria <arquivo>"];
+  } catch (x) {
+    erros = [x.message];
+  }
+  if (erros.length) {
+    console.error(erros.map((x) => `- ${x}`).join("\n"));
+    process.exitCode = 1;
+  } else console.log("ok");
+}

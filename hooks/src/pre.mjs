@@ -5,6 +5,7 @@ import { lerEntrada, acharProjeto, lerConfig, agenteDa, registrar, monitorLigado
 import { checarCerca } from "./cerca.mjs";
 import { checarTerritorio } from "./territorio.mjs";
 import { checarTrava, criarInvocou } from "./trava.mjs";
+import { checarPlano } from "./plano-hook.mjs";
 
 const entrada = lerEntrada();
 const proj = acharProjeto(entrada);
@@ -22,6 +23,7 @@ try {
   if (perfil.cerca !== false) checarCerca(entrada, ctx);
   alerta = checarTerritorio(entrada, ctx);
   if (perfil.trava !== false) checarTrava(entrada, ctx);
+  checarPlano(entrada, ctx);
 } catch (e) {
   if (e instanceof Bloqueio) bloqueio = e;
   else falha = e; // erro do próprio hook: não trava o trabalho, mas fica registrado

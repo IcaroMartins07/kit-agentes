@@ -32,6 +32,7 @@
     "./skills/terceiros/playwright/playwright-skill",
     "./skills/terceiros/impeccable/impeccable",
     "./skills/terceiros/taste-skill/design-taste-frontend",
-    "./skills/terceiros/ponytail/ponytail-audit"
+    "./skills/terceiros/ponytail/ponytail-audit",
+    "./skills/proprias/modo-deus"
   ]
 }

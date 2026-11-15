@@ -1,15 +1,36 @@
-// SubagentStart, SubagentStop e Stop: só telemetria por enquanto. Os detectores V5–V8 entram na F5.
+// SubagentStart, SubagentStop e Stop: telemetria e contrato de saída da Revisão.
+// Os detectores V5–V8 entram na F5.
 import { lerEntrada, acharProjeto, lerConfig, registrar, monitorLigado } from "./comum.mjs";
+import { lerVeredito, lerAuditoria } from "./plano.mjs";
 
 const entrada = lerEntrada();
 const proj = acharProjeto(entrada);
 if (!proj) process.exit(0);
-if (!monitorLigado(lerConfig(proj.raiz))) process.exit(0);
+const agente = (entrada.agent_type || "principal").split(":").pop() || "principal";
+
+// Revisão e auditor só encerram entregando o bloco no formato. Na segunda tentativa
+// (stop_hook_active) deixa encerrar, para não prender o subagente em laço, e registra.
+const CONTRATOS = { revisor: lerVeredito, "revisor-seguranca": lerVeredito, "auditor-de-fatos": lerAuditoria };
+let contrato = null;
+if (entrada.hook_event_name === "SubagentStop" && CONTRATOS[agente]) {
+  const { erros } = CONTRATOS[agente](entrada.last_assistant_message);
+  if (erros.length) {
+    contrato = erros;
+    if (!entrada.stop_hook_active) {
+      registrar(proj.raiz, { sessao: entrada.session_id, evento: "SubagentStop", agente, agent_id: entrada.agent_id || null, resultado: "bloqueado", regra: "contrato", motivo: erros.join("; ") });
+      const lista = erros.map((x) => `- ${x}`).join("\n");
+      process.stderr.write(`[modo-deus · contrato] Sua resposta final não segue o formato combinado:\n${lista}\nRefaça a resposta final terminando com o bloco json pedido.\n`);
+      process.exit(2);
+    }
+  }
+}
+if (!monitorLigado(lerConfig(proj.raiz)) && !contrato) process.exit(0);
 
 registrar(proj.raiz, {
   sessao: entrada.session_id,
   evento: entrada.hook_event_name,
-  agente: (entrada.agent_type || "principal").split(":").pop() || "principal",
+  agente,
   agent_id: entrada.agent_id || null,
+  ...(contrato ? { resultado: "contrato_falhou", motivo: contrato.join("; ") } : {}),
   ultima_mensagem: entrada.last_assistant_message ? String(entrada.last_assistant_message).slice(0, 300) : undefined,
 });

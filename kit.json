@@ -99,7 +99,8 @@
       "playwright-skill":           { "caminho": "skills/terceiros/playwright/playwright-skill",             "dono": "qa" },
       "impeccable":                 { "caminho": "skills/terceiros/impeccable/impeccable",                   "dono": "dev-front, qa-ui" },
       "design-taste-frontend":      { "caminho": "skills/terceiros/taste-skill/design-taste-frontend",       "dono": "dev-front" },
-      "ponytail-audit":             { "caminho": "skills/terceiros/ponytail/ponytail-audit",                 "dono": "revisor" }
+      "ponytail-audit":             { "caminho": "skills/terceiros/ponytail/ponytail-audit",                 "dono": "revisor" },
+      "modo-deus":                  { "caminho": "skills/proprias/modo-deus",                                "dono": "maestro" }
     },
     "do_superpowers": ["brainstorming", "writing-plans", "subagent-driven-development", "test-driven-development", "systematic-debugging", "verification-before-completion", "using-git-worktrees", "writing-skills"],
     "excluidas": {

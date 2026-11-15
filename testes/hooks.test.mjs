@@ -207,7 +207,9 @@ espera(0, "V2 · dev-db em migração", () => pre("Write", { file_path: arq("mig
 espera(0, "V2 · qa-e2e em cypress/", () => pre("Write", { file_path: arq("cypress/e2e/a.cy.ts") }, { agente: "qa-e2e" }));
 espera(2, "V2 · qa-e2e em código de produção", () => pre("Edit", { file_path: arq("src/components/Botao.tsx") }, { agente: "qa-e2e" }));
 espera(2, "V2 · revisor não escreve nada", () => pre("Edit", { file_path: arq("README.md") }, { agente: "revisor" }));
-espera(0, "V2 · maestro grava o plano", () => pre("Write", { file_path: arq(".claude/modo-deus/plano.json") }, { agente: "maestro" }));
+const planoExemplo = () => [...fs.readFileSync(path.join(KIT, "skills/proprias/modo-deus/SKILL.md"), "utf8").matchAll(/```json\s*([\s\S]*?)```/g)][0][1];
+espera(0, "V2 · maestro grava o plano", () => pre("Write", { file_path: arq(".claude/modo-deus/plano.json"), content: planoExemplo() }, { agente: "maestro" }));
+espera(0, "V2 · maestro grava a retro", () => pre("Write", { file_path: arq(".claude/modo-deus/retro/x.md"), content: "x" }, { agente: "maestro" }));
 espera(2, "V2 · maestro não edita código", () => pre("Edit", { file_path: arq("src/components/x.tsx") }, { agente: "maestro" }));
 espera(0, "V2 · sessão principal não é restrita por território", () => pre("Edit", { file_path: arq("src/server/api.ts") }, { skills: ["incremental-implementation"] }));
 espera(2, "V2 · subagente fora do kit segue a trava", () => rodar("pre", { tool_name: "Edit", tool_input: { file_path: arq("app.ts") }, transcript_path: transcricao(), agent_type: "Explore", agent_id: "x" }));
