@@ -1,36 +1,84 @@
 {
-  "description": "modo-deus: contexto e grafo no início da sessão, cerca (V9), território (V2), trava de fase e telemetria. Só age em projetos com o kit instalado (.claude/modo-deus/config.json).",
+  "description": "modo-deus: contexto e grafo no início da sessão, cerca (V9), território (V2), trava de fase, monitor (V1, V3–V8, V10, V11) e telemetria. Só age em projetos com o kit instalado (.claude/modo-deus/config.json).",
   "hooks": {
     "SessionStart": [
       {
         "matcher": "startup|resume|clear|compact",
-        "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/src/sessao.mjs\"", "timeout": 20 }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/src/sessao.mjs\"",
+            "timeout": 20
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
       {
-        "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/src/prompt.mjs\"", "timeout": 5 }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/src/prompt.mjs\"",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "PreToolUse": [
       {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit|Bash|Read|Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/src/pre.mjs\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
         "matcher": "Edit|Write|MultiEdit|NotebookEdit|Bash|Read",
-        "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/src/pre.mjs\"", "timeout": 10 }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/src/evento.mjs\"",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "SubagentStart": [
       {
-        "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/src/evento.mjs\"", "timeout": 5 }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/src/evento.mjs\"",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "SubagentStop": [
       {
-        "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/src/evento.mjs\"", "timeout": 5 }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/src/evento.mjs\"",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "Stop": [
       {
-        "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/src/evento.mjs\"", "timeout": 5 }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/src/evento.mjs\"",
+            "timeout": 5
+          }
+        ]
       }
     ]
   }

@@ -39,4 +39,5 @@ export function checarPlano(entrada, ctx) {
   }
   const erros = validarPlano(plano, { config: ctx.config });
   if (erros.length) throw new Bloqueio("plano", `plano.json fora do contrato:\n${erros.map((x) => `- ${x}`).join("\n")}\nCorrija e grave de novo. Formato na skill modo-deus.`);
+  return plano;
 }

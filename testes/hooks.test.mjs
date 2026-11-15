@@ -273,6 +273,12 @@ test("SessionStart injeta CLAUDE.md base, REGRAS.md e times; projeto sem kit nã
   assert.match(rodar("prompt", {}).stdout, /\[modo-deus · estrito\]/);
 });
 
+test("hooks.json registra o monitor (F5): PostToolUseFailure e Grep/Glob no PreToolUse", () => {
+  const h = JSON.parse(fs.readFileSync(path.join(KIT, "hooks", "hooks.json"), "utf8")).hooks;
+  assert.match(h.PreToolUse[0].matcher, /\bGrep\b.*\bGlob\b/);
+  assert.match(h.PostToolUseFailure[0].hooks[0].command, /evento\.mjs/);
+});
+
 // ================= desempenho =================
 test("desempenho do PreToolUse (mediana de 9 execuções)", (t) => {
   const medir = (fn) => {
