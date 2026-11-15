@@ -50,3 +50,6 @@ desktop.ini
 
 # Dados locais do modo-deus nos projetos de teste
 .claude/modo-deus/telemetria/
+
+# Worktrees de subagentes do Claude Code
+.claude/worktrees/
