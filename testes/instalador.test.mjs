@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { instalar, remover, doctor, planoDependencias } from "../instalar.mjs";
 
 let tmp, repo;
@@ -272,4 +272,81 @@ test("dependências: tudo instalado não gera passo; graphify antigo é atualiza
   assert.deepEqual(planoDependencias({ instalados: todos, marketplaces: ["claude-plugins-official"], graphify: "9.9.9", skillGraphify: true, ferramentas: {} }), []);
   const p = planoDependencias({ instalados: todos, marketplaces: ["claude-plugins-official"], graphify: "0.1.0", skillGraphify: true, ferramentas: { uv: true } });
   assert.deepEqual(p.map((x) => [x.bin, ...x.args].join(" ")), ["uv tool upgrade graphifyy"]);
+});
+
+// ---------- correções da revisão da F1 ----------
+const KIT_DIR = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1")), "..");
+const cli = (script, ...a) => spawnSync(process.execPath, [script, ...a], { encoding: "utf8", env: process.env });
+
+test("revisão 1: CLI chamado por junction/symlink executa", () => {
+  const link = path.join(tmp, "kitlink");
+  fs.symlinkSync(KIT_DIR, link, process.platform === "win32" ? "junction" : "dir");
+  const r = cli(path.join(link, "instalar.mjs"), "doctor", repo);
+  assert.match(r.stdout, /node \d+/, `saída vazia; stderr: ${r.stderr}`);
+});
+
+test("revisão 2: comando sem preencher conta como campo aberto", () => {
+  const contar = (linhas) => Number(linhas.find((l) => l.startsWith("regras")).match(/\((\d+) campo/)[1]);
+  let linhas = [];
+  instalar(repo, { log: (l) => linhas.push(l) });
+  const comTipos = contar(linhas);
+  remover(repo, { log: silencio });
+  escrever("package.json", JSON.stringify({ scripts: { dev: "vite", test: "vitest", lint: "eslint .", build: "vite build" }, devDependencies: { vitest: "^3.0.0", typescript: "^5.6.0" } }));
+  linhas = [];
+  instalar(repo, { log: (l) => linhas.push(l) });
+  assert.equal(contar(linhas), comTipos + 1, "Tipos vazio deve somar um campo");
+});
+
+test("revisão 3: placeholder do npm init não vira comando de teste", () => {
+  escrever("package.json", JSON.stringify({ scripts: { test: 'echo "Error: no test specified" && exit 1' } }));
+  instalar(repo, { log: silencio });
+  assert.match(ler(".claude/modo-deus/REGRAS.md"), /\| Testes \| `<\.\.\.>` \|/);
+});
+
+test("revisão 4: app.json do Heroku não liga dev-mobile; lib/ só é mobile com Flutter", () => {
+  escrever("app.json", JSON.stringify({ name: "api", buildpacks: [] }));
+  fs.mkdirSync(path.join(repo, "lib"));
+  let r = instalar(repo, { log: silencio });
+  assert.equal(r.deteccao.sobDemanda["dev-mobile"], false);
+  escrever("app.json", JSON.stringify({ expo: { name: "app" } }));
+  r = instalar(repo, { log: silencio });
+  assert.equal(r.deteccao.sobDemanda["dev-mobile"], true);
+  assert.ok(!r.deteccao.territorios.mobile.includes("lib/**"), "lib/ sem pubspec.yaml não é mobile");
+  escrever("pubspec.yaml", "name: app\n");
+  r = instalar(repo, { log: silencio });
+  assert.ok(r.deteccao.territorios.mobile.includes("lib/**"));
+});
+
+test("revisão 5: settings versionado vira aviso no doctor, não erro", () => {
+  escrever(".claude/settings.local.json", "{}\n");
+  git(repo, "add", "-f", ".claude/settings.local.json");
+  commitar();
+  instalar(repo, { log: silencio });
+  const r = doctor(repo, { log: silencio });
+  assert.ok(!r.resultados.some(([n, m]) => n === "ERRO" && /deny/.test(m)), JSON.stringify(r.resultados));
+  assert.ok(r.resultados.some(([n, m]) => n === "aviso" && /versionado/.test(m)));
+});
+
+test("revisão 6: $ no nome do repositório não corrompe o REGRAS.md", () => {
+  const estranho = path.join(tmp, "r$&x");
+  fs.mkdirSync(estranho);
+  git(estranho, "init", "-q");
+  instalar(estranho, { log: silencio });
+  assert.match(fs.readFileSync(path.join(estranho, ".claude", "modo-deus", "REGRAS.md"), "utf8"), /^# Regras do projeto r\$&x$/m);
+});
+
+test("revisão 7: --perfil sem valor é erro de uso", () => {
+  const r = cli(path.join(KIT_DIR, "instalar.mjs"), repo, "--perfil");
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /--perfil precisa de um valor/);
+});
+
+test("revisão 2b: REGRAS.md com todos os campos preenchidos sai como preenchido", () => {
+  pluginsFake("superpowers@claude-plugins-official", "claude-security@claude-plugins-official", "frontend-design@claude-plugins-official");
+  instalar(repo, { log: silencio });
+  const f = ".claude/modo-deus/REGRAS.md";
+  // preenche tudo o que estiver entre < > (exceto <a definir>, que é pendência assumida)
+  escrever(f, ler(f).replace(/<(?!a definir>)(?:\.\.\.|[A-Za-zÀ-ÿ][^>\n]*)>/g, "preenchido"));
+  const r = doctor(repo, { log: silencio });
+  assert.ok(r.resultados.some(([n, m]) => n === "ok" && m === "REGRAS.md preenchido"), JSON.stringify(r.resultados.filter(([, m]) => /REGRAS/.test(m))));
 });

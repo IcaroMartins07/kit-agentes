@@ -1,7 +1,7 @@
 # Regras do projeto <nome>
 
 Só o que é específico deste projeto. As regras gerais vêm do `CLAUDE.md` base do modo-deus; não repita aqui.
-Campos `<...>` precisam ser preenchidos. Escreva `<a definir>` no que ainda não se sabe: vira pendência assumida e não gera aviso.
+Campos entre os sinais de menor e maior precisam ser preenchidos. Escreva `<a definir>` no que ainda não se sabe: vira pendência assumida e não gera aviso.
 
 ## Visão
 

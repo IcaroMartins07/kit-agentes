@@ -60,6 +60,12 @@
     "testes": ["cypress/**", "tests/**", "test/**", "__tests__/**", "e2e/**", "**/*.test.*", "**/*.spec.*", "**/*.cy.*", "cypress.config.*", "fixtures/**"]
   },
 
+  "condicoes": {
+    "$comentario": "Sinal ou padrão que só vale se a condição bater. existe: algum destes existe. json_tem: o JSON tem alguma destas chaves.",
+    "app.json": { "json_tem": { "arquivo": "app.json", "chaves": ["expo"] } },
+    "lib/**":   { "existe": ["pubspec.yaml"] }
+  },
+
   "sinais_sob_demanda": {
     "dev-mobile": ["android", "ios", "pubspec.yaml", "app.json", "eas.json", "capacitor.config.ts", "capacitor.config.json"],
     "dev-dados":  ["dbt_project.yml", "dags", "airflow.cfg", "notebooks", "*.ipynb"],

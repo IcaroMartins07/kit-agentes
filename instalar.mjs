@@ -75,7 +75,10 @@ function args(argv) {
     else if (a === "--remover") o.comando = "remover";
     else if (a === "--dry-run") o.dryRun = true;
     else if (a === "--sem-grafo") o.semGrafo = true;
-    else if (a === "--perfil") o.perfil = resto.shift();
+    else if (a === "--perfil") {
+      o.perfil = resto.shift();
+      if (!o.perfil || o.perfil.startsWith("-")) throw new ErroUso("--perfil precisa de um valor");
+    }
     else if (a === "--times") {
       for (const par of (resto.shift() || "").split(",").filter(Boolean)) {
         const [t, m] = par.split("=");
@@ -122,6 +125,20 @@ function padraoExiste(raiz, padrao) {
   return fs.existsSync(path.join(raiz, ...estaticas));
 }
 
+// Condição extra de um sinal ou padrão (kit.json > condicoes): outro arquivo existir,
+// ou um JSON ter certa chave. Evita falso positivo (app.json do Heroku, lib/ de Node).
+function condicaoOk(raiz, c) {
+  if (!c) return true;
+  if (c.existe && !c.existe.some((p) => padraoExiste(raiz, p))) return false;
+  if (c.json_tem) {
+    try {
+      const j = lerJson(path.join(raiz, c.json_tem.arquivo));
+      if (!c.json_tem.chaves.some((k) => k in j)) return false;
+    } catch { return false; }
+  }
+  return true;
+}
+
 // ---------- detecção do projeto ----------
 function detectar(raiz) {
   const d = { stack: [], comandos: {}, territorios: {}, sobDemanda: {}, cypress: false, runner: null, manifestos: [] };
@@ -138,7 +155,9 @@ function detectar(raiz) {
     d.stack.push(`Node${pkg.engines?.node ? " " + pkg.engines.node : ""} (${pm})`);
     for (const n of conhecidas) if (deps[n]) d.stack.push(`${n} ${deps[n]}`);
     const s = pkg.scripts || {};
-    const achar = (...nomes) => nomes.find((n) => s[n]);
+    // o "test" que o npm init cria só falha; não é comando de teste
+    const placeholder = (cmd) => /no test specified/i.test(cmd);
+    const achar = (...nomes) => nomes.find((n) => s[n] && !placeholder(s[n]));
     const rodar = (n) => (n ? `${pm} run ${n}` : null);
     d.comandos = {
       Instalar: `${pm} install`,
@@ -163,10 +182,10 @@ function detectar(raiz) {
 
   for (const [t, padroes] of Object.entries(kit.territorios)) {
     if (t.startsWith("$")) continue;
-    d.territorios[t] = padroes.filter((p) => padraoExiste(raiz, p));
+    d.territorios[t] = padroes.filter((p) => padraoExiste(raiz, p) && condicaoOk(raiz, kit.condicoes?.[p]));
   }
   for (const [time, sinais] of Object.entries(kit.sinais_sob_demanda)) {
-    d.sobDemanda[time] = sinais.some((s) => padraoExiste(raiz, s));
+    d.sobDemanda[time] = sinais.some((s) => padraoExiste(raiz, s) && condicaoOk(raiz, kit.condicoes?.[s]));
   }
   return d;
 }
@@ -199,12 +218,13 @@ function renderRegras(raiz, d, times) {
       "- Mobile nativo (se houver): <Detox, Maestro ou <a definir>>",
     ].join("\n"),
   };
-  t = t.replace("<nome>", nome);
-  for (const [k, v] of Object.entries(bloco)) t = t.replace(`<!-- modo-deus:${k} -->`, v);
+  t = t.replace("<nome>", () => nome);
+  for (const [k, v] of Object.entries(bloco)) t = t.replace(`<!-- modo-deus:${k} -->`, () => v);
   return t;
 }
 
-const camposAbertos = (texto) => texto.replace(/<a definir>/g, "").replace(/<!--[\s\S]*?-->/g, "").match(/<[A-Za-zÀ-ÿ][^>\n]*>/g) || [];
+const camposAbertos = (texto) =>
+  texto.replace(/<a definir>/g, "").replace(/<!--[\s\S]*?-->/g, "").match(/<(?:\.\.\.|[A-Za-zÀ-ÿ][^>\n]*)>/g) || [];
 
 // ---------- settings.local.json ----------
 function lerSettings(raiz) {
@@ -414,7 +434,8 @@ export function doctor(caminho, { log = console.log } = {}) {
       }
 
       let s = null;
-      try { s = lerSettings(raiz); } catch (e) { erro(e.message); }
+      if (versionado(raiz, SETTINGS)) aviso(`${SETTINGS} é versionado pelo projeto: o deny-list do kit não foi aplicado; confira as regras de segurança nele`);
+      else try { s = lerSettings(raiz); } catch (e) { erro(e.message); }
       if (s) {
         const deny = lerJson(path.join(KIT, "modelos", "settings.deny.json")).deny;
         const faltam = deny.filter((r) => !(s.dados.permissions?.deny || []).includes(r));
@@ -493,7 +514,13 @@ export function dependencias({ dryRun = false, log = console.log } = {}) {
 }
 
 // ---------- CLI ----------
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+// Compara caminhos reais: chamado por junction/symlink, argv[1] e import.meta.url diferem.
+const mesmoArquivo = (a, b) => {
+  const real = (p) => { try { return fs.realpathSync.native(p); } catch { return path.resolve(p); } };
+  const [x, y] = [real(a), real(b)];
+  return process.platform === "win32" ? x.toLowerCase() === y.toLowerCase() : x === y;
+};
+if (process.argv[1] && mesmoArquivo(process.argv[1], fileURLToPath(import.meta.url))) {
   try {
     const o = args(process.argv.slice(2));
     if (o.comando === "doctor") process.exitCode = doctor(o.caminho).erros ? 1 : 0;
