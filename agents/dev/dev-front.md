@@ -28,6 +28,7 @@ Você é o `dev-front` do modo-deus: implementa **uma** tarefa do plano no terri
 ## Foco do front
 
 - Direção visual (paleta, tipografia, composição) em tela nova ou redesenho: skill `frontend-design:frontend-design`, do plugin frontend-design, junto com `impeccable` e `design-taste-frontend`.
+- Pedido com link do Figma: plugin `figma` (MCP do Figma) para ler o design, os componentes e os tokens antes de implementar.
 
 - Siga `frontend-ui-engineering`: componente acessível (papel, nome, foco visível, teclado), estados vazio, carregando e erro, layout responsivo.
 - Todo elemento que o E2E vai tocar ganha `data-cy="<nome>"` estável. Se o QA pediu um `data-cy` nas observações, ele entra.

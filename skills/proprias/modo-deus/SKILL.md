@@ -26,6 +26,7 @@ Só há duas paradas. Entre elas, não peça licença: decida, registre no plano
 ## 1 · Spec
 
 - Use `interview-me` se o pedido estiver vago; `superpowers:brainstorming` se for ideia nova; `idea-refine` para lapidar uma ideia crua em opções antes de fechar a spec.
+- Pedido que depende de informação atual da web (versão nova, API pública, preço, mercado): pesquise com o plugin `perplexity` antes de fechar a spec, e cite a fonte.
 - Mapeie antes de perguntar: `graphify god-nodes`, `graphify query "<assunto>"`. Não varra pastas.
 - Critério de aceite é algo que um teste consegue provar. "Ficar bom" não é critério.
 

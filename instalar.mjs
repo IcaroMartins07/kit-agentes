@@ -533,7 +533,7 @@ export function doctor(caminho, { log = console.log } = {}) {
 
 // Instala o que falta: marketplaces, plugins obrigatórios e graphify. Nunca o que está em dependencias.fora.
 // escopo "local": marketplace e plugins só no projeto (rodados com cwd no projeto); "user": globais.
-export function planoDependencias({ instalados = null, marketplaces = null, graphify = graphifyVersao(), skillGraphify = null, ferramentas = null, escopo = kit.dependencias.escopo_padrao || "local", projeto = null } = {}) {
+export function planoDependencias({ instalados = null, marketplaces = null, graphify = graphifyVersao(), skillGraphify = null, ferramentas = null, escopo = kit.dependencias.escopo_padrao || "local", projeto = null, externas = null, mcps = null } = {}) {
   const lerChaves = (f, sub) => { try { const j = lerJson(path.join(home(), ".claude", "plugins", f)); return Object.keys(sub ? j[sub] || {} : j); } catch { return []; } };
   // Instalado vale se for global (user) ou, no escopo local, se for deste projeto.
   if (!instalados) {
@@ -568,6 +568,22 @@ export function planoDependencias({ instalados = null, marketplaces = null, grap
     );
   }
   if (!skillGraphify) passos.push({ descricao: "skill graphify no Claude Code", bin: "graphify", args: ["install", "--platform", "claude"] });
+
+  // Ferramentas de linha de comando com MCP (SkillSpector): a CLI é da máquina; o MCP fica no escopo pedido.
+  for (const [nome, fer] of Object.entries(kit.dependencias.ferramentas || {})) {
+    const tem = externas ? !!externas[nome] : existeBin(fer.binario);
+    if (!tem) {
+      passos.push(
+        ferramentas.uv ? { descricao: `${nome} via uv`, bin: "uv", args: ["tool", "install", fer.pacote] }
+        : ferramentas.pipx ? { descricao: `${nome} via pipx`, bin: "pipx", args: ["install", fer.pacote] }
+        : { descricao: `${nome} via pip`, bin: "python", args: ["-m", "pip", "install", "--user", fer.pacote] },
+      );
+    }
+    if (fer.mcp) {
+      const registrado = mcps ? mcps.includes(fer.mcp.nome) : rodar("claude", ["mcp", "get", fer.mcp.nome], projeto || undefined) !== null;
+      if (!registrado) passos.push({ descricao: `MCP ${fer.mcp.nome}`, bin: "claude", args: ["mcp", "add", "--scope", escopo, fer.mcp.nome, "--", fer.binario, ...fer.mcp.args] });
+    }
+  }
   return passos;
 }
 
@@ -591,6 +607,12 @@ export function dependencias({ caminho = process.cwd(), escopo = kit.dependencia
   }
   log("");
   log(dryRun ? `${passos.length} passo(s) a executar.` : falhas ? `${falhas} falha(s).` : "Dependências instaladas. Abra uma sessão nova do Claude Code.");
+  const precisa = Object.entries(kit.dependencias.configuracao || {});
+  if (precisa.length) {
+    log("");
+    log("Precisam de configuração sua (o kit não inventa chaves nem faz login):");
+    for (const [id, o] of precisa) log(`  - ${id.split("@")[0]}: ${o}`);
+  }
   log(`Fora do kit, de propósito: ${Object.entries(kit.dependencias.fora).map(([n, m]) => `${n} (${m})`).join("; ")}.`);
   return { falhas, passos };
 }

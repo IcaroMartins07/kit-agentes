@@ -28,6 +28,8 @@ const skillGraphifyFake = () => {
   fs.writeFileSync(path.join(d, "SKILL.md"), "x");
 };
 const temGraphify = (() => { try { execFileSync("graphify", ["--version"], { stdio: "ignore", shell: process.platform === "win32" }); return true; } catch { return false; } })();
+const CONECTORES = JSON.parse(fs.readFileSync(new URL("../plugins/conectores.json", import.meta.url), "utf8"));
+const TODOS_PLUGINS = CONECTORES.plugins;
 const pluginsFake = (...ids) => {
   const f = path.join(process.env.MODO_DEUS_HOME, ".claude", "plugins", "installed_plugins.json");
   fs.mkdirSync(path.dirname(f), { recursive: true });
@@ -190,7 +192,7 @@ test("perfil: padrão estrito, troca persiste", () => {
 
 test("doctor: projeto sem kit tem erro; instalado e com plugins não tem", () => {
   assert.ok(doctor(repo, { log: silencio }).erros > 0);
-  pluginsFake("modo-deus@kit-agentes", "superpowers@claude-plugins-official", "claude-security@claude-plugins-official", "frontend-design@claude-plugins-official");
+  pluginsFake("modo-deus@kit-agentes", ...TODOS_PLUGINS);
   instalar(repo, { log: silencio });
   const r = doctor(repo, { log: silencio });
   const erros = r.resultados.filter(([n]) => n === "ERRO").map(([, m]) => m);
@@ -237,7 +239,7 @@ test("graphify real: grafo criado fora do git, doctor ok, remoção apaga o graf
   assert.equal(status(), "", "graphify-out/ fica no exclude");
   assert.ok(!fs.existsSync(path.join(repo, ".gitattributes")), "nada de merge driver versionado");
   skillGraphifyFake();
-  pluginsFake("superpowers@claude-plugins-official", "claude-security@claude-plugins-official", "frontend-design@claude-plugins-official");
+  pluginsFake(...TODOS_PLUGINS);
   const r = doctor(repo, { log: silencio });
   assert.equal(r.erros, 0, JSON.stringify(r.resultados));
   assert.ok(r.resultados.some(([n, m]) => n === "ok" && /grafo do projeto atualizado/.test(m)));
@@ -258,28 +260,38 @@ test("grafo versionado pelo projeto não é tocado nem excluído", () => {
 });
 
 test("dependências: instala só o que falta, só no projeto (--scope local) e nunca o caveman", () => {
-  const passos = planoDependencias({ instalados: ["superpowers@claude-plugins-official"], marketplaces: [], graphify: null, skillGraphify: false, ferramentas: { uv: false, pipx: true } });
+  const passos = planoDependencias({ instalados: ["superpowers@claude-plugins-official"], marketplaces: [], graphify: null, skillGraphify: false, ferramentas: { uv: false, pipx: true }, externas: { skillspector: false }, mcps: [] });
   const linhas = passos.map((p) => [p.bin, ...p.args].join(" "));
-  assert.deepEqual(linhas, [
-    "claude plugin marketplace add anthropics/claude-plugins-official --scope local",
-    "claude plugin install claude-security@claude-plugins-official --scope local",
-    "claude plugin install frontend-design@claude-plugins-official --scope local",
-    "pipx install graphifyy",
-    "graphify install --platform claude",
-  ]);
-  assert.ok(!linhas.some((l) => /caveman|claude-code-setup/.test(l)));
+  for (const repo of Object.values(CONECTORES.marketplaces)) assert.ok(linhas.includes(`claude plugin marketplace add ${repo} --scope local`), repo);
+  for (const id of TODOS_PLUGINS.filter((p) => p !== "superpowers@claude-plugins-official")) assert.ok(linhas.includes(`claude plugin install ${id} --scope local`), id);
+  assert.ok(!linhas.some((l) => l.includes("install superpowers@")), "o que já está instalado não repete");
+  assert.ok(linhas.includes("pipx install graphifyy"));
+  assert.ok(linhas.includes("graphify install --platform claude"));
+  assert.ok(linhas.includes(`pipx install ${CONECTORES.ferramentas.skillspector.pacote}`));
+  assert.ok(linhas.includes("claude mcp add --scope local skillspector -- skillspector mcp"));
+  assert.ok(!linhas.some((l) => /caveman/.test(l)));
 });
 
 test("dependências: tudo instalado não gera passo; graphify antigo é atualizado", () => {
-  const todos = ["superpowers@claude-plugins-official", "claude-security@claude-plugins-official", "frontend-design@claude-plugins-official"];
-  assert.deepEqual(planoDependencias({ instalados: todos, marketplaces: ["claude-plugins-official"], graphify: "9.9.9", skillGraphify: true, ferramentas: {} }), []);
-  const p = planoDependencias({ instalados: todos, marketplaces: ["claude-plugins-official"], graphify: "0.1.0", skillGraphify: true, ferramentas: { uv: true } });
+  const tudo = { instalados: TODOS_PLUGINS, marketplaces: Object.keys(CONECTORES.marketplaces), skillGraphify: true, externas: { skillspector: true }, mcps: ["skillspector"] };
+  assert.deepEqual(planoDependencias({ ...tudo, graphify: "9.9.9", ferramentas: {} }), []);
+  const p = planoDependencias({ ...tudo, graphify: "0.1.0", ferramentas: { uv: true } });
   assert.deepEqual(p.map((x) => [x.bin, ...x.args].join(" ")), ["uv tool upgrade graphifyy"]);
 });
 
 test("dependências: escopo user instala global quando pedido", () => {
-  const passos = planoDependencias({ instalados: [], marketplaces: ["claude-plugins-official"], graphify: "9.9.9", skillGraphify: true, ferramentas: {}, escopo: "user" });
-  assert.ok(passos.every((p) => p.args.slice(-2).join(" ") === "--scope user"));
+  const passos = planoDependencias({ instalados: [], marketplaces: Object.keys(CONECTORES.marketplaces), graphify: "9.9.9", skillGraphify: true, ferramentas: {}, escopo: "user", externas: { skillspector: true }, mcps: [] });
+  const claude = passos.filter((p) => p.bin === "claude");
+  assert.ok(claude.length > 0);
+  assert.ok(claude.every((p) => p.args.join(" ").includes("--scope user")));
+});
+
+test("dependências: todo conector que precisa de chave ou login está declarado, sem valor inventado", () => {
+  for (const [id, o] of Object.entries(CONECTORES.configuracao || {})) {
+    assert.ok(TODOS_PLUGINS.includes(id), `${id} em configuracao mas fora de plugins`);
+    assert.doesNotMatch(o, /sk-|pplx-[A-Za-z0-9]{8,}|=\s*[A-Za-z0-9]{12,}/, `${id}: parece conter um valor de chave`);
+  }
+  assert.match(CONECTORES.configuracao["perplexity@perplexity-mcp-server"], /PERPLEXITY_API_KEY/);
 });
 
 // ---------- correções da revisão da F1 ----------
@@ -350,7 +362,7 @@ test("revisão 7: --perfil sem valor é erro de uso", () => {
 });
 
 test("revisão 2b: REGRAS.md com todos os campos preenchidos sai como preenchido", () => {
-  pluginsFake("superpowers@claude-plugins-official", "claude-security@claude-plugins-official", "frontend-design@claude-plugins-official");
+  pluginsFake(...TODOS_PLUGINS);
   instalar(repo, { log: silencio });
   const f = ".modo-deus/REGRAS.md";
   // preenche tudo o que estiver entre < > (exceto <a definir>, que é pendência assumida)

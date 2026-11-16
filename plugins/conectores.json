@@ -2,25 +2,38 @@
   "$comentario": "Conectores que o kit usa. `node instalar.mjs dependencias <projeto>` instala só o que falta, por padrão com --scope local (só naquele projeto, nada global). O doctor confere.",
   "escopo_padrao": "local",
   "marketplaces": {
-    "claude-plugins-official": "anthropics/claude-plugins-official"
+    "claude-plugins-official": "anthropics/claude-plugins-official",
+    "agent-browser": "vercel-labs/agent-browser",
+    "ponytail": "DietrichGebert/ponytail",
+    "perplexity-mcp-server": "perplexityai/modelcontextprotocol"
   },
   "plugins": [
     "superpowers@claude-plugins-official",
     "claude-security@claude-plugins-official",
-    "frontend-design@claude-plugins-official"
+    "frontend-design@claude-plugins-official",
+    "claude-code-setup@claude-plugins-official",
+    "context7@claude-plugins-official",
+    "playwright@claude-plugins-official",
+    "figma@claude-plugins-official",
+    "agent-browser@agent-browser",
+    "ponytail@ponytail",
+    "perplexity@perplexity-mcp-server"
   ],
   "uso": {
     "superpowers@claude-plugins-official": "TDD, debugging, planos, verificação, worktrees e escrita de skills: pré-carregadas nos agentes Dev e QA e exigidas pela trava",
     "claude-security@claude-plugins-official": "varredura profunda de segurança recomendada pelo revisor-seguranca antes do merge",
-    "frontend-design@claude-plugins-official": "direção visual de interface usada pelo dev-front"
+    "frontend-design@claude-plugins-official": "direção visual de interface usada pelo dev-front",
+    "claude-code-setup@claude-plugins-official": "recomenda automações do Claude Code para o projeto (hooks, subagentes, MCPs); citado no CLAUDE.md base",
+    "context7@claude-plugins-official": "documentação atual de bibliotecas, na versão que o projeto usa; regra no CLAUDE.md base",
+    "playwright@claude-plugins-official": "navegador para explorar telas e reproduzir bugs; usado pelos QAs de tela junto com a playwright-skill",
+    "figma@claude-plugins-official": "ler designs do Figma e traduzir em código; usado pelo dev-front quando o pedido traz link do Figma",
+    "agent-browser@agent-browser": "automação rápida de navegador pela CLI agent-browser; usado pelos QAs de tela",
+    "ponytail@ponytail": "modo da solução mais enxuta que funciona (YAGNI); o /build e o revisor seguem a mesma disciplina, e a skill ponytail-audit vem do mesmo autor",
+    "perplexity@perplexity-mcp-server": "pesquisa na web em tempo real; usada pelo Maestro na spec quando o pedido depende de informação atual"
   },
-  "recomendados": {
-    "context7": "MCP de documentação de bibliotecas citado no CLAUDE.md base; instale pelo /mcp se faltar",
-    "playwright": "navegador para exploração e reprodução de bug (playwright-skill do kit já cobre o básico)"
-  },
+  "recomendados": {},
   "fora": {
-    "caveman": "coberto pelo ponytail; não instalar",
-    "claude-code-setup": "fora do kit por enquanto"
+    "caveman": "coberto pelo ponytail; não instalar"
   },
   "graphify": {
     "$comentario": "Base de mapeamento dos projetos: agentes consultam o grafo antes de varrer arquivos. Grafo de código por AST, sem LLM.",
@@ -32,5 +45,26 @@
   "cli": {
     "agent-browser": "opcional",
     "cypress": "por projeto, com sua confirmação"
+  },
+  "configuracao": {
+    "context7@claude-plugins-official": "autenticar no Context7 quando o Claude Code pedir (MCP remoto)",
+    "figma@claude-plugins-official": "login no Figma pelo /mcp (OAuth)",
+    "perplexity@perplexity-mcp-server": "variável de ambiente PERPLEXITY_API_KEY com uma chave da API da Perplexity",
+    "agent-browser@agent-browser": "CLI agent-browser instalada (npm i -g agent-browser) e navegador baixado com agent-browser install",
+    "playwright@claude-plugins-official": "navegadores do Playwright baixados no primeiro uso"
+  },
+  "ferramentas": {
+    "skillspector": {
+      "descricao": "scanner de segurança de skills da NVIDIA; modo estático (--no-llm) sem chave, modo LLM com ANTHROPIC_API_KEY ou OPENAI_API_KEY",
+      "origem": "https://github.com/NVIDIA/skillspector",
+      "pacote": "skillspector[mcp] @ git+https://github.com/NVIDIA/skillspector.git",
+      "binario": "skillspector",
+      "mcp": {
+        "nome": "skillspector",
+        "args": [
+          "mcp"
+        ]
+      }
+    }
   }
 }
