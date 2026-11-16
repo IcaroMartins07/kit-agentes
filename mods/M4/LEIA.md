@@ -10,3 +10,4 @@
   ```
 - **Revisão:** sem rede própria. O `/keepwarm` faz chamadas de modelo periódicas (`$.model.fork`) para manter o cache. Observa o envio de prompts para estimar o custo.
 - **Atenção:** manter o cache usa tokens e exige cache principal de uma hora. Os valores são equivalentes de API, não cobrança extra garantida na assinatura.
+- **Status nesta máquina:** instalado em 2026-11-16, commit igual ao revisado.

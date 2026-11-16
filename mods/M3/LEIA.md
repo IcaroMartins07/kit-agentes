@@ -15,3 +15,4 @@
   - Tem "arquivos protegidos": pode negar Read/Edit nos caminhos que você marcar na árvore.
   - Muda uma configuração própria (animação "shimmer") pelo `$.config.set`.
 - **Atenção:** o autor informa testes em Linux, macOS e Windows. Sessões WSL dentro do Claude Desktop não carregam mods.
+- **Status nesta máquina:** instalado em 2026-11-16, commit igual ao revisado.

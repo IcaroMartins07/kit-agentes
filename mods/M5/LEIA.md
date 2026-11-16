@@ -10,3 +10,4 @@
   ```
 - **Revisão:** sem rede própria. Faz uma chamada de modelo (`$.model.complete`) por prompt elegível. Só grava no CLAUDE.md quando você clica em Save. Acrescenta uma seção ao prompt de sistema.
 - **Atenção:** salvar uma regra muda as próximas respostas em todas as sessões daquele CLAUDE.md.
+- **Status nesta máquina:** instalado em 2026-11-16, commit igual ao revisado.
