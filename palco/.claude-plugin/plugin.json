@@ -1,0 +1,8 @@
+{
+  "name": "palco",
+  "version": "0.1.0",
+  "description": "Canvas ao lado do chat para dispor e rodar agentes (Claude, Codex, Gemini), comandos e notas.",
+  "author": { "name": "kit-agentes" },
+  "types": "./types/index.d.ts",
+  "license": "UNLICENSED"
+}

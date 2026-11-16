@@ -11,6 +11,13 @@
       "version": "0.1.0",
       "source": "./",
       "category": "development"
+    },
+    {
+      "name": "palco",
+      "description": "Mod: canvas ao lado do chat para dispor e rodar agentes (Claude, Codex, Gemini), comandos e notas.",
+      "version": "0.1.0",
+      "source": "./palco",
+      "category": "mod"
     }
   ]
 }
