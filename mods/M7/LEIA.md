@@ -5,4 +5,5 @@
 - **Automático** (desligado por padrão): `/prompt-master auto on` reescreve cada prompt digitado na hora de enviar; `/prompt-master auto off` desliga. Comandos de barra, pedidos com menos de 20 caracteres e mensagens que não vieram do teclado nunca são reescritos; se o modelo falha, vai o original.
 - **Modelo:** opção `modelo` (sonnet, haiku, opus; padrão sonnet).
 - **Custo:** cada reescrita é uma chamada de modelo.
-- **Testes:** `claude plugin test mods/M7/prompt-master` (4 cenários: regras do automático, limpeza da resposta, botão e desfazer no terminal e no desktop, automático com falha do modelo).
+- **Visual:** mesmo estilo dos seletores do rodapé (sem moldura própria, borda cinza discreta do tema); no hover a borda fica laranja suave. Cores do tema, então acompanham claro, escuro e o mod de temas.
+- **Testes:** `claude plugin test mods/M7/prompt-master` (5 cenários: regras do automático, limpeza da resposta, botão e desfazer, automático com falha do modelo, estilo do botão).

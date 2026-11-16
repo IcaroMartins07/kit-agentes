@@ -71,3 +71,20 @@ test('automático: reescreve ao enviar; se o modelo falha, envia o original', as
   await $.prompt.submit({ text: '/deus algo', origin: { kind: 'composer' }, wait: false } as never)
   expect(enviados).toEqual(['Versão melhor do pedido.', 'outro pedido grande o bastante aqui', '/deus algo'])
 })
+
+test('o botão segue o visual dos seletores do rodapé (borda discreta, sem moldura própria)', async ($, on) => {
+  on('command.register', () => ({ value: { command: 'prompt-master' } }))
+  on('store.get', () => ({ value: undefined }))
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  await $.session.start({ cwd: '/p', surface: 'desktop', isInteractive: true })
+  for (const surface of ['terminal', 'desktop'] as const) {
+    const ui = await $.ui.mount({ ...RODAPE, surface })
+    const caixa = await ui.find({ type: 'Box', key: 'prompt-master-caixa' })
+    expect(caixa?.props.borderStyle).toBe('round')
+    expect(caixa?.props.borderColor).toBe('subtle')
+    // O hover (borda laranja suave) é aplicado pela superfície e não aparece no find: confira na tela.
+    const botao = await ui.find({ type: 'Button', key: 'prompt-master' })
+    expect(botao?.props.plain).toBe(true)
+    await ui.unmount()
+  }
+})

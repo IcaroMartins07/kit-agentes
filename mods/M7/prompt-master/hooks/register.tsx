@@ -2,7 +2,7 @@
 // com um modelo e o devolve na caixa para você revisar antes de enviar. "↶ desfazer" volta ao
 // original. O modo automático (/prompt-master auto on) reescreve ao enviar, só o que você digitou.
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register } from 'claude-code'
+import type { EngineInterface, Register, RenderChildren } from 'claude-code'
 
 import { SISTEMA, deveReescrever, limpar, modeloDe } from './modelo'
 
@@ -11,6 +11,9 @@ const original = atom({ plugin: 'prompt-master', key: 'original' } as const, nul
 const auto = atom({ plugin: 'prompt-master', key: 'auto' } as const, false)
 
 const CHAVE_AUTO = 'auto'
+
+// Borda em repouso igual à dos seletores do rodapé; laranja suave só no hover.
+const ESTILO = { borda: 'subtle', bordaHover: 'claude' } as const
 
 async function reescrever($: EngineInterface, texto: string, modelo: string): Promise<{ texto: string } | { erro: string }> {
   const r = await $.model.complete({ model: modelo, system: SISTEMA, prompt: texto, maxTokens: 2000, timeoutMs: 60000 })
@@ -97,20 +100,40 @@ export const register: Register = (on, options) => {
       }
     }
 
+    // Mesmo visual dos seletores do rodapé (modelo, modo): sem a moldura própria do botão, texto na
+    // fonte e cor padrão, borda cinza discreta do tema. No hover, só a borda muda para o laranja do
+    // Claude, esmaecido para ficar suave. Cores do tema: acompanham claro, escuro e os mods de tema.
+    const pilula = (chave: string, filho: RenderChildren) => (
+      <Box
+        key={`${chave}-caixa`}
+        borderStyle="round"
+        borderColor={ESTILO.borda}
+        paddingX={1}
+        hover={{ borderColor: ESTILO.bordaHover, borderDimColor: true }}
+      >
+        {filho}
+      </Box>
+    )
+
     return (
       <Box flexDirection="row" gap={1} alignItems="center">
-        <Button key="prompt-master" label={rodando ? '✦ reescrevendo…' : ligado ? '✦ Prompt Master · auto' : '✦ Prompt Master'} onPress={clicar} />
-        {anterior !== null && (
-          <Button
-            key="prompt-master-desfazer"
-            label="↶ desfazer"
-            plain
-            onPress={async () => {
-              await $.prompt.fill({ text: anterior, mode: 'replace' })
-              await update($, original, () => null)
-            }}
-          />
+        {pilula(
+          'prompt-master',
+          <Button key="prompt-master" plain label={rodando ? '✦ reescrevendo…' : ligado ? '✦ Prompt Master · auto' : '✦ Prompt Master'} onPress={clicar} />,
         )}
+        {anterior !== null &&
+          pilula(
+            'prompt-master-desfazer',
+            <Button
+              key="prompt-master-desfazer"
+              label="↶ desfazer"
+              plain
+              onPress={async () => {
+                await $.prompt.fill({ text: anterior, mode: 'replace' })
+                await update($, original, () => null)
+              }}
+            />,
+          )}
         {abaixo}
       </Box>
     )
