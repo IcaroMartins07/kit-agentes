@@ -62,7 +62,7 @@ const PANE = {
 
 test('o painel cria um nó e mostra o editor, no terminal e no desktop', async ($, on) => {
   on('command.register', () => ({ value: { command: 'palco' } }))
-  on('process.run', () => ({ value: { exitCode: 1, stdout: '', stderr: '' } }))
+  on('process.run', () => ({ value: { exitCode: 1, stdout: '', stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }))
   on('store.get', () => ({ value: undefined }))
   on('store.set', () => ({ value: undefined }))
   on('clock.now', () => ({ value: 1000 }))
@@ -71,7 +71,7 @@ test('o painel cria um nó e mostra o editor, no terminal e no desktop', async (
 
   for (const surface of ['terminal', 'desktop'] as const) {
     const ui = await $.ui.mount({ ...PANE, surface })
-    const botao = await ui.find({ type: 'Button', label: /\+ nota/ })
+    const botao = await ui.find({ type: 'Button', key: 'add-nota' })
     expect(botao).toBeTruthy()
     if (surface === 'terminal') {
       await ui.press({ key: 'add-nota' })
