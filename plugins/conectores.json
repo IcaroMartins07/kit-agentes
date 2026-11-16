@@ -55,7 +55,7 @@
   },
   "ferramentas": {
     "skillspector": {
-      "descricao": "scanner de segurança de skills da NVIDIA; modo estático (--no-llm) sem chave, modo LLM com ANTHROPIC_API_KEY ou OPENAI_API_KEY",
+      "descricao": "scanner de segurança de skills da NVIDIA; modo estático (--no-llm) sem chave, modo LLM com ANTHROPIC_API_KEY ou OPENAI_API_KEY; no Windows usa Python 3.12, porque o yara-python não tem pacote pronto para o 3.14 e compilar exige o Microsoft C++ Build Tools",
       "origem": "https://github.com/NVIDIA/skillspector",
       "pacote": "skillspector[mcp] @ git+https://github.com/NVIDIA/skillspector.git",
       "binario": "skillspector",
@@ -64,7 +64,8 @@
         "args": [
           "mcp"
         ]
-      }
+      },
+      "python": "3.12"
     }
   }
 }

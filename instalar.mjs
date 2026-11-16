@@ -574,14 +574,14 @@ export function planoDependencias({ instalados = null, marketplaces = null, grap
     const tem = externas ? !!externas[nome] : existeBin(fer.binario);
     if (!tem) {
       passos.push(
-        ferramentas.uv ? { descricao: `${nome} via uv`, bin: "uv", args: ["tool", "install", fer.pacote] }
-        : ferramentas.pipx ? { descricao: `${nome} via pipx`, bin: "pipx", args: ["install", fer.pacote] }
-        : { descricao: `${nome} via pip`, bin: "python", args: ["-m", "pip", "install", "--user", fer.pacote] },
+        ferramentas.uv ? { descricao: `${nome} via uv`, bin: "uv", args: ["tool", "install", ...(fer.python ? ["--python", fer.python] : []), fer.pacote], fornece: nome }
+        : ferramentas.pipx ? { descricao: `${nome} via pipx`, bin: "pipx", args: ["install", ...(fer.python ? ["--python", fer.python] : []), fer.pacote], fornece: nome }
+        : { descricao: `${nome} via pip`, bin: "python", args: ["-m", "pip", "install", "--user", fer.pacote], fornece: nome },
       );
     }
     if (fer.mcp) {
       const registrado = mcps ? mcps.includes(fer.mcp.nome) : rodar("claude", ["mcp", "get", fer.mcp.nome], projeto || undefined) !== null;
-      if (!registrado) passos.push({ descricao: `MCP ${fer.mcp.nome}`, bin: "claude", args: ["mcp", "add", "--scope", escopo, fer.mcp.nome, "--", fer.binario, ...fer.mcp.args] });
+      if (!registrado) passos.push({ descricao: `MCP ${fer.mcp.nome}`, bin: "claude", args: ["mcp", "add", "--scope", escopo, fer.mcp.nome, "--", fer.binario, ...fer.mcp.args], requer: nome });
     }
   }
   return passos;
@@ -597,12 +597,14 @@ export function dependencias({ caminho = process.cwd(), escopo = kit.dependencia
     return { falhas: 0, passos };
   }
   let falhas = 0;
+  const falhou = new Set();
   for (const p of passos) {
+    if (p.requer && falhou.has(p.requer)) { log(`pulado   ${p.descricao}: ${p.requer} não instalou`); continue; }
     const linha = `${p.bin} ${p.args.join(" ")}`;
     if (dryRun) { log(`[simulação] ${p.descricao}: ${linha}`); continue; }
     log(`...      ${p.descricao}: ${linha}`);
     const saida = rodar(p.bin, p.args, p.bin === "claude" ? raiz : undefined);
-    if (saida === null) { falhas++; log(`FALHOU   ${p.descricao}`); }
+    if (saida === null) { falhas++; if (p.fornece) falhou.add(p.fornece); log(`FALHOU   ${p.descricao}`); }
     else log(`ok       ${p.descricao}`);
   }
   log("");

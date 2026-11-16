@@ -267,7 +267,7 @@ test("dependências: instala só o que falta, só no projeto (--scope local) e n
   assert.ok(!linhas.some((l) => l.includes("install superpowers@")), "o que já está instalado não repete");
   assert.ok(linhas.includes("pipx install graphifyy"));
   assert.ok(linhas.includes("graphify install --platform claude"));
-  assert.ok(linhas.includes(`pipx install ${CONECTORES.ferramentas.skillspector.pacote}`));
+  assert.ok(linhas.includes(`pipx install --python 3.12 ${CONECTORES.ferramentas.skillspector.pacote}`));
   assert.ok(linhas.includes("claude mcp add --scope local skillspector -- skillspector mcp"));
   assert.ok(!linhas.some((l) => /caveman/.test(l)));
 });

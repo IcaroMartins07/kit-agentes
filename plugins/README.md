@@ -12,14 +12,22 @@ Por padrão instala com `--scope local`: os plugins valem só naquele projeto e 
 
 ## O que tem
 
-| Conector | Para que o kit usa | Obrigatório |
-|---|---|---|
-| `superpowers@claude-plugins-official` | TDD, debugging, planos, verificação, worktrees e escrita de skills; pré-carregadas nos agentes Dev e QA e aceitas pela trava | sim |
-| `claude-security@claude-plugins-official` | varredura profunda de segurança, recomendada pelo `revisor-seguranca` antes do merge | sim |
-| `frontend-design@claude-plugins-official` | direção visual de interface, usada pelo `dev-front` | sim |
-| graphify (`graphifyy` ≥ 0.9.96) | mapa do projeto que os agentes consultam antes de varrer pastas | sim |
-| context7 (MCP) | documentação de bibliotecas citada no `CLAUDE.md` base | recomendado |
-| playwright | navegador para exploração e reprodução de bug | recomendado |
+| Conector | Origem | Para que o kit usa | Precisa de você |
+|---|---|---|---|
+| superpowers | claude-plugins-official | TDD, debugging, planos, verificação, worktrees; exigidas pela trava | — |
+| claude-security | claude-plugins-official | varredura de segurança antes do merge (revisor-seguranca) | — |
+| frontend-design | claude-plugins-official | direção visual (dev-front) | — |
+| claude-code-setup | claude-plugins-official | recomendações de automação do Claude Code para o projeto | — |
+| context7 | claude-plugins-official | documentação atual de bibliotecas | autenticar no Context7 quando pedir |
+| playwright | claude-plugins-official | navegador para explorar e reproduzir bugs (QAs de tela) | navegadores baixados no primeiro uso |
+| figma | claude-plugins-official | ler designs e tokens do Figma (dev-front) | login no Figma pelo /mcp |
+| agent-browser | vercel-labs/agent-browser | automação rápida de navegador (QAs de tela) | CLI `agent-browser` e `agent-browser install` |
+| ponytail | DietrichGebert/ponytail | modo da solução mais enxuta (YAGNI) em todo prompt e subagente | — |
+| perplexity | perplexityai/modelcontextprotocol | pesquisa na web atual (Maestro, na spec) | variável `PERPLEXITY_API_KEY` |
+| SkillSpector (CLI + MCP) | NVIDIA/skillspector | escanear skills de terceiros antes de instalar (`skillspector scan <pasta> --no-llm`) | modo LLM só com `ANTHROPIC_API_KEY` ou `OPENAI_API_KEY` |
+| graphify (`graphifyy` ≥ 0.9.96) | PyPI | mapa do projeto | — |
+
+O SkillSpector usa Python 3.12 (`pipx install --python 3.12`): no 3.14 o `yara-python` não tem pacote pronto no Windows e compilar exige o Microsoft C++ Build Tools.
 
 Fora de propósito: `caveman` (o ponytail cobre) e `claude-code-setup`.
 
