@@ -4,7 +4,7 @@ argument-hint: <o que deve ser construído>
 ---
 Use a skill spec-driven-development para especificar: $ARGUMENTS
 
-- Leia antes o CLAUDE.md e o .claude/modo-deus/REGRAS.md do projeto, se existirem.
+- Leia antes o CLAUDE.md e o .modo-deus/REGRAS.md do projeto, se existirem.
 - Pergunte o que for ambíguo e caro de errar; para o resto, declare a suposição.
 - Não escreva código nesta fase.
 

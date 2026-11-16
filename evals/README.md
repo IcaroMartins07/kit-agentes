@@ -7,7 +7,7 @@ evals/
   modo-deus/                 casos da skill do Maestro
     classificar-simples/     mudança pequena → simples / medium
     classificar-complexa/    migração + autorização → complexa / high
-    plano-valido/            grava .claude/modo-deus/plano.json no contrato
+    plano-valido/            grava .modo-deus/plano.json no contrato
   regressao/                 casos que nasceram de falhas reais (/retro)
   results/                   saída das execuções (fora do git)
 ```
@@ -29,7 +29,7 @@ claude plugin eval . --tag regressao --allow-tools Write
 
 `--threshold` (padrão 1.0) faz o comando sair com erro se algum caso ficar abaixo da nota; `--json resultado.json` grava o detalhe por execução. Os graders `regex`, `tool_used` e `file_exists` são grátis; os `llm` usam um juiz (haiku por padrão, `--judge-model` troca).
 
-Não há grader com código próprio no `claude plugin eval`. O caso `plano-valido` cobre o contrato com regex e um juiz que recebe as mesmas regras de `hooks/src/plano.mjs`. Para conferir com o validador de verdade, rode com `--keep-temp` e depois `node hooks/src/plano.mjs validar <pasta-temporária>/.claude/modo-deus/plano.json`.
+Não há grader com código próprio no `claude plugin eval`. O caso `plano-valido` cobre o contrato com regex e um juiz que recebe as mesmas regras de `hooks/src/plano.mjs`. Para conferir com o validador de verdade, rode com `--keep-temp` e depois `node hooks/src/plano.mjs validar <pasta-temporária>/.modo-deus/plano.json`.
 
 ## Como a retrospectiva acrescenta casos
 

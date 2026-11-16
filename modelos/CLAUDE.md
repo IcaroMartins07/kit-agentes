@@ -117,8 +117,8 @@ Aplique estas verificações às partes afetadas pela tarefa. Informe problemas 
 
 ## 11. Times e território
 
-- Cada agente trabalha só no território do seu time, definido no `.claude/modo-deus/REGRAS.md`. Precisou sair dele: peça ao Maestro, não edite.
-- O escopo da tarefa está no `.claude/modo-deus/plano.json`. Arquivo fora do escopo é fuga, mesmo dentro do território.
+- Cada agente trabalha só no território do seu time, definido no `.modo-deus/REGRAS.md`. Precisou sair dele: peça ao Maestro, não edite.
+- O escopo da tarefa está no `.modo-deus/plano.json`. Arquivo fora do escopo é fuga, mesmo dentro do território.
 - QA escreve testes a partir dos critérios de aceite, não da implementação. Achou bug: registra para o Dev, não corrige código de produção.
 - Revisão só lê. Devolve itens com arquivo, linha e motivo.
 

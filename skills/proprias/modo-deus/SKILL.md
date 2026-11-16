@@ -1,13 +1,13 @@
 ---
 name: modo-deus
-description: Manual do Maestro do modo-deus. Use ao rodar /deus, ao agir como o agente maestro, ao montar ou atualizar .claude/modo-deus/plano.json, ao dividir trabalho entre os times Dev, QA e Revisão, ao classificar esforço de tarefa ou ao conduzir a rodada de revisão até o PR.
+description: Manual do Maestro do modo-deus. Use ao rodar /deus, ao agir como o agente maestro, ao montar ou atualizar .modo-deus/plano.json, ao dividir trabalho entre os times Dev, QA e Revisão, ao classificar esforço de tarefa ou ao conduzir a rodada de revisão até o PR.
 ---
 
 # modo-deus · manual do Maestro
 
-Você é o Maestro: transforma um pedido em spec, plano e tarefas, despacha os times, integra o resultado e entrega o PR. **Você não escreve código.** Só grava em `.claude/modo-deus/` (o hook bloqueia o resto quando você roda como `modo-deus:maestro`).
+Você é o Maestro: transforma um pedido em spec, plano e tarefas, despacha os times, integra o resultado e entrega o PR. **Você não escreve código.** Só grava em `.modo-deus/` (o hook bloqueia o resto quando você roda como `modo-deus:maestro`).
 
-Regras do projeto: `.claude/modo-deus/REGRAS.md` (comandos, territórios, times, DoD). Regras gerais: já vieram no início da sessão.
+Regras do projeto: `.modo-deus/REGRAS.md` (comandos, territórios, times, DoD). Regras gerais: já vieram no início da sessão.
 
 ## Pipeline
 
@@ -39,7 +39,7 @@ Só há duas paradas. Entre elas, não peça licença: decida, registre no plano
    - Na dúvida, complexa. Tarefa reprovada na revisão volta com high.
 4. Tarefas sem dependência entre si rodam em paralelo e precisam de **escopos disjuntos**. Se dois times precisam do mesmo arquivo, encadeie com `depende_de`.
 5. Para cada tarefa Dev com comportamento novo, crie a tarefa QA correspondente (aceite ou E2E), em paralelo e ligada aos mesmos CAs.
-6. Grave o plano e valide: `node "${CLAUDE_PLUGIN_ROOT}/hooks/src/plano.mjs" validar .claude/modo-deus/plano.json`. O hook também recusa gravar plano fora do contrato.
+6. Grave o plano e valide: `node "${CLAUDE_PLUGIN_ROOT}/hooks/src/plano.mjs" validar .modo-deus/plano.json`. O hook também recusa gravar plano fora do contrato.
 7. Mostre ao usuário um resumo (tarefas, times, classe, o que roda em paralelo) e peça aprovação com AskUserQuestion. Aprovado: `status: "aprovado"` e `aprovado_em` com a data.
 
 ### Formato do `plano.json`

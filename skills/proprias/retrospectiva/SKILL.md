@@ -50,16 +50,16 @@ Cada causa aponta para um alvo provável:
 
 Para cada causa, separe:
 - **Lição do kit** (vale para qualquer projeto) → vira proposta de mudança no kit.
-- **Lição do projeto** (território, comando, convenção deste repositório) → vai para `.claude/modo-deus/REGRAS.md` do projeto, com a aprovação do usuário. **Não** vai para a skill global e não precisa de eval.
+- **Lição do projeto** (território, comando, convenção deste repositório) → vai para `.modo-deus/REGRAS.md` do projeto, com a aprovação do usuário. **Não** vai para a skill global e não precisa de eval.
 
 Uma ocorrência isolada raramente justifica mudar o kit. Priorize causas que se repetem ou que custaram uma rodada de revisão.
 
 ## 3 · Proposta
 
-Uma proposta por causa, em `.claude/modo-deus/retro/<AAAA-MM-DD>-<assunto>.md`. O esqueleto sai do script, já com a evidência:
+Uma proposta por causa, em `.modo-deus/retro/<AAAA-MM-DD>-<assunto>.md`. O esqueleto sai do script, já com a evidência:
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/hooks/src/retro.mjs" proposta .claude/modo-deus/retro/2026-11-15-esforco-migracao.md --causa esforco_errado [--sessao X] [--desde D]
+node "${CLAUDE_PLUGIN_ROOT}/hooks/src/retro.mjs" proposta .modo-deus/retro/2026-11-15-esforco-migracao.md --causa esforco_errado [--sessao X] [--desde D]
 ```
 
 Preencha: hipótese, alvo (skill, agente, regra de esforço, detector ou `REGRAS.md`), arquivo exato e o **diff sugerido**, o menor possível. Para escrever ou ajustar skill, siga `superpowers:writing-skills`. Não amplie o escopo: um diff resolve uma causa.
@@ -92,7 +92,7 @@ No repositório do kit (`${CLAUDE_PLUGIN_ROOT}`; em desenvolvimento, o clone do 
 4. Commite o diff, o caso em `evals/regressao/` e a versão juntos. `npm test` e `claude plugin validate --strict .` passam antes do commit.
 5. Merge e push são do usuário.
 
-Lição de projeto: edite `.claude/modo-deus/REGRAS.md` do projeto (com o sim do usuário) e pare aí.
+Lição de projeto: edite `.modo-deus/REGRAS.md` do projeto (com o sim do usuário) e pare aí.
 
 ## 7 · Encerrar
 

@@ -5,7 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const KIT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
-export const PASTA = ".claude/modo-deus";
+export const PASTA = ".modo-deus";
 
 let kitCache = null;
 export const kit = () => (kitCache ??= JSON.parse(fs.readFileSync(path.join(KIT, "kit.json"), "utf8")));
@@ -21,7 +21,7 @@ export function lerEntrada() {
 
 export const barra = (p) => (p || "").replace(/\\/g, "/");
 
-// Raiz do projeto com o kit instalado. Sobe a partir do cwd procurando .claude/modo-deus/config.json;
+// Raiz do projeto com o kit instalado. Sobe a partir do cwd procurando .modo-deus/config.json;
 // numa worktree (onde a pasta não existe, porque fica fora do git) segue o arquivo .git até o repositório principal.
 export function acharProjeto(entrada) {
   const inicio = path.resolve(process.env.CLAUDE_PROJECT_DIR || entrada.cwd || process.cwd());
@@ -73,7 +73,7 @@ const EXT_CODIGO = new Set(("ts tsx js jsx mjs cjs py go rs java kt kts rb php c
 // Arquivo de código? Docs, configs e .claude/ ficam livres (mesma regra da v1).
 export function ehCodigo(p) {
   const s = barra(p);
-  if (/(^|\/)(\.claude|node_modules|\.git)\//.test(s)) return false;
+  if (/(^|\/)(\.claude|\.modo-deus|node_modules|\.git)\//.test(s)) return false;
   const base = s.split("/").pop();
   const i = base.lastIndexOf(".");
   if (i <= 0) return false;

@@ -11,6 +11,6 @@ Depois, em até cinco linhas:
 
 - O que está parado ou atrasado (tarefa em `reprovada`, subagente sem "encerrado", agente com muitas chamadas).
 - Cada regra com alerta ou bloqueio (V1–V11), com o que fazer segundo a skill `modo-deus:vigia`.
-- O caminho do painel HTML (`.claude/modo-deus/painel/index.html`), para eu abrir no navegador.
+- O caminho do painel HTML (`.modo-deus/painel/index.html`), para eu abrir no navegador.
 
 Não altere arquivos nem o plano: é só leitura. Se o kit não estiver instalado, diga como instalar (`node instalar.mjs <projeto>`).

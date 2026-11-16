@@ -78,15 +78,15 @@ const hook = (nome, entrada) =>
     encoding: "utf8",
     env: { ...process.env, CLAUDE_PROJECT_DIR: "", MODO_DEUS_SEM_GRAPHIFY: "1" },
   });
-const planoF = () => path.join(repo, ".claude", "modo-deus", "plano.json");
+const planoF = () => path.join(repo, ".modo-deus", "plano.json");
 
 before(() => {
   tmp = fs.mkdtempSync(path.join(os.tmpdir(), "modo-deus-f3-"));
   repo = path.join(tmp, "repo");
-  fs.mkdirSync(path.join(repo, ".claude", "modo-deus"), { recursive: true });
+  fs.mkdirSync(path.join(repo, ".modo-deus"), { recursive: true });
   git(repo, "init", "-q", "-b", "feat");
-  fs.writeFileSync(path.join(repo, ".claude", "modo-deus", "config.json"), JSON.stringify({ perfil: "deus", times: {} }));
-  fs.writeFileSync(path.join(repo, ".claude", "modo-deus", "REGRAS.md"), "# Regras\n\n## Territórios\n\n- **front**: `src/components/**`\n");
+  fs.writeFileSync(path.join(repo, ".modo-deus", "config.json"), JSON.stringify({ perfil: "deus", times: {} }));
+  fs.writeFileSync(path.join(repo, ".modo-deus", "REGRAS.md"), "# Regras\n\n## Territórios\n\n- **front**: `src/components/**`\n");
 });
 after(() => fs.rmSync(tmp, { recursive: true, force: true }));
 
@@ -121,7 +121,7 @@ test("hook: revisor não encerra sem veredito no formato; na segunda tentativa e
   assert.equal(com.status, 0, com.stderr);
   const laco = hook("evento", { ...base, stop_hook_active: true, last_assistant_message: "ainda sem bloco" });
   assert.equal(laco.status, 0);
-  const dir = path.join(repo, ".claude", "modo-deus", "telemetria");
+  const dir = path.join(repo, ".modo-deus", "telemetria");
   const ev = fs.readFileSync(path.join(dir, fs.readdirSync(dir)[0]), "utf8").trim().split("\n").map((l) => JSON.parse(l));
   assert.ok(ev.some((e) => e.resultado === "contrato_falhou" && e.agente === "revisor"));
 });

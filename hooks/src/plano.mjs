@@ -1,4 +1,4 @@
-// Contrato do plano (.claude/modo-deus/plano.json) e das respostas da Revisão.
+// Contrato do plano (.modo-deus/plano.json) e das respostas da Revisão.
 // Usado pelo hook (bloqueia gravar plano inválido), pelo Maestro (valida antes de pedir aprovação)
 // e pelo SubagentStop da Revisão (exige o veredito no formato).
 //

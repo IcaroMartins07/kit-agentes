@@ -62,7 +62,7 @@ test("instalação termina e deixa git status limpo", () => {
 
 test("REGRAS.md nasce com stack, comandos e territórios detectados", () => {
   instalar(repo, { log: silencio });
-  const r = ler(".claude/modo-deus/REGRAS.md");
+  const r = ler(".modo-deus/REGRAS.md");
   assert.match(r, /# Regras do projeto repo/);
   assert.match(r, /\| Testes \| `npm run test` \|/);
   assert.match(r, /\| Tipos \| `npm run typecheck` \|/);
@@ -79,17 +79,18 @@ test("worktree também ignora os arquivos do kit", () => {
   instalar(repo, { log: silencio });
   const wt = path.join(tmp, "wt");
   git(repo, "worktree", "add", "-q", wt);
-  fs.mkdirSync(path.join(wt, ".claude", "modo-deus"), { recursive: true });
-  fs.writeFileSync(path.join(wt, ".claude", "modo-deus", "REGRAS.md"), "x");
+  fs.mkdirSync(path.join(wt, ".modo-deus"), { recursive: true });
+  fs.writeFileSync(path.join(wt, ".modo-deus", "REGRAS.md"), "x");
+  fs.mkdirSync(path.join(wt, ".claude"), { recursive: true });
   fs.writeFileSync(path.join(wt, ".claude", "settings.local.json"), "{}");
   assert.equal(status(wt), "");
 });
 
 test("reinstalação preserva REGRAS.md editado e não duplica deny", () => {
   instalar(repo, { log: silencio });
-  escrever(".claude/modo-deus/REGRAS.md", "minhas regras");
+  escrever(".modo-deus/REGRAS.md", "minhas regras");
   instalar(repo, { log: silencio });
-  assert.equal(ler(".claude/modo-deus/REGRAS.md"), "minhas regras");
+  assert.equal(ler(".modo-deus/REGRAS.md"), "minhas regras");
   const deny = lerJson(".claude/settings.local.json").permissions.deny;
   assert.equal(deny.length, new Set(deny).size);
 });
@@ -115,7 +116,7 @@ test("settings.local.json inválido aborta sem alterar nada", () => {
 });
 
 test("pasta do kit versionada pelo projeto aborta", () => {
-  escrever(".claude/modo-deus/REGRAS.md", "do projeto");
+  escrever(".modo-deus/REGRAS.md", "do projeto");
   commitar();
   assert.throws(() => instalar(repo, { log: silencio }), /já é versionado/);
 });
@@ -141,10 +142,10 @@ test("--dry-run não escreve nada", () => {
 
 test("--remover limpa o projeto e guarda backup fora dele", () => {
   instalar(repo, { log: silencio });
-  escrever(".claude/modo-deus/REGRAS.md", "minhas regras");
+  escrever(".modo-deus/REGRAS.md", "minhas regras");
   const { backup } = remover(repo, { log: silencio });
   assert.equal(status(), "");
-  assert.ok(!fs.existsSync(path.join(repo, ".claude", "modo-deus")));
+  assert.ok(!fs.existsSync(path.join(repo, ".modo-deus")));
   assert.ok(!fs.existsSync(path.join(repo, ".claude", "settings.local.json")), "settings criado pelo kit some");
   assert.ok(!fs.readFileSync(path.join(repo, ".git", "info", "exclude"), "utf8").includes("modo-deus"));
   assert.equal(fs.readFileSync(path.join(backup, "REGRAS.md"), "utf8"), "minhas regras");
@@ -171,7 +172,7 @@ test("times sob demanda: detecção e modo forçado persistem", () => {
   let r = instalar(repo, { log: silencio });
   assert.equal(r.deteccao.sobDemanda["dev-mobile"], true);
   assert.equal(r.deteccao.sobDemanda["dev-dados"], false);
-  const regras = ler(".claude/modo-deus/REGRAS.md");
+  const regras = ler(".modo-deus/REGRAS.md");
   assert.match(regras, /\| dev-mobile \| auto \| sim \|/);
   assert.match(regras, /\*\*mobile\*\*: `android\/\*\*`/);
   assert.match(regras, /\*\*dados\*\*: time dev-dados não detectado/);
@@ -302,7 +303,7 @@ test("revisão 2: comando sem preencher conta como campo aberto", () => {
 test("revisão 3: placeholder do npm init não vira comando de teste", () => {
   escrever("package.json", JSON.stringify({ scripts: { test: 'echo "Error: no test specified" && exit 1' } }));
   instalar(repo, { log: silencio });
-  assert.match(ler(".claude/modo-deus/REGRAS.md"), /\| Testes \| `<\.\.\.>` \|/);
+  assert.match(ler(".modo-deus/REGRAS.md"), /\| Testes \| `<\.\.\.>` \|/);
 });
 
 test("revisão 4: app.json do Heroku não liga dev-mobile; lib/ só é mobile com Flutter", () => {
@@ -334,7 +335,7 @@ test("revisão 6: $ no nome do repositório não corrompe o REGRAS.md", () => {
   fs.mkdirSync(estranho);
   git(estranho, "init", "-q");
   instalar(estranho, { log: silencio });
-  assert.match(fs.readFileSync(path.join(estranho, ".claude", "modo-deus", "REGRAS.md"), "utf8"), /^# Regras do projeto r\$&x$/m);
+  assert.match(fs.readFileSync(path.join(estranho, ".modo-deus", "REGRAS.md"), "utf8"), /^# Regras do projeto r\$&x$/m);
 });
 
 test("revisão 7: --perfil sem valor é erro de uso", () => {
@@ -346,7 +347,7 @@ test("revisão 7: --perfil sem valor é erro de uso", () => {
 test("revisão 2b: REGRAS.md com todos os campos preenchidos sai como preenchido", () => {
   pluginsFake("superpowers@claude-plugins-official", "claude-security@claude-plugins-official", "frontend-design@claude-plugins-official");
   instalar(repo, { log: silencio });
-  const f = ".claude/modo-deus/REGRAS.md";
+  const f = ".modo-deus/REGRAS.md";
   // preenche tudo o que estiver entre < > (exceto <a definir>, que é pendência assumida)
   escrever(f, ler(f).replace(/<(?!a definir>)(?:\.\.\.|[A-Za-zÀ-ÿ][^>\n]*)>/g, "preenchido"));
   const r = doctor(repo, { log: silencio });
@@ -356,7 +357,7 @@ test("revisão 2b: REGRAS.md com todos os campos preenchidos sai como preenchido
 test("allowlist acompanha o REGRAS.md: comando trocado sai, novo entra, o do usuário fica", () => {
   escrever(".claude/settings.local.json", JSON.stringify({ permissions: { allow: ["Bash(make:*)"] } }));
   instalar(repo, { log: silencio });
-  const f = ".claude/modo-deus/REGRAS.md";
+  const f = ".modo-deus/REGRAS.md";
   escrever(f, ler(f).replace("`npm run test`", "`npm run test:unit`"));
   instalar(repo, { log: silencio });
   const allow = lerJson(".claude/settings.local.json").permissions.allow;
@@ -372,4 +373,33 @@ test("allowlist ignora comando composto do REGRAS.md", async () => {
   const r = allowlist("## Comandos\n\n| Ação | Comando |\n|---|---|\n| Testes | `npm test && rm -rf x` |\n| Lint | `npm run lint` |\n");
   assert.ok(r.includes("Bash(npm run lint:*)"));
   assert.ok(!r.some((x) => x.includes("rm -rf")));
+});
+
+test("validação real: dados do kit fora de .claude/ (o Claude Code trata .claude/ como sensível)", () => {
+  instalar(repo, { log: silencio });
+  assert.ok(fs.existsSync(path.join(repo, ".modo-deus", "REGRAS.md")));
+  assert.ok(!fs.existsSync(path.join(repo, ".claude", "modo-deus")));
+  assert.equal(status(), "");
+});
+
+test("validação real: instalação antiga em .claude/modo-deus é migrada com o conteúdo", () => {
+  instalar(repo, { log: silencio });
+  fs.mkdirSync(path.join(repo, ".claude"), { recursive: true });
+  fs.renameSync(path.join(repo, ".modo-deus"), path.join(repo, ".claude", "modo-deus"));
+  escrever(".claude/modo-deus/REGRAS.md", "regras antigas");
+  assert.ok(doctor(repo, { log: silencio }).resultados.some(([n, m]) => n === "ERRO" && /local antigo/.test(m)));
+  const linhas = [];
+  instalar(repo, { log: (l) => linhas.push(l) });
+  assert.ok(linhas.some((l) => l.startsWith("migra")));
+  assert.equal(ler(".modo-deus/REGRAS.md"), "regras antigas");
+  assert.ok(!fs.existsSync(path.join(repo, ".claude", "modo-deus")));
+  assert.equal(status(), "");
+});
+
+test("validação real: instalar dependência só na forma exata", async () => {
+  const { allowlist } = await import("../instalar.mjs");
+  const r = allowlist("## Comandos\n\n| Ação | Comando |\n|---|---|\n| Instalar | `npm install` |\n| Testes | `npm run test` |\n");
+  assert.ok(r.includes("Bash(npm install)"));
+  assert.ok(!r.includes("Bash(npm install:*)"));
+  assert.ok(r.includes("Bash(npm run test:*)"));
 });

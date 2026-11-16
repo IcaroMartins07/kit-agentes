@@ -33,8 +33,8 @@ const REGRAS = `# Regras do projeto teste
 `;
 
 function instalarKit(dir, perfil = "estrito") {
-  escrever(dir, ".claude/modo-deus/config.json", JSON.stringify({ perfil, times: { "dev-mobile": "auto" } }));
-  escrever(dir, ".claude/modo-deus/REGRAS.md", REGRAS);
+  escrever(dir, ".modo-deus/config.json", JSON.stringify({ perfil, times: { "dev-mobile": "auto" } }));
+  escrever(dir, ".modo-deus/REGRAS.md", REGRAS);
   fs.appendFileSync(path.join(dir, ".git", "info", "exclude"), "\n.claude/\n");
 }
 
@@ -120,7 +120,7 @@ espera(0, "v1 · cat > .ts com incremental-implementation", () => pre("Bash", { 
 espera(0, "v1 · redireção para .log sem skill", () => pre("Bash", { command: "npm run build > build.log 2>&1" }));
 espera(0, "v1 · redireção para /dev/null sem skill", () => pre("Bash", { command: "node x.js >/dev/null" }));
 espera(0, "v1 · sed -i em .md sem skill", () => pre("Bash", { command: "sed -i s/a/b/ README.md" }));
-espera(0, "v1 · escrita em .claude/ sem skill", () => pre("Bash", { command: "echo x > .claude/modo-deus/hooks/a.sh" }));
+espera(0, "v1 · escrita em .claude/ sem skill", () => pre("Bash", { command: "echo x > .modo-deus/hooks/a.sh" }));
 espera(0, "v1 · ls sem skill", () => pre("Bash", { command: "ls -la" }));
 
 test("v1 · cache vê skill invocada depois", () => {
@@ -138,7 +138,7 @@ test("v1 · menção solta de skill não libera edição", () => {
 });
 
 test("v1 · '<a definir>' não gera aviso; campo <...> gera", () => {
-  const f = path.join(repo, ".claude/modo-deus/REGRAS.md");
+  const f = path.join(repo, ".modo-deus/REGRAS.md");
   fs.writeFileSync(f, "Testes: <a definir>\n");
   assert.doesNotMatch(rodar("sessao", {}).stdout, /campo\(s\) sem preencher/);
   fs.writeFileSync(f, "Nome: <nome do projeto>\n");
@@ -208,8 +208,8 @@ espera(0, "V2 · qa-e2e em cypress/", () => pre("Write", { file_path: arq("cypre
 espera(2, "V2 · qa-e2e em código de produção", () => pre("Edit", { file_path: arq("src/components/Botao.tsx") }, { agente: "qa-e2e" }));
 espera(2, "V2 · revisor não escreve nada", () => pre("Edit", { file_path: arq("README.md") }, { agente: "revisor" }));
 const planoExemplo = () => [...fs.readFileSync(path.join(KIT, "skills/proprias/modo-deus/SKILL.md"), "utf8").matchAll(/```json\s*([\s\S]*?)```/g)][0][1];
-espera(0, "V2 · maestro grava o plano", () => pre("Write", { file_path: arq(".claude/modo-deus/plano.json"), content: planoExemplo() }, { agente: "maestro" }));
-espera(0, "V2 · maestro grava a retro", () => pre("Write", { file_path: arq(".claude/modo-deus/retro/x.md"), content: "x" }, { agente: "maestro" }));
+espera(0, "V2 · maestro grava o plano", () => pre("Write", { file_path: arq(".modo-deus/plano.json"), content: planoExemplo() }, { agente: "maestro" }));
+espera(0, "V2 · maestro grava a retro", () => pre("Write", { file_path: arq(".modo-deus/retro/x.md"), content: "x" }, { agente: "maestro" }));
 espera(2, "V2 · maestro não edita código", () => pre("Edit", { file_path: arq("src/components/x.tsx") }, { agente: "maestro" }));
 espera(0, "V2 · sessão principal não é restrita por território", () => pre("Edit", { file_path: arq("src/server/api.ts") }, { skills: ["incremental-implementation"] }));
 espera(2, "V2 · subagente fora do kit segue a trava", () => rodar("pre", { tool_name: "Edit", tool_input: { file_path: arq("app.ts") }, transcript_path: transcricao(), agent_type: "Explore", agent_id: "x" }));
@@ -228,7 +228,7 @@ test("V2 · worktree de tarefa acha o kit do repositório principal", () => {
 
 // ================= telemetria =================
 test("telemetria: bloqueio registrado com regra; perfil leve não registra o que passou", () => {
-  const dir = path.join(repo, ".claude/modo-deus/telemetria");
+  const dir = path.join(repo, ".modo-deus/telemetria");
   fs.rmSync(dir, { recursive: true, force: true });
   pre("Bash", { command: "git push --force" });
   pre("Bash", { command: "ls" });
@@ -247,7 +247,7 @@ test("telemetria: bloqueio registrado com regra; perfil leve não registra o que
 });
 
 test("telemetria: SubagentStart/Stop e Stop", () => {
-  const dir = path.join(repo, ".claude/modo-deus/telemetria");
+  const dir = path.join(repo, ".modo-deus/telemetria");
   fs.rmSync(dir, { recursive: true, force: true });
   rodar("evento", { hook_event_name: "SubagentStart", agent_type: "modo-deus:dev-back", agent_id: "z" });
   rodar("evento", { hook_event_name: "SubagentStop", agent_type: "modo-deus:dev-back", agent_id: "z", last_assistant_message: "feito" });

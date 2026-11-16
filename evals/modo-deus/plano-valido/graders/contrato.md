@@ -1,7 +1,7 @@
 ---
 type: llm
 weight: 3
-focus: { source: file, path: .claude/modo-deus/plano.json }
+focus: { source: file, path: .modo-deus/plano.json }
 ---
 
 O arquivo é o plano do modo deus. Confira as regras do contrato (as mesmas de `node hooks/src/plano.mjs validar`):

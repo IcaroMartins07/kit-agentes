@@ -46,7 +46,7 @@ Roda como **agente principal** da sessão (`claude --agent modo-deus:maestro` ou
 - Quebra o trabalho em tarefas pequenas, cada uma com time dono, escopo de arquivos, critério de pronto e **classe de complexidade** (abaixo).
 - Grava `plano.json`: tarefas, dependências, escopo, esforço. É a fonte da verdade dos detectores de fuga.
 - Despacha os times (em paralelo quando não há dependência), integra os resultados, resolve conflitos entre times e devolve o PR.
-- Não edita código. Só escreve em `.claude/modo-deus/`.
+- Não edita código. Só escreve em `.modo-deus/`.
 
 **Classe de complexidade → esforço** (o Maestro aplica; a regra fica na skill `modo-deus` e pode ser corrigida pela retro):
 
@@ -149,7 +149,7 @@ O graphify é a base de mapeamento de todos os agentes e a principal economia de
 
 ### 6.1 Registro
 
-Cada evento de hook vira uma linha JSONL em `.claude/modo-deus/telemetria/`: `ts, sessao, time, agente, tarefa, evento, ferramenta, alvo, resultado, duracao_ms, alerta?`.
+Cada evento de hook vira uma linha JSONL em `.modo-deus/telemetria/`: `ts, sessao, time, agente, tarefa, evento, ferramenta, alvo, resultado, duracao_ms, alerta?`.
 Eventos: `SessionStart`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `SubagentStart`, `SubagentStop`, `Stop`, `PostCompact`. Os hooks do Orca no seu `settings.json` global continuam; os do kit somam.
 
 ### 6.2 Detectores
@@ -182,7 +182,7 @@ Disparo: `/retro`, ou automático no fim de sessão com alertas ou reprovações
 
 1. **Coleta:** telemetria, reprovações da revisão e suas correções na conversa.
 2. **Diagnóstico por time:** skill que não disparou, instrução ambígua, passo pulado, classificação de esforço errada, detector com falso positivo.
-3. **Proposta:** diff na skill, no agente, na regra de esforço ou no detector, em `.claude/modo-deus/retro/`, com o trecho de log que a justifica.
+3. **Proposta:** diff na skill, no agente, na regra de esforço ou no detector, em `.modo-deus/retro/`, com o trecho de log que a justifica.
 4. **Avaliação:** eval da skill antes e depois (`superpowers:writing-skills`), com casos tirados das falhas reais. Sem melhora, descarta.
 5. **Aprovação sua.** Aprovado → aplica, sobe versão no `kit.json`, registra no `CHANGELOG`.
 6. **Regressão:** os casos viram teste permanente.
@@ -213,7 +213,7 @@ kit-agentes/
 └── docs/ · modo-deus/PLANO.md
 ```
 
-No projeto (fora do git): `.claude/settings.local.json` e `.claude/modo-deus/{REGRAS.md, plano.json, telemetria/, retro/}`.
+No projeto (fora do git): `.claude/settings.local.json` e `.modo-deus/{REGRAS.md, plano.json, telemetria/, retro/}`.
 
 ## 9. Fases
 

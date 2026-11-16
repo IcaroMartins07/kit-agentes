@@ -1,7 +1,7 @@
 {
   "$comentario": "Fonte de verdade do kit. Lida pelo instalar.mjs, pelos hooks (F2) e pelo Maestro (F3). Modelos usam alias (opus/sonnet/haiku), que resolvem para a geração atual (5.5).",
   "nome": "modo-deus",
-  "versao": "0.1.0",
+  "versao": "0.2.0",
   "node_minimo": 18,
 
   "dependencias": {

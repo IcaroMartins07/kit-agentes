@@ -31,6 +31,6 @@ Regra geral: não discuta com o alerta nem tente contorná-lo (outro caminho, Ba
 
 ## Onde ver
 
-- `/modo-deus:deus-status` — tarefas, subagentes, alertas por regra e o painel `.claude/modo-deus/painel/index.html`.
-- Telemetria: `.claude/modo-deus/telemetria/AAAA-MM-DD.jsonl` (linhas com `regra` e `alerta: true` ou `resultado: "bloqueado"`).
-- Sessão com alerta ou bloqueio deixa `.claude/modo-deus/retro/PENDENTE.json`; a próxima sessão avisa para rodar `/modo-deus:retro`.
+- `/modo-deus:deus-status` — tarefas, subagentes, alertas por regra e o painel `.modo-deus/painel/index.html`.
+- Telemetria: `.modo-deus/telemetria/AAAA-MM-DD.jsonl` (linhas com `regra` e `alerta: true` ou `resultado: "bloqueado"`).
+- Sessão com alerta ou bloqueio deixa `.modo-deus/retro/PENDENTE.json`; a próxima sessão avisa para rodar `/modo-deus:retro`.

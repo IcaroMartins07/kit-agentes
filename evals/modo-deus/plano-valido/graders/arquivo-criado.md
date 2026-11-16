@@ -1,4 +1,4 @@
 ---
 type: file_exists
-path: '.claude/modo-deus/plano.json'
+path: '.modo-deus/plano.json'
 ---

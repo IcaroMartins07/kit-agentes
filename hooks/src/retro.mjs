@@ -248,7 +248,7 @@ export function coletar(raiz, { sessao = null, desde = null } = {}) {
 }
 
 // ---------- proposta ----------
-const ALVOS = ["skill (skills/proprias/<nome>/SKILL.md)", "agente (agents/<nome>.md)", "regra de esforço (skill modo-deus, passo 2.3)", "detector (hooks/src/*.mjs)", "só este projeto (.claude/modo-deus/REGRAS.md)"];
+const ALVOS = ["skill (skills/proprias/<nome>/SKILL.md)", "agente (agents/<nome>.md)", "regra de esforço (skill modo-deus, passo 2.3)", "detector (hooks/src/*.mjs)", "só este projeto (.modo-deus/REGRAS.md)"];
 
 export function esqueletoProposta({ causa = null, dados = null, data = new Date().toISOString().slice(0, 10) } = {}) {
   const c = dados && causa ? dados.causas.find((x) => x.causa === causa) : dados?.causas[0];

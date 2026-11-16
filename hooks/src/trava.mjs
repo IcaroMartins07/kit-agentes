@@ -9,7 +9,7 @@ import { createRequire } from "node:module";
 import { kit, PASTA, ehCodigo, Bloqueio } from "./comum.mjs";
 
 // ---------- skills invocadas, com leitura incremental da transcrição ----------
-// O cache fica em <raiz>/.claude/modo-deus/cache/: os hooks do kit não escrevem fora da pasta do kit.
+// O cache fica em <raiz>/.modo-deus/cache/: os hooks do kit não escrevem fora da pasta do kit.
 function skillsDa(arq, dirCache) {
   if (!arq || !fs.existsSync(arq)) return [];
   const { createHash } = awaitCrypto();

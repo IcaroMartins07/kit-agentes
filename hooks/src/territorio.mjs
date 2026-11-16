@@ -3,7 +3,7 @@
 //
 // Regra de sobreposição (decidida na revisão da F1):
 //  - Revisão (somente_leitura): não escreve nada.
-//  - Maestro: só escreve em .claude/modo-deus/ (plano, retro).
+//  - Maestro: só escreve em .modo-deus/ (plano, retro).
 //  - QA: só escreve em arquivo que case com o território "testes".
 //  - Dev: escreve no próprio território, inclusive testes que estejam dentro dele (TDD).
 //    Arquivo de teste fora do território do Dev (cypress/, e2e/) é do QA.

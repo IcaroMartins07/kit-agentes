@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Painel do modo-deus: resumo em texto e .claude/modo-deus/painel/index.html (autocontido, sem CDN)
+// Painel do modo-deus: resumo em texto e .modo-deus/painel/index.html (autocontido, sem CDN)
 // com a linha do tempo de cada agente. Lê plano.json e a telemetria.
 //
 // Uso: node mods/painel/gerar.mjs [caminho do projeto] [--sessao <id> | --todas]

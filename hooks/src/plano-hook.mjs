@@ -1,4 +1,4 @@
-// Gravar .claude/modo-deus/plano.json só com plano válido. O conteúdo final é calculado
+// Gravar .modo-deus/plano.json só com plano válido. O conteúdo final é calculado
 // (Write: content; Edit/MultiEdit: aplica as trocas no arquivo atual) e validado pelo contrato.
 import fs from "node:fs";
 import path from "node:path";

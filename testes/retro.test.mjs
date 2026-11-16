@@ -13,12 +13,12 @@ const RETRO = path.join(KIT, "hooks", "src", "retro.mjs");
 
 function projeto() {
   const raiz = fs.mkdtempSync(path.join(os.tmpdir(), "retro-"));
-  fs.mkdirSync(path.join(raiz, ".claude", "modo-deus", "telemetria"), { recursive: true });
-  fs.writeFileSync(path.join(raiz, ".claude", "modo-deus", "config.json"), JSON.stringify({ perfil: "estrito" }));
+  fs.mkdirSync(path.join(raiz, ".modo-deus", "telemetria"), { recursive: true });
+  fs.writeFileSync(path.join(raiz, ".modo-deus", "config.json"), JSON.stringify({ perfil: "estrito" }));
   return raiz;
 }
 const gravarDia = (raiz, dia, eventos) =>
-  fs.writeFileSync(path.join(raiz, ".claude", "modo-deus", "telemetria", `${dia}.jsonl`), eventos.map((e) => JSON.stringify(e)).join("\n") + "\n");
+  fs.writeFileSync(path.join(raiz, ".modo-deus", "telemetria", `${dia}.jsonl`), eventos.map((e) => JSON.stringify(e)).join("\n") + "\n");
 
 const ev = (dia, i, campos) => ({ ts: `${dia}T10:00:${String(i).padStart(2, "0")}.000Z`, sessao: "s1", evento: "PreToolUse", agente: "dev-front", ...campos });
 
@@ -44,8 +44,8 @@ function cenario() {
     ev(d2, 3, { sessao: "s2", agente: "dev-back", ferramenta: "Edit", alvo: "src/api/y.ts", resultado: "ok", regra: null }),
     ev(d2, 4, { sessao: "s2", agente: "dev-back", ferramenta: "Bash", alvo: "npm test", resultado: "ok", regra: "V7", motivo: "mesma ação 4x" }),
   ]);
-  fs.appendFileSync(path.join(raiz, ".claude", "modo-deus", "telemetria", `${d2}.jsonl`), "isto não é json\n");
-  fs.writeFileSync(path.join(raiz, ".claude", "modo-deus", "plano.json"), JSON.stringify({
+  fs.appendFileSync(path.join(raiz, ".modo-deus", "telemetria", `${d2}.jsonl`), "isto não é json\n");
+  fs.writeFileSync(path.join(raiz, ".modo-deus", "plano.json"), JSON.stringify({
     versao: 1, pedido: "x", status: "revisao",
     tarefas: [
       { id: "T1", titulo: "campo novo", time: "dev-front", classe: "simples", esforco: "high", status: "reprovada", rodadas_revisao: 1 },
@@ -160,7 +160,7 @@ test("lições e memória do graphify entram quando existem", () => {
 
 test("PENDENTE.json é lido pela coleta e apagado por concluir", () => {
   const raiz = projeto();
-  const dir = path.join(raiz, ".claude", "modo-deus", "retro");
+  const dir = path.join(raiz, ".modo-deus", "retro");
   fs.mkdirSync(dir, { recursive: true });
   const pend = { sessao: "s9", ts: "2026-11-14T10:00:00Z", alertas: 3, bloqueios: 1, regras: { V3: 2, V1: 1 } };
   fs.writeFileSync(path.join(dir, "PENDENTE.json"), JSON.stringify(pend));
@@ -172,7 +172,7 @@ test("PENDENTE.json é lido pela coleta e apagado por concluir", () => {
 
 test("proposta gera o esqueleto com causa, evidência, alvo, diff e plano de eval", () => {
   const raiz = cenario();
-  const saida = path.join(raiz, ".claude", "modo-deus", "retro", "2026-11-15-esforco.md");
+  const saida = path.join(raiz, ".modo-deus", "retro", "2026-11-15-esforco.md");
   escreverProposta(saida, { causa: "esforco_errado", dados: coletar(raiz), data: "2026-11-15" });
   const t = fs.readFileSync(saida, "utf8");
   for (const s of ["## Causa", "## Evidência", "## Alvo da mudança", "## Diff sugerido", "## Plano de eval", "## Decisão"]) assert.ok(t.includes(s), s);
@@ -234,7 +234,7 @@ test("integração F5×F6: depois do /retro, o Stop da mesma sessão não recria
   ocorrencia(raiz, "s9", { tipo: "bloqueio", regra: "V9", agente: "principal" });
   assert.equal(marcarPendente(raiz, "s9").bloqueios, 1);
   assert.equal(concluir(raiz), true);
-  assert.ok(fs.existsSync(path.join(raiz, ".claude", "modo-deus", "retro", "ULTIMA.json")));
+  assert.ok(fs.existsSync(path.join(raiz, ".modo-deus", "retro", "ULTIMA.json")));
   await new Promise((r) => setTimeout(r, 5)); // ts de ocorrência e de corte são ISO com milissegundos
   assert.equal(marcarPendente(raiz, "s9"), null, "nada novo desde a retro");
   ocorrencia(raiz, "s9", { tipo: "alerta", regra: "V4", agente: "dev-back" });

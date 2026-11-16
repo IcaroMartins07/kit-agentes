@@ -59,7 +59,7 @@ Se a v1 registrou o MCP do Playwright no projeto, ele continua. Para tirar: `cla
 node KIT/instalar.mjs /caminho/do/projeto
 ```
 
-O instalador cria `.claude/modo-deus/` com um `REGRAS.md` novo, gerado a partir do que ele detecta no projeto. O `REGRAS.md` preenchido da v1 está no backup (`projeto-<nome>/fluxo/REGRAS.md`): use-o para completar o novo. Até você rodar o instalador, o `.claude/settings.local.json` pode aparecer no `git status`, porque o bloco da v1 que o escondia saiu do exclude. O instalador põe o bloco do modo-deus no lugar.
+O instalador cria `.modo-deus/` com um `REGRAS.md` novo, gerado a partir do que ele detecta no projeto. O `REGRAS.md` preenchido da v1 está no backup (`projeto-<nome>/fluxo/REGRAS.md`): use-o para completar o novo. Até você rodar o instalador, o `.claude/settings.local.json` pode aparecer no `git status`, porque o bloco da v1 que o escondia saiu do exclude. O instalador põe o bloco do modo-deus no lugar.
 
 ## 5. Conferir
 

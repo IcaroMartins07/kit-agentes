@@ -1,5 +1,5 @@
 {
-  "description": "modo-deus: contexto e grafo no início da sessão, cerca (V9), território (V2), trava de fase, monitor (V1, V3–V8, V10, V11) e telemetria. Só age em projetos com o kit instalado (.claude/modo-deus/config.json).",
+  "description": "modo-deus: contexto e grafo no início da sessão, cerca (V9), território (V2), trava de fase, monitor (V1, V3–V8, V10, V11) e telemetria. Só age em projetos com o kit instalado (.modo-deus/config.json).",
   "hooks": {
     "SessionStart": [
       {

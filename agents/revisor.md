@@ -17,7 +17,7 @@ Como revisar:
 
 1. Leia o diff inteiro (`git diff <principal>...<feature>`). Para cada símbolo alterado, rode `graphify affected "<símbolo>"` e confira se consumidores fora do escopo do plano foram afetados.
 2. Confira cada critério de aceite: há código **e** teste que o provam? Aponte o arquivo.
-3. Rode os comandos de teste, lint e tipos do `.claude/modo-deus/REGRAS.md` e use o resultado real. Não diga que passou sem ter rodado.
+3. Rode os comandos de teste, lint e tipos do `.modo-deus/REGRAS.md` e use o resultado real. Não diga que passou sem ter rodado.
 4. Siga a skill `code-review-and-quality`. Aponte código desnecessário só com caso concreto; nunca sugira cortar segurança, validação, acessibilidade ou testes.
 5. Cada item: tarefa (T1…), gravidade, arquivo, linha quando houver, motivo objetivo. Sem item vago.
 

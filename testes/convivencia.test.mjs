@@ -111,7 +111,7 @@ test("instalar e remover o kit não mudam um byte do settings.json global (hooks
   const { backup } = remover(repo, { log: silencio });
   assert.equal(fs.readFileSync(settingsF, "utf8"), ORCA);
   // Fora o backup da remoção, o HOME está como antes.
-  const fora = diferencas(antesHome, arvore(home)).filter((k) => !k.startsWith(".claude/modo-deus/backups/"));
+  const fora = diferencas(antesHome, arvore(home)).filter((k) => !k.startsWith(".claude/modo-deus/backups/")); // backups ficam na home do usuário
   assert.deepEqual(fora, []);
   assert.ok(backup.startsWith(path.join(home, ".claude", "modo-deus", "backups")));
   assert.equal(git(repo, "status", "--porcelain"), "");
@@ -148,12 +148,12 @@ test("hooks.json só referencia ${CLAUDE_PLUGIN_ROOT} e arquivos que existem", (
   assert.doesNotMatch(JSON.stringify(hj), /CLAUDE_PROJECT_DIR|\.claude\/fluxo|[A-Za-z]:\\\\|~\//);
 });
 
-test("num projeto com o kit, hooks só escrevem em <raiz>/.claude/modo-deus/", () => {
+test("num projeto com o kit, hooks só escrevem em <raiz>/.modo-deus/", () => {
   const repo = novoRepo("com-kit");
   instalar(repo, { perfil: "deus", semGrafo: true, log: silencio });
   const t = transcricao("incremental-implementation");
   const t2 = transcricao();
-  const dentro = (rel) => rel.startsWith("com-kit/.claude/modo-deus/");
+  const dentro = (rel) => rel.startsWith("com-kit/.modo-deus/");
   const antes = arvore(tmp, dentro);
   const excludeAntes = fs.readFileSync(path.join(repo, ".git", "info", "exclude"), "utf8");
   const codigos = [];
@@ -161,15 +161,15 @@ test("num projeto com o kit, hooks só escrevem em <raiz>/.claude/modo-deus/", (
   assert.ok(codigos.includes(2), "algum hook devia ter bloqueado (rm -rf / ou edição sem skill)");
   assert.ok(codigos.every((c) => c === 0 || c === 2), String(codigos));
 
-  // Sem exceção: o cache da trava fica em .claude/modo-deus/cache/ (TEMP/TMP/TMPDIR apontam para
+  // Sem exceção: o cache da trava fica em .modo-deus/cache/ (TEMP/TMP/TMPDIR apontam para
   // hooktmp justamente para pegar qualquer escrita na pasta temporária do sistema).
   const fora = diferencas(antes, arvore(tmp, dentro));
-  assert.deepEqual(fora, [], "hook escreveu fora de .claude/modo-deus/");
-  assert.ok(fs.readdirSync(path.join(repo, ".claude", "modo-deus", "cache")).some((f) => /^skills-[0-9a-f]{32}\.json$/.test(f)), "cache da trava dentro da pasta do kit");
+  assert.deepEqual(fora, [], "hook escreveu fora de .modo-deus/");
+  assert.ok(fs.readdirSync(path.join(repo, ".modo-deus", "cache")).some((f) => /^skills-[0-9a-f]{32}\.json$/.test(f)), "cache da trava dentro da pasta do kit");
   assert.equal(fs.readFileSync(path.join(repo, ".git", "info", "exclude"), "utf8"), excludeAntes);
   assert.equal(fs.readFileSync(path.join(home, ".claude", "settings.json"), "utf8"), ORCA);
   // E escreveram de fato lá dentro (telemetria do perfil deus).
-  const tel = path.join(repo, ".claude", "modo-deus", "telemetria");
+  const tel = path.join(repo, ".modo-deus", "telemetria");
   assert.ok(fs.readdirSync(tel).some((f) => f.endsWith(".jsonl")));
   assert.equal(git(repo, "status", "--porcelain"), "");
 });

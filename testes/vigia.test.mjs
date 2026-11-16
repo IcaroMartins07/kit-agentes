@@ -44,7 +44,7 @@ const PLANO = {
   ],
 };
 
-const perfil = (p) => escrever(repo, ".claude/modo-deus/config.json", JSON.stringify({ perfil: p, times: {} }));
+const perfil = (p) => escrever(repo, ".modo-deus/config.json", JSON.stringify({ perfil: p, times: {} }));
 const sessao = () => `s${process.pid}-${n++}`;
 
 function rodar(arq, entrada, env = {}) {
@@ -64,7 +64,7 @@ const contexto = (r) => {
   return o.hookSpecificOutput?.additionalContext || o.systemMessage || "";
 };
 const telemetria = () => {
-  const dir = path.join(repo, ".claude/modo-deus/telemetria");
+  const dir = path.join(repo, ".modo-deus/telemetria");
   return fs.readdirSync(dir).filter((f) => /^\d{4}-\d\d-\d\d\.jsonl$/.test(f)).flatMap((f) => fs.readFileSync(path.join(dir, f), "utf8").trim().split("\n").filter(Boolean).map((l) => JSON.parse(l)));
 };
 
@@ -80,8 +80,8 @@ before(() => {
   git(repo, "checkout", "-q", "-b", "feat/login");
   fs.appendFileSync(path.join(repo, ".git", "info", "exclude"), "\n.claude/\n");
   perfil("estrito");
-  escrever(repo, ".claude/modo-deus/REGRAS.md", REGRAS);
-  escrever(repo, ".claude/modo-deus/plano.json", JSON.stringify(PLANO));
+  escrever(repo, ".modo-deus/REGRAS.md", REGRAS);
+  escrever(repo, ".modo-deus/plano.json", JSON.stringify(PLANO));
   wt1 = path.join(repo, ".claude", "worktrees", "t1");
   wt2 = path.join(repo, ".claude", "worktrees", "t2");
   git(repo, "worktree", "add", "-q", "-b", "feat/login-T1", wt1);
@@ -124,7 +124,7 @@ test("V1 · fora do escopo: leve nada, estrito alerta, deus bloqueia", () => {
 test("V1 · sem tarefa identificada (branch sem -T<n>) ou sem plano: quieto", () => {
   let r = pre(sessao(), "Edit", { file_path: path.join(repo, "src/server/pagamento.ts") }, { agente: "dev-back" });
   assert.equal(contexto(r), "");
-  const f = path.join(repo, ".claude/modo-deus/plano.json");
+  const f = path.join(repo, ".modo-deus/plano.json");
   fs.renameSync(f, f + ".bak");
   try {
     r = pre(sessao(), "Edit", { file_path: path.join(wt1, "src/server/pagamento.ts") }, { agente: "dev-back", cwd: wt1 });
@@ -320,7 +320,7 @@ test("V11 · plano com tarefa simples já reprovada: registra; plano normal: qui
   const s = sessao();
   const p = planoExemplo();
   const simples = p.tarefas.find((t) => t.classe === "simples");
-  const gravar = (plano) => pre(s, "Write", { file_path: path.join(repo, ".claude/modo-deus/plano.json"), content: JSON.stringify(plano) }, { agente: "maestro", id: "m1" });
+  const gravar = (plano) => pre(s, "Write", { file_path: path.join(repo, ".modo-deus/plano.json"), content: JSON.stringify(plano) }, { agente: "maestro", id: "m1" });
   assert.equal(gravar(p).status, 0);
   assert.ok(!telemetria().some((l) => l.sessao === s && l.evento === "V11"));
   simples.rodadas_revisao = 1;
@@ -346,7 +346,7 @@ test("perfil leve: nenhum detector, nem loop", () => {
 });
 
 // ================= marcador de retrospectiva =================
-const PENDENTE = () => path.join(repo, ".claude/modo-deus/retro/PENDENTE.json");
+const PENDENTE = () => path.join(repo, ".modo-deus/retro/PENDENTE.json");
 
 test("Stop sem alerta nem bloqueio não marca retrospectiva", () => {
   fs.rmSync(PENDENTE(), { force: true });
@@ -403,7 +403,7 @@ test("painel: texto e HTML autocontido com linha do tempo por agente", () => {
   assert.match(texto, /- dev-back \(p1\): 1 chamada\(s\)/);
   assert.match(texto, /V1 1a\/0b/);
   const html = fs.readFileSync(arquivo, "utf8");
-  assert.ok(arquivo.endsWith(path.join(".claude", "modo-deus", "painel", "index.html")));
+  assert.ok(arquivo.endsWith(path.join(".modo-deus", "painel", "index.html")));
   assert.match(html, /^<!DOCTYPE html>/);
   assert.match(html, /class="barra"/);
   assert.doesNotMatch(html, /<script[^>]+src=|<link[^>]+href=|https?:\/\//, "sem CDN");
@@ -434,7 +434,7 @@ test("instalador: --statusline grava, reinstalação sem a flag mantém, --remov
     instalar(r2, { semGrafo: true, statusline: true, log: silencio });
     assert.equal(settings().statusLine.type, "command");
     assert.match(settings().statusLine.command, /^node ".*\/mods\/statusline\.mjs"$/);
-    const manifesto = JSON.parse(fs.readFileSync(path.join(r2, ".claude/modo-deus/instalados.json"), "utf8"));
+    const manifesto = JSON.parse(fs.readFileSync(path.join(r2, ".modo-deus/instalados.json"), "utf8"));
     assert.equal(manifesto.statusline, settings().statusLine.command);
 
     instalar(r2, { semGrafo: true, log: silencio });

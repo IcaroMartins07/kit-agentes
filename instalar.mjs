@@ -20,7 +20,8 @@ const lerJson = (f) => JSON.parse(fs.readFileSync(f, "utf8"));
 const kit = lerJson(path.join(KIT, "kit.json"));
 const MARCA_INI = "# modo-deus (kit local)";
 const MARCA_FIM = "# /modo-deus";
-const PASTA = ".claude/modo-deus";
+const PASTA = ".modo-deus";
+const PASTA_ANTIGA = ".claude/modo-deus";
 const SETTINGS = ".claude/settings.local.json";
 const MODOS_TIME = ["auto", "ligado", "desligado"];
 
@@ -249,8 +250,14 @@ const ALLOW_FIXO = [
   "Bash(git status:*)", "Bash(git diff:*)", "Bash(git log:*)", "Bash(git show:*)", "Bash(git branch --show-current)",
 ];
 export function allowlist(regrasTexto) {
-  const cmds = Object.values(comandosDe(regrasTexto || "")).filter((c) => !/[;&|><`$]/.test(c)); // nada composto
-  return [...new Set([...cmds.map((c) => `Bash(${c}:*)`), ...ALLOW_FIXO])];
+  const regras = [];
+  for (const [acao, c] of Object.entries(comandosDe(regrasTexto || ""))) {
+    if (/[;&|><`$]/.test(c)) continue; // nada composto
+    // Instalar só na forma exata: `npm install` sem argumento instala o lockfile; com argumento
+    // traria dependência nova, que pede aprovação do usuário.
+    regras.push(acao === "Instalar" ? `Bash(${c})` : `Bash(${c}:*)`);
+  }
+  return [...new Set([...regras, ...ALLOW_FIXO])];
 }
 
 // ---------- exclude ----------
@@ -280,6 +287,12 @@ export function instalar(caminho, { perfil = null, times = {}, dryRun = false, s
   const raiz = raizDoRepo(caminho);
   const pasta = path.join(raiz, PASTA);
   if (versionado(raiz, PASTA)) throw new ErroUso(`${PASTA} já é versionado pelo projeto; não vou sobrescrever`);
+  // Até a 0.1.0 os dados ficavam em .claude/modo-deus/, que o Claude Code trata como arquivo sensível
+  // (pede aprovação a cada escrita do Maestro). Move para .modo-deus/ na primeira reinstalação.
+  const antiga = path.join(raiz, PASTA_ANTIGA);
+  if (fs.existsSync(antiga) && !fs.existsSync(pasta) && !versionado(raiz, PASTA_ANTIGA)) {
+    executor(dryRun, log)(`migra    ${PASTA_ANTIGA}/ → ${PASTA}/`, () => fs.renameSync(antiga, pasta));
+  }
   const fazer = executor(dryRun, log);
   const manifestoF = path.join(pasta, "instalados.json");
   const anterior = fs.existsSync(manifestoF) ? lerJson(manifestoF) : null;
@@ -386,7 +399,7 @@ export function instalar(caminho, { perfil = null, times = {}, dryRun = false, s
   log("");
   log(`${dryRun ? "Simulação concluída" : "Pronto"} em ${raiz} (perfil ${config.perfil}).`);
   if (!d.cypress) log("Cypress não encontrado: o Maestro vai oferecer configurar quando houver tarefa de E2E.");
-  log("Próximo passo: revisar .claude/modo-deus/REGRAS.md e rodar `node instalar.mjs doctor`.");
+  log("Próximo passo: revisar .modo-deus/REGRAS.md e rodar `node instalar.mjs doctor`.");
   return { raiz, config, deteccao: d };
 }
 
@@ -464,7 +477,8 @@ export function doctor(caminho, { log = console.log } = {}) {
   try { raiz = raizDoRepo(caminho); } catch { erro(`${caminho} não é um repositório git`); }
   if (raiz) {
     const pasta = path.join(raiz, PASTA);
-    if (!fs.existsSync(path.join(pasta, "instalados.json"))) erro("kit não instalado neste projeto (node instalar.mjs <caminho>)");
+    if (fs.existsSync(path.join(raiz, PASTA_ANTIGA, "instalados.json")) && !fs.existsSync(pasta)) erro(`kit no local antigo (${PASTA_ANTIGA}/): rode o instalador de novo para migrar para ${PASTA}/`);
+    else if (!fs.existsSync(path.join(pasta, "instalados.json"))) erro("kit não instalado neste projeto (node instalar.mjs <caminho>)");
     else {
       let config = {};
       try { config = lerJson(path.join(pasta, "config.json")); } catch { erro("config.json ausente ou inválido"); }

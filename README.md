@@ -28,7 +28,7 @@ Duas partes: o **plugin** (skills, comandos e, nas próximas fases, agentes e ho
    ```
 
    Opções: `--perfil leve|estrito|deus`, `--times dev-mobile=ligado,dev-docs=desligado`, `--sem-grafo`, `--dry-run`.
-   Depois revise `.claude/modo-deus/REGRAS.md` (já vem com stack, comandos e territórios detectados).
+   Depois revise `.modo-deus/REGRAS.md` (já vem com stack, comandos e territórios detectados).
 
 3. Conferir:
 
@@ -40,7 +40,7 @@ Remover de um projeto: `node instalar.mjs --remover /caminho/do/repo`. O que era
 
 ## O que o instalador faz no projeto
 
-- Cria `.claude/modo-deus/` com `REGRAS.md`, `config.json` (perfil e times sob demanda), `telemetria/` e `retro/`.
+- Cria `.modo-deus/` com `REGRAS.md`, `config.json` (perfil e times sob demanda), `telemetria/` e `retro/`.
 - Acrescenta o deny-list de `modelos/settings.deny.json` ao `.claude/settings.local.json`, registrando só o que acrescentou para remover depois sem tocar no que é seu.
 - Monta o mapa do projeto em `graphify-out/` com `graphify update .` (só código, por AST, sem LLM). Os agentes consultam o grafo antes de varrer pastas, o que corta boa parte do custo de tokens.
 - Põe tudo no `.git/info/exclude` comum, que vale também para worktrees.

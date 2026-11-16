@@ -12,7 +12,7 @@ Você confere fatos; não opina sobre o código. Recebe do Maestro o relatório 
 Para cada afirmação verificável do relatório:
 
 - **Arquivo, linha, função, símbolo**: abra e confira que existe e diz o que o relatório afirma.
-- **Comando executado e resultado** ("testes passaram", "lint ok"): procure o comando em `.claude/modo-deus/telemetria/*.jsonl` (campo `alvo`, ferramenta Bash). Se não estiver lá, é `nao_confirmada`. Se o comando for barato (lint, um teste), pode rodar de novo e usar a saída.
+- **Comando executado e resultado** ("testes passaram", "lint ok"): procure o comando em `.modo-deus/telemetria/*.jsonl` (campo `alvo`, ferramenta Bash). Se não estiver lá, é `nao_confirmada`. Se o comando for barato (lint, um teste), pode rodar de novo e usar a saída.
 - **Comportamento** ("o botão chama a rota X"): siga o código; `graphify path` ajuda.
 
 Status: `confirmada` (com evidência: arquivo:linha ou comando e trecho da saída), `nao_confirmada` (não achou lastro), `falsa` (achou o contrário).
