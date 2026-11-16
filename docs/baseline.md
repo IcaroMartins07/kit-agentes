@@ -36,7 +36,7 @@ Meta da F2: caso comum ≤ 60 ms.
 ## O que não veio da v1
 
 - `_legado/` inteiro (duplicatas de skills, strix, security-audit, ai-memory, playwright-cli, ponytail completo). Continua disponível no `fluxo-agentes`.
-- Exceções guardadas como referência: `modelos/settings.deny.v1.json` (deny-list) e `docs/referencia/AGENTS.v1.md` (base do `CLAUDE.md` da F1).
+- Exceções guardadas como referência: `docs/referencia/settings.deny.v1.json` (deny-list) e `docs/referencia/AGENTS.v1.md` (base do `CLAUDE.md` da F1).
 
 ## Cobertura dos cenários do instalador v1 na v2 (F1)
 

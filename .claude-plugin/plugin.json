@@ -37,5 +37,23 @@
     "./skills/proprias/qa-cypress",
     "./skills/proprias/retrospectiva",
     "./skills/proprias/vigia"
+  ],
+  "agents": [
+    "./agents/maestro/maestro.md",
+    "./agents/dev/dev-front.md",
+    "./agents/dev/dev-back.md",
+    "./agents/dev/dev-db.md",
+    "./agents/dev/dev-devops.md",
+    "./agents/dev/dev-mobile.md",
+    "./agents/dev/dev-dados.md",
+    "./agents/dev/dev-docs.md",
+    "./agents/qa/qa-unit.md",
+    "./agents/qa/qa-integracao.md",
+    "./agents/qa/qa-e2e.md",
+    "./agents/qa/qa-ui.md",
+    "./agents/qa/qa-regressao.md",
+    "./agents/review/revisor.md",
+    "./agents/review/revisor-seguranca.md",
+    "./agents/review/auditor-de-fatos.md"
   ]
 }

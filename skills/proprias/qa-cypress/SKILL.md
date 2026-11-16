@@ -57,7 +57,7 @@ Testes E2E e de componente que provam critérios de aceite e não quebram à toa
 Instalar dependência pede aprovação do usuário: o Maestro põe a configuração no plano, e a aprovação do plano é a confirmação. São duas tarefas, porque os arquivos do Cypress são do território "testes" e o hook não deixa o Dev gravá-los:
 
 1. **`dev-devops` · instalar**: `npm i -D cypress` (e `cypress-axe axe-core` se houver tarefa de UI) com o gerenciador do projeto; scripts no `package.json`: `"test:e2e": "cypress run"`, `"test:component": "cypress run --component"`; job de E2E no CI, se o projeto tiver CI. Devolve os comandos novos em `observacoes`.
-2. **`qa-e2e` · configurar** (`depende_de` a tarefa 1): copia de `${CLAUDE_PLUGIN_ROOT}/modelos/cypress/` o `cypress.config.ts`, `cypress/support/e2e.ts` e `cypress/support/component.ts`, ajusta `baseUrl` e o `devServer`, e escreve o primeiro teste real.
+2. **`qa-e2e` · configurar** (`depende_de` a tarefa 1): copia de `${CLAUDE_PLUGIN_ROOT}/skills/proprias/qa-cypress/modelos/cypress/` o `cypress.config.ts`, `cypress/support/e2e.ts` e `cypress/support/component.ts`, ajusta `baseUrl` e o `devServer`, e escreve o primeiro teste real.
 3. **Maestro**: atualiza a linha E2E da tabela de comandos do `REGRAS.md` com o que o `dev-devops` devolveu.
 
 Mobile nativo não usa Cypress: use o runner do projeto (Detox ou Maestro).

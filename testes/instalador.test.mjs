@@ -257,13 +257,13 @@ test("grafo versionado pelo projeto não é tocado nem excluído", () => {
   assert.ok(!fs.readFileSync(path.join(repo, ".git", "info", "exclude"), "utf8").includes("graphify-out"));
 });
 
-test("dependências: instala só o que falta e nunca o caveman", () => {
+test("dependências: instala só o que falta, só no projeto (--scope local) e nunca o caveman", () => {
   const passos = planoDependencias({ instalados: ["superpowers@claude-plugins-official"], marketplaces: [], graphify: null, skillGraphify: false, ferramentas: { uv: false, pipx: true } });
   const linhas = passos.map((p) => [p.bin, ...p.args].join(" "));
   assert.deepEqual(linhas, [
-    "claude plugin marketplace add anthropics/claude-plugins-official",
-    "claude plugin install claude-security@claude-plugins-official",
-    "claude plugin install frontend-design@claude-plugins-official",
+    "claude plugin marketplace add anthropics/claude-plugins-official --scope local",
+    "claude plugin install claude-security@claude-plugins-official --scope local",
+    "claude plugin install frontend-design@claude-plugins-official --scope local",
     "pipx install graphifyy",
     "graphify install --platform claude",
   ]);
@@ -275,6 +275,11 @@ test("dependências: tudo instalado não gera passo; graphify antigo é atualiza
   assert.deepEqual(planoDependencias({ instalados: todos, marketplaces: ["claude-plugins-official"], graphify: "9.9.9", skillGraphify: true, ferramentas: {} }), []);
   const p = planoDependencias({ instalados: todos, marketplaces: ["claude-plugins-official"], graphify: "0.1.0", skillGraphify: true, ferramentas: { uv: true } });
   assert.deepEqual(p.map((x) => [x.bin, ...x.args].join(" ")), ["uv tool upgrade graphifyy"]);
+});
+
+test("dependências: escopo user instala global quando pedido", () => {
+  const passos = planoDependencias({ instalados: [], marketplaces: ["claude-plugins-official"], graphify: "9.9.9", skillGraphify: true, ferramentas: {}, escopo: "user" });
+  assert.ok(passos.every((p) => p.args.slice(-2).join(" ") === "--scope user"));
 });
 
 // ---------- correções da revisão da F1 ----------

@@ -210,7 +210,7 @@ kit-agentes/
 ├── modelos/ REGRAS.md · CLAUDE.md · plano.schema.json · territorios.json · cypress/
 ├── instalar.mjs                     # --perfil · --times · --dry-run · --remover · doctor
 ├── testes/                          # node:test
-└── docs/ · modo-deus/PLANO.md
+└── docs/ · docs/PLANO.md
 ```
 
 No projeto (fora do git): `.claude/settings.local.json` e `.modo-deus/{REGRAS.md, plano.json, telemetria/, retro/}`.

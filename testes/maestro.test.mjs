@@ -53,8 +53,8 @@ test("plano: dependência resolve sobreposição de escopo", () => {
 
 // ---------- veredito e auditoria ----------
 test("os exemplos de veredito dos revisores e do auditor seguem o contrato", () => {
-  for (const f of ["agents/revisor.md", "agents/revisor-seguranca.md"]) assert.deepEqual(lerVeredito(ler(f)).erros, [], f);
-  assert.deepEqual(lerAuditoria(ler("agents/auditor-de-fatos.md")).erros, []);
+  for (const f of ["agents/review/revisor.md", "agents/review/revisor-seguranca.md"]) assert.deepEqual(lerVeredito(ler(f)).erros, [], f);
+  assert.deepEqual(lerAuditoria(ler("agents/review/auditor-de-fatos.md")).erros, []);
 });
 
 test("veredito: sem bloco, JSON quebrado, reprovado sem item grave, aprovado com item alto", () => {
@@ -143,7 +143,8 @@ const frontmatter = (f) => {
   }
   return o;
 };
-const agentes = fs.readdirSync(path.join(KIT, "agents")).filter((f) => f.endsWith(".md"));
+// Agentes em subpastas por time (maestro/, dev/, qa/, review/): caminhos relativos a agents/.
+const agentes = fs.readdirSync(path.join(KIT, "agents"), { recursive: true }).map((f) => String(f).replace(/\\/g, "/")).filter((f) => f.endsWith(".md"));
 
 test("todo agente em agents/ existe no kit.json com o mesmo modelo e esforço", () => {
   assert.ok(agentes.length >= 4);
@@ -158,7 +159,7 @@ test("todo agente em agents/ existe no kit.json com o mesmo modelo e esforço", 
 
 test("Revisão é só leitura também nas ferramentas", () => {
   for (const n of ["revisor", "revisor-seguranca", "auditor-de-fatos"]) {
-    const fm = frontmatter(`agents/${n}.md`);
+    const fm = frontmatter(`agents/review/${n}.md`);
     assert.doesNotMatch(fm.tools, /\b(Edit|Write|MultiEdit|NotebookEdit)\b/, n);
     assert.match(fm.disallowedTools, /Edit/, n);
   }
@@ -171,7 +172,7 @@ test("skills pré-carregadas existem no plugin; o Maestro só despacha agentes q
     assert.ok(existentes[plug], `${f}: skill ${s} precisa do prefixo modo-deus: ou superpowers:`);
     assert.ok(existentes[plug].has(nome), `${f}: skill ${s} não existe em ${plug}`);
   }
-  const despacha = frontmatter("agents/maestro.md").tools.match(/Agent\(([^)]*)\)/)[1].split(",").map((x) => x.trim());
+  const despacha = frontmatter("agents/maestro/maestro.md").tools.match(/Agent\(([^)]*)\)/)[1].split(",").map((x) => x.trim());
   const nomes = new Set(agentes.map((f) => frontmatter(`agents/${f}`).name));
   for (const a of despacha) if (a.startsWith("modo-deus:")) assert.ok(nomes.has(a.split(":")[1]), `${a} não existe em agents/`);
 });

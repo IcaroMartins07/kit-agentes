@@ -203,7 +203,7 @@ test("CLI: coletar, proposta e concluir", () => {
 
 // ---------- evals ----------
 test("evals: cada caso tem prompt.md e pelo menos um grader com type válido", () => {
-  const dir = path.join(KIT, "evals");
+  const dir = path.join(KIT, "testes", "evals");
   const casos = [];
   const varrer = (d) => {
     for (const it of fs.readdirSync(d, { withFileTypes: true })) {

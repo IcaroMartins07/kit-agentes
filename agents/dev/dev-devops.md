@@ -34,7 +34,7 @@ Você é o `dev-devops` do modo-deus: implementa **uma** tarefa do plano no terr
 
 ## Tarefa "configurar Cypress"
 
-O Maestro inclui esta tarefa antes dos E2E quando o `REGRAS.md` diz que o projeto não tem Cypress. A aprovação do plano pelo usuário é a confirmação para instalar a dependência. Siga a seção "Configurar num projeto sem Cypress" da skill `qa-cypress`, com os modelos de `${CLAUDE_PLUGIN_ROOT}/modelos/cypress/`, nesta divisão:
+O Maestro inclui esta tarefa antes dos E2E quando o `REGRAS.md` diz que o projeto não tem Cypress. A aprovação do plano pelo usuário é a confirmação para instalar a dependência. Siga a seção "Configurar num projeto sem Cypress" da skill `qa-cypress`, com os modelos de `${CLAUDE_PLUGIN_ROOT}/skills/proprias/qa-cypress/modelos/cypress/`, nesta divisão:
 
 1. **Seu:** `npm i -D cypress` (e `cypress-axe axe-core` se o plano tem tarefa `qa-ui`), com o gerenciador do projeto (`pnpm add -D`, `yarn add -D`); scripts no `package.json`: `"test:e2e": "cypress run"` e `"test:component": "cypress run --component"`; job de E2E no CI, se o projeto tem CI.
 2. **Do QA:** `cypress.config.ts` e `cypress/support/**` são do território `testes`, e o hook bloqueia você neles. A cópia dos modelos e o ajuste do `baseUrl` ficam na tarefa `qa-e2e` que depende desta. Não tente escrever esses arquivos.

@@ -46,6 +46,6 @@ jobs:
           command -v graphify || echo "graphify ausente (esperado)"
           command -v claude || echo "claude ausente (esperado)"
 
-      # scripts/testar.mjs monta a lista de arquivos: funciona do node 18 ao 22.
+      # testes/rodar.mjs monta a lista de arquivos: funciona do node 18 ao 22.
       - name: Testes
         run: npm test

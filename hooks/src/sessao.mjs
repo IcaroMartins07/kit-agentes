@@ -17,7 +17,7 @@ const out = [];
 out.push(`# modo-deus ativo · perfil ${config.perfil} · kit ${kit().versao}`);
 out.push("");
 try {
-  out.push(fs.readFileSync(path.join(KIT, "modelos", "CLAUDE.md"), "utf8").trim());
+  out.push(fs.readFileSync(path.join(KIT, "docs", "modelos", "CLAUDE.md"), "utf8").trim());
 } catch {
   avisos.push("CLAUDE.md base do kit não encontrado; reinstale o plugin.");
 }

@@ -2,8 +2,8 @@
 // Migração do fluxo-agentes (v1) para o modo-deus. Padrão: simulação, nada é alterado.
 //
 // Uso:
-//   node scripts/migrar-v1.mjs --global [--aplicar] [--forcar]   skills globais da v1 (~/.claude/skills)
-//   node scripts/migrar-v1.mjs <caminho> [--aplicar]             parte da v1 dentro de um projeto
+//   node migrar-v1.mjs --global [--aplicar] [--forcar]   skills globais da v1 (~/.claude/skills)
+//   node migrar-v1.mjs <caminho> [--aplicar]             parte da v1 dentro de um projeto
 //
 // Global: remove só as skills listadas em ~/.claude/fluxo-skills.txt que o modo-deus já cobre
 // (plugin, superpowers ou substituta). Exige o plugin modo-deus instalado (ou --forcar).
@@ -17,7 +17,7 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-const KIT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const KIT = path.dirname(fileURLToPath(import.meta.url)); // migrar-v1.mjs fica na raiz do kit
 const kit = JSON.parse(fs.readFileSync(path.join(KIT, "kit.json"), "utf8"));
 const MARCA_INI = "# fluxo-agentes (kit local)";
 const MARCA_FIM = "# /fluxo-agentes";
@@ -258,7 +258,7 @@ if (process.argv[1] && mesmoArquivo(process.argv[1], fileURLToPath(import.meta.u
   } catch (e) {
     if (!(e instanceof ErroUso)) throw e;
     if (e.message) console.error(`erro: ${e.message}`);
-    console.error("uso: node scripts/migrar-v1.mjs --global [--aplicar] [--forcar]\n     node scripts/migrar-v1.mjs <caminho-do-projeto> [--aplicar]");
+    console.error("uso: node migrar-v1.mjs --global [--aplicar] [--forcar]\n     node migrar-v1.mjs <caminho-do-projeto> [--aplicar]");
     process.exitCode = 1;
   }
 }

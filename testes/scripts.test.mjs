@@ -1,4 +1,4 @@
-// scripts/atualizar-terceiros.mjs e scripts/migrar-v1.mjs.
+// skills/atualizar-terceiros.mjs e migrar-v1.mjs.
 // Sem rede: a origem das skills é um repositório git criado no temp. HOME e projetos também são temporários.
 import { test, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
@@ -8,8 +8,8 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { execFileSync, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { atualizar, lerTabela, alteracoesLocais, ErroUso as ErroAtualizar } from "../scripts/atualizar-terceiros.mjs";
-import { migrarGlobal, migrarProjeto, semHooksV1, semBlocoV1, ErroUso as ErroMigrar } from "../scripts/migrar-v1.mjs";
+import { atualizar, lerTabela, alteracoesLocais, ErroUso as ErroAtualizar } from "../skills/atualizar-terceiros.mjs";
+import { migrarGlobal, migrarProjeto, semHooksV1, semBlocoV1, ErroUso as ErroMigrar } from "../migrar-v1.mjs";
 import { instalar } from "../instalar.mjs";
 
 const KIT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -306,7 +306,7 @@ test("migrar-v1 <projeto> --aplicar: remove só a v1, preserva o do usuário e o
 test("migrar-v1 pela linha de comando: passos separados e simulação por padrão", () => {
   montarHomeV1();
   const repo = montarProjetoV1();
-  const cli = (...a) => spawnSync(process.execPath, [path.join(KIT, "scripts", "migrar-v1.mjs"), ...a], { encoding: "utf8", env: { ...process.env } });
+  const cli = (...a) => spawnSync(process.execPath, [path.join(KIT, "migrar-v1.mjs"), ...a], { encoding: "utf8", env: { ...process.env } });
   const antes = arvore(repo);
   const r = cli(repo);
   assert.equal(r.status, 0, r.stderr);

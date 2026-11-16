@@ -6,7 +6,7 @@
     "node": ">=18"
   },
   "scripts": {
-    "test": "node scripts/testar.mjs",
+    "test": "node testes/rodar.mjs",
     "doctor": "node instalar.mjs doctor"
   }
 }

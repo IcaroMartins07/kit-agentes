@@ -23,8 +23,8 @@ Instale o plugin modo-deus pelo marketplace do kit (`/plugin` no Claude Code). C
 Nada é alterado nesta etapa.
 
 ```bash
-node KIT/scripts/migrar-v1.mjs --global
-node KIT/scripts/migrar-v1.mjs /caminho/do/projeto
+node KIT/migrar-v1.mjs --global
+node KIT/migrar-v1.mjs /caminho/do/projeto
 ```
 
 O passo global mostra, para cada skill da v1:
@@ -45,8 +45,8 @@ O passo do projeto lista o que será removido:
 ## 3. Aplicar
 
 ```bash
-node KIT/scripts/migrar-v1.mjs --global --aplicar
-node KIT/scripts/migrar-v1.mjs /caminho/do/projeto --aplicar
+node KIT/migrar-v1.mjs --global --aplicar
+node KIT/migrar-v1.mjs /caminho/do/projeto --aplicar
 ```
 
 O passo do projeto pode ser repetido em cada repositório que usava a v1. Rodar de novo num projeto já migrado não faz nada.
@@ -95,9 +95,9 @@ O backup fica em `~/.claude/modo-deus/backups/migracao-v1-<data>/`:
 Não faz parte da migração, mas usa o mesmo cuidado (simulação primeiro):
 
 ```bash
-node KIT/scripts/atualizar-terceiros.mjs                  # compara o local com o commit pinado de cada pacote
-node KIT/scripts/atualizar-terceiros.mjs --ultimo         # compara com o HEAD remoto
-node KIT/scripts/atualizar-terceiros.mjs --pacote humanizer --commit <sha> --aplicar
+node KIT/skills/atualizar-terceiros.mjs                  # compara o local com o commit pinado de cada pacote
+node KIT/skills/atualizar-terceiros.mjs --ultimo         # compara com o HEAD remoto
+node KIT/skills/atualizar-terceiros.mjs --pacote humanizer --commit <sha> --aplicar
 ```
 
 Com `--aplicar`, a pasta local fica igual à da origem, o commit é atualizado na tabela de `skills/terceiros/README.md` e o script lista as "Alterações locais" que você precisa refazer à mão. Revise com `git diff skills/terceiros` e rode `npm test` antes de commitar.

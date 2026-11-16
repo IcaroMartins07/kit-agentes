@@ -9,7 +9,9 @@ import { contratoDe } from "../hooks/src/plano.mjs";
 const KIT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const kit = JSON.parse(fs.readFileSync(path.join(KIT, "kit.json"), "utf8"));
 const ler = (rel) => fs.readFileSync(path.join(KIT, rel), "utf8");
-const arquivo = (nome) => `agents/${nome}.md`;
+// Cada agente fica na pasta do time: maestro/, dev/, qa/ ou review/.
+const PASTA = { maestro: "maestro", dev: "dev", qa: "qa", revisao: "review" };
+const arquivo = (nome) => `agents/${PASTA[kit.agentes[nome].time]}/${nome}.md`;
 
 // Frontmatter simples: "chave: valor" e listas "  - item".
 const frontmatter = (texto) => {
@@ -121,8 +123,8 @@ test("QA escreve a partir dos critérios, sem ler a implementação, e não corr
 
 test("dev-devops configura Cypress com os modelos do kit; dev-db nunca altera migração aplicada", () => {
   const devops = corpo(ler(arquivo("dev-devops")));
-  assert.match(devops, /\$\{CLAUDE_PLUGIN_ROOT\}\/modelos\/cypress\//);
-  assert.ok(fs.existsSync(path.join(KIT, "modelos", "cypress", "cypress.config.ts")));
+  assert.match(devops, /\$\{CLAUDE_PLUGIN_ROOT\}\/skills\/proprias\/qa-cypress\/modelos\/cypress\//);
+  assert.ok(fs.existsSync(path.join(KIT, "skills", "proprias", "qa-cypress", "modelos", "cypress", "cypress.config.ts")));
   assert.match(corpo(ler(arquivo("dev-db"))), /Migração aplicada nunca é alterada/);
   assert.match(corpo(ler(arquivo("dev-docs"))), /humanizer/);
 });

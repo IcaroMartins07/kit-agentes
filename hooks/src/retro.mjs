@@ -283,7 +283,7 @@ Arquivo: <caminho exato>
 
 ## Plano de eval
 
-- **Caso de regressão:** \`evals/regressao/${data}-<assunto>/\` (prompt.md + graders/) reproduzindo a falha acima.
+- **Caso de regressão:** \`testes/evals/regressao/${data}-<assunto>/\` (prompt.md + graders/) reproduzindo a falha acima.
 - **Antes:** \`claude plugin eval <plugin> --case "${data}-*" --runs 3\` → nota: <...>
 - **Depois:** mesmo comando com o diff aplicado → nota: <...>
 - **Critério:** a nota depois tem de ser maior que antes e nenhum caso existente pode cair. Sem melhora, a proposta é descartada.

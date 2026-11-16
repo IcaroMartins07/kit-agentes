@@ -66,9 +66,9 @@ Preencha: hipótese, alvo (skill, agente, regra de esforço, detector ou `REGRAS
 
 ## 4 · Avaliação antes e depois
 
-As evals ficam em `evals/` do kit, no formato do `claude plugin eval` (veja `evals/README.md`): pasta com `prompt.md` + `graders/*.md`.
+As evals ficam em `testes/evals/` do kit, no formato do `claude plugin eval` (veja `testes/evals/README.md`): pasta com `prompt.md` + `graders/*.md`.
 
-1. Crie o caso de regressão `evals/regressao/<data>-<assunto>/` reproduzindo a falha real: o pedido como o usuário fez, sem citar a skill; graders `regex`/`tool_used`/`file_exists` quando a falha é observável, `llm` com PASS/FAIL concretos para o resto; `tags: [regressao, <skill>]`.
+1. Crie o caso de regressão `testes/evals/regressao/<data>-<assunto>/` reproduzindo a falha real: o pedido como o usuário fez, sem citar a skill; graders `regex`/`tool_used`/`file_exists` quando a falha é observável, `llm` com PASS/FAIL concretos para o resto; `tags: [regressao, <skill>]`.
 2. **Antes:** sem o diff, `claude plugin eval "${CLAUDE_PLUGIN_ROOT}" --case "<data>-<assunto>" --runs 3 --no-publish`. O caso deve falhar ou ter nota baixa; se já passa, o caso não reproduz a falha: reescreva.
 3. **Depois:** aplique o diff numa branch do kit e rode de novo o caso novo e a suíte da skill afetada (`--tag <skill>`).
 4. Melhorou no caso novo e não caiu em nenhum outro → segue. Senão, **descarte**: anote na proposta "descartada: sem melhora (antes X, depois Y)" e reverta a branch.
@@ -89,7 +89,7 @@ No repositório do kit (`${CLAUDE_PLUGIN_ROOT}`; em desenvolvimento, o clone do 
    - `.claude-plugin/plugin.json` → `version`
    - `.claude-plugin/marketplace.json` → `plugins[].version` do modo-deus
 3. Entrada no `CHANGELOG.md`: versão, data, a causa e o caso de regressão.
-4. Commite o diff, o caso em `evals/regressao/` e a versão juntos. `npm test` e `claude plugin validate --strict .` passam antes do commit.
+4. Commite o diff, o caso em `testes/evals/regressao/` e a versão juntos. `npm test` e `claude plugin validate --strict .` passam antes do commit.
 5. Merge e push são do usuário.
 
 Lição de projeto: edite `.modo-deus/REGRAS.md` do projeto (com o sim do usuário) e pare aí.

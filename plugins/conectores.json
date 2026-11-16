@@ -1,0 +1,36 @@
+{
+  "$comentario": "Conectores que o kit usa. `node instalar.mjs dependencias <projeto>` instala só o que falta, por padrão com --scope local (só naquele projeto, nada global). O doctor confere.",
+  "escopo_padrao": "local",
+  "marketplaces": {
+    "claude-plugins-official": "anthropics/claude-plugins-official"
+  },
+  "plugins": [
+    "superpowers@claude-plugins-official",
+    "claude-security@claude-plugins-official",
+    "frontend-design@claude-plugins-official"
+  ],
+  "uso": {
+    "superpowers@claude-plugins-official": "TDD, debugging, planos, verificação, worktrees e escrita de skills: pré-carregadas nos agentes Dev e QA e exigidas pela trava",
+    "claude-security@claude-plugins-official": "varredura profunda de segurança recomendada pelo revisor-seguranca antes do merge",
+    "frontend-design@claude-plugins-official": "direção visual de interface usada pelo dev-front"
+  },
+  "recomendados": {
+    "context7": "MCP de documentação de bibliotecas citado no CLAUDE.md base; instale pelo /mcp se faltar",
+    "playwright": "navegador para exploração e reprodução de bug (playwright-skill do kit já cobre o básico)"
+  },
+  "fora": {
+    "caveman": "coberto pelo ponytail; não instalar",
+    "claude-code-setup": "fora do kit por enquanto"
+  },
+  "graphify": {
+    "$comentario": "Base de mapeamento dos projetos: agentes consultam o grafo antes de varrer arquivos. Grafo de código por AST, sem LLM.",
+    "pacote": "graphifyy",
+    "minimo": "0.9.96",
+    "skill": "graphify",
+    "obrigatorio": true
+  },
+  "cli": {
+    "agent-browser": "opcional",
+    "cypress": "por projeto, com sua confirmação"
+  }
+}

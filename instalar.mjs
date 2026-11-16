@@ -7,7 +7,7 @@
 //   node instalar.mjs [caminho] --statusline       também grava a status line do kit no .claude/settings.local.json
 //   node instalar.mjs --remover [caminho] [--dry-run]
 //   node instalar.mjs doctor [caminho]
-//   node instalar.mjs dependencias [--dry-run]     plugins obrigatórios e graphify (nunca o caveman)
+//   node instalar.mjs dependencias [caminho] [--escopo local|user] [--dry-run]     plugins obrigatórios e graphify (nunca o caveman)
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -17,7 +17,8 @@ import { comandosDe, camposAbertos } from "./hooks/src/comum.mjs";
 
 const KIT = path.dirname(fileURLToPath(import.meta.url));
 const lerJson = (f) => JSON.parse(fs.readFileSync(f, "utf8"));
-const kit = lerJson(path.join(KIT, "kit.json"));
+// Os conectores (plugins, marketplaces, graphify) ficam em plugins/conectores.json; o resto em kit.json.
+const kit = { ...lerJson(path.join(KIT, "kit.json")), dependencias: lerJson(path.join(KIT, "plugins", "conectores.json")) };
 const MARCA_INI = "# modo-deus (kit local)";
 const MARCA_FIM = "# /modo-deus";
 const PASTA = ".modo-deus";
@@ -78,6 +79,10 @@ function args(argv) {
     else if (a === "--remover") o.comando = "remover";
     else if (a === "--dry-run") o.dryRun = true;
     else if (a === "--sem-grafo") o.semGrafo = true;
+    else if (a === "--escopo") {
+      o.escopo = resto.shift();
+      if (!["local", "user"].includes(o.escopo)) throw new ErroUso("--escopo precisa ser local ou user");
+    }
     else if (a === "--statusline") o.statusline = true;
     else if (a === "--perfil") {
       o.perfil = resto.shift();
@@ -196,7 +201,7 @@ function detectar(raiz) {
 
 // ---------- REGRAS.md ----------
 function renderRegras(raiz, d, times) {
-  let t = fs.readFileSync(path.join(KIT, "modelos", "REGRAS.md"), "utf8");
+  let t = fs.readFileSync(path.join(KIT, "docs", "modelos", "REGRAS.md"), "utf8");
   const nome = path.basename(raiz);
   const ph = "`<...>`";
   const bloco = {
@@ -333,7 +338,7 @@ export function instalar(caminho, { perfil = null, times = {}, dryRun = false, s
   } else {
     const s = lerSettings(raiz);
     criouSettings ||= !s.existe;
-    const desejado = { deny: lerJson(path.join(KIT, "modelos", "settings.deny.json")).deny, allow: allowlist(regrasTexto) };
+    const desejado = { deny: lerJson(path.join(KIT, "hooks", "settings.deny.json")).deny, allow: allowlist(regrasTexto) };
     const mudancas = [];
     for (const chave of ["deny", "allow"]) {
       const atual = s.dados.permissions?.[chave] || [];
@@ -496,7 +501,7 @@ export function doctor(caminho, { log = console.log } = {}) {
       if (versionado(raiz, SETTINGS)) aviso(`${SETTINGS} é versionado pelo projeto: o deny-list do kit não foi aplicado; confira as regras de segurança nele`);
       else try { s = lerSettings(raiz); } catch (e) { erro(e.message); }
       if (s) {
-        const deny = lerJson(path.join(KIT, "modelos", "settings.deny.json")).deny;
+        const deny = lerJson(path.join(KIT, "hooks", "settings.deny.json")).deny;
         const faltam = deny.filter((r) => !(s.dados.permissions?.deny || []).includes(r));
         faltam.length ? erro(`deny-list incompleto: faltam ${faltam.length} regra(s)`) : ok("deny-list aplicado");
         const regras = fs.existsSync(path.join(pasta, "REGRAS.md")) ? fs.readFileSync(path.join(pasta, "REGRAS.md"), "utf8") : "";
@@ -527,19 +532,31 @@ export function doctor(caminho, { log = console.log } = {}) {
 }
 
 // Instala o que falta: marketplaces, plugins obrigatórios e graphify. Nunca o que está em dependencias.fora.
-export function planoDependencias({ instalados = null, marketplaces = null, graphify = graphifyVersao(), skillGraphify = null, ferramentas = null } = {}) {
+// escopo "local": marketplace e plugins só no projeto (rodados com cwd no projeto); "user": globais.
+export function planoDependencias({ instalados = null, marketplaces = null, graphify = graphifyVersao(), skillGraphify = null, ferramentas = null, escopo = kit.dependencias.escopo_padrao || "local", projeto = null } = {}) {
   const lerChaves = (f, sub) => { try { const j = lerJson(path.join(home(), ".claude", "plugins", f)); return Object.keys(sub ? j[sub] || {} : j); } catch { return []; } };
-  instalados ??= lerChaves("installed_plugins.json", "plugins");
+  // Instalado vale se for global (user) ou, no escopo local, se for deste projeto.
+  if (!instalados) {
+    instalados = [];
+    try {
+      const todos = lerJson(path.join(home(), ".claude", "plugins", "installed_plugins.json")).plugins || {};
+      const mesmo = (a, b) => !!a && !!b && path.resolve(a).toLowerCase() === path.resolve(b).toLowerCase();
+      for (const [id, entradas] of Object.entries(todos)) {
+        const lista = Array.isArray(entradas) ? entradas : [entradas];
+        if (lista.some((x) => !x?.scope || x.scope === "user" || (escopo === "local" && mesmo(x.projectPath, projeto)))) instalados.push(id);
+      }
+    } catch { /* sem plugins */ }
+  }
   marketplaces ??= lerChaves("known_marketplaces.json");
   skillGraphify ??= fs.existsSync(path.join(home(), ".claude", "skills", kit.dependencias.graphify.skill, "SKILL.md"));
   ferramentas ??= { uv: existeBin("uv"), pipx: existeBin("pipx") };
   const passos = [];
   for (const [nome, repo] of Object.entries(kit.dependencias.marketplaces)) {
-    if (!marketplaces.includes(nome)) passos.push({ descricao: `marketplace ${nome}`, bin: "claude", args: ["plugin", "marketplace", "add", repo] });
+    if (!marketplaces.includes(nome)) passos.push({ descricao: `marketplace ${nome}`, bin: "claude", args: ["plugin", "marketplace", "add", repo, "--scope", escopo] });
   }
   for (const id of kit.dependencias.plugins) {
     if (Object.keys(kit.dependencias.fora).some((f) => id.startsWith(f + "@"))) continue;
-    if (!instalados.includes(id)) passos.push({ descricao: `plugin ${id}`, bin: "claude", args: ["plugin", "install", id] });
+    if (!instalados.includes(id)) passos.push({ descricao: `plugin ${id}`, bin: "claude", args: ["plugin", "install", id, "--scope", escopo] });
   }
   const pacote = kit.dependencias.graphify.pacote;
   if (!graphify || cmpVersao(graphify, kit.dependencias.graphify.minimo) < 0) {
@@ -554,8 +571,11 @@ export function planoDependencias({ instalados = null, marketplaces = null, grap
   return passos;
 }
 
-export function dependencias({ dryRun = false, log = console.log } = {}) {
-  const passos = planoDependencias();
+export function dependencias({ caminho = process.cwd(), escopo = kit.dependencias.escopo_padrao || "local", dryRun = false, log = console.log } = {}) {
+  if (!["local", "user"].includes(escopo)) throw new ErroUso(`escopo inválido: ${escopo} (use local|user)`);
+  const raiz = escopo === "local" ? raizDoRepo(caminho) : process.cwd();
+  log(`escopo   ${escopo}${escopo === "local" ? ` (só em ${raiz})` : " (todas as sessões)"}`);
+  const passos = planoDependencias({ escopo, projeto: raiz });
   if (!passos.length) {
     log("Todas as dependências já estão instaladas.");
     return { falhas: 0, passos };
@@ -565,7 +585,7 @@ export function dependencias({ dryRun = false, log = console.log } = {}) {
     const linha = `${p.bin} ${p.args.join(" ")}`;
     if (dryRun) { log(`[simulação] ${p.descricao}: ${linha}`); continue; }
     log(`...      ${p.descricao}: ${linha}`);
-    const saida = rodar(p.bin, p.args);
+    const saida = rodar(p.bin, p.args, p.bin === "claude" ? raiz : undefined);
     if (saida === null) { falhas++; log(`FALHOU   ${p.descricao}`); }
     else log(`ok       ${p.descricao}`);
   }
@@ -592,7 +612,7 @@ if (process.argv[1] && mesmoArquivo(process.argv[1], fileURLToPath(import.meta.u
   } catch (e) {
     if (!(e instanceof ErroUso)) throw e;
     if (e.message) console.error(`erro: ${e.message}`);
-    console.error("uso: node instalar.mjs [caminho] [--perfil leve|estrito|deus] [--times dev-mobile=ligado,...] [--sem-grafo] [--statusline] [--dry-run]\n     node instalar.mjs --remover [caminho] [--dry-run]\n     node instalar.mjs doctor [caminho]\n     node instalar.mjs dependencias [--dry-run]");
+    console.error("uso: node instalar.mjs [caminho] [--perfil leve|estrito|deus] [--times dev-mobile=ligado,...] [--sem-grafo] [--statusline] [--dry-run]\n     node instalar.mjs --remover [caminho] [--dry-run]\n     node instalar.mjs doctor [caminho]\n     node instalar.mjs dependencias [caminho] [--escopo local|user] [--dry-run]");
     process.exitCode = 1;
   }
 }

@@ -3,9 +3,9 @@
 // Lê a tabela de skills/terceiros/README.md (pacote, origem owner/repo [pasta], commit).
 //
 // Uso:
-//   node scripts/atualizar-terceiros.mjs                         simula: compara o local com o commit pinado
-//   node scripts/atualizar-terceiros.mjs --ultimo                simula contra o HEAD remoto de cada pacote
-//   node scripts/atualizar-terceiros.mjs --pacote humanizer --commit <sha>
+//   node skills/atualizar-terceiros.mjs                         simula: compara o local com o commit pinado
+//   node skills/atualizar-terceiros.mjs --ultimo                simula contra o HEAD remoto de cada pacote
+//   node skills/atualizar-terceiros.mjs --pacote humanizer --commit <sha>
 //   ... --aplicar                                                copia por cima e atualiza o commit na tabela
 // Opções de teste/uso avançado:
 //   --origem <pasta>   usa <pasta>/<owner>/<repo> como repositório de origem (sem rede)
@@ -296,7 +296,7 @@ if (process.argv[1] && mesmoArquivo(process.argv[1], fileURLToPath(import.meta.u
   } catch (e) {
     if (!(e instanceof ErroUso)) throw e;
     if (e.message) console.error(`erro: ${e.message}`);
-    console.error("uso: node scripts/atualizar-terceiros.mjs [--pacote <nome>] [--commit <sha> | --ultimo] [--aplicar] [--origem <pasta>] [--kit <pasta>]");
+    console.error("uso: node skills/atualizar-terceiros.mjs [--pacote <nome>] [--commit <sha> | --ultimo] [--aplicar] [--origem <pasta>] [--kit <pasta>]");
     process.exitCode = 1;
   }
 }
