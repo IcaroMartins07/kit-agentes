@@ -10,7 +10,8 @@ Mods do Claude Code guardados com o kit. Estar aqui não instala nada; o estado 
 | `M4/` | Cache Tax | karanb192/cache-tax | instalado (2.4.2) |
 | `M5/` | Reflect (reflect-mod) | BayramAnnakov/claude-reflect | instalado (3.3.0) |
 | `M6/` | Terminal Browser | zenbu-labs/terminal-browser | não instalado; exige WSL no Windows |
+| `M7/` | Prompt Master | criado no kit | carregado nesta sessão; não instalado |
 
-Do próprio kit, também aqui: `statusline.mjs` (status line do modo-deus, `instalar.mjs --statusline`) e `painel/` (gerador do `/deus-status`).
+Do próprio kit, também aqui: `statusline.mjs` (status line do modo-deus, `instalar.mjs --statusline`), `painel/gerar.mjs` (gerador do `/deus-status`) e `painel/temas/` (mod de temas para os apps: Café, Meia-noite, Floresta, Neon e Papel; `/tema`).
 
 Para atualizar um mod guardado, clone o repositório de origem e copie de novo a pasta do plugin, atualizando o commit no `LEIA.md`.

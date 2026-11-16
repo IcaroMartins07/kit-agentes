@@ -1,0 +1,8 @@
+{
+  "name": "temas",
+  "version": "0.1.0",
+  "description": "Temas para o Claude Code (apps desktop e mobile): Café, Meia-noite, Floresta, Neon e Papel. /tema abre o seletor.",
+  "author": { "name": "kit-agentes" },
+  "types": "./types/index.d.ts",
+  "license": "UNLICENSED"
+}
