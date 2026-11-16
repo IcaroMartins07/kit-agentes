@@ -1,0 +1,8 @@
+{
+  "name": "arvore",
+  "version": "0.1.0",
+  "description": "Árvore de arquivos do projeto ao lado do chat, marcando em tempo real o que o Claude e os subagentes leem, buscam e editam.",
+  "author": { "name": "kit-agentes" },
+  "types": "./types/index.d.ts",
+  "license": "UNLICENSED"
+}

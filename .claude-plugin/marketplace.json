@@ -18,6 +18,13 @@
       "version": "0.1.0",
       "source": "./palco",
       "category": "mod"
+    },
+    {
+      "name": "arvore",
+      "description": "Mod: árvore de arquivos do projeto marcando em tempo real o que o Claude lê, busca e edita.",
+      "version": "0.1.0",
+      "source": "./arvore",
+      "category": "mod"
     }
   ]
 }
