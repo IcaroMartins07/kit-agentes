@@ -11,6 +11,20 @@
       "version": "0.2.0",
       "source": "./",
       "category": "development"
+    },
+    {
+      "name": "temas",
+      "description": "Mod: temas para os apps do Claude Code (Café, Meia-noite, Floresta, Neon, Papel); /tema abre o seletor.",
+      "version": "0.1.0",
+      "source": "./mods/painel/temas",
+      "category": "mod"
+    },
+    {
+      "name": "prompt-master",
+      "description": "Mod: botão Prompt Master ao lado do prompt que reescreve o rascunho para revisão; modo automático opcional.",
+      "version": "0.1.0",
+      "source": "./mods/M7/prompt-master",
+      "category": "mod"
     }
   ]
 }
