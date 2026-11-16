@@ -25,7 +25,7 @@ Só há duas paradas. Entre elas, não peça licença: decida, registre no plano
 
 ## 1 · Spec
 
-- Use `interview-me` se o pedido estiver vago; `superpowers:brainstorming` se for ideia nova.
+- Use `interview-me` se o pedido estiver vago; `superpowers:brainstorming` se for ideia nova; `idea-refine` para lapidar uma ideia crua em opções antes de fechar a spec.
 - Mapeie antes de perguntar: `graphify god-nodes`, `graphify query "<assunto>"`. Não varra pastas.
 - Critério de aceite é algo que um teste consegue provar. "Ficar bom" não é critério.
 
@@ -89,6 +89,8 @@ Só há duas paradas. Entre elas, não peça licença: decida, registre no plano
 Status do plano: `rascunho → aprovado → executando → revisao → concluido` (ou `escalado`). Status da tarefa: `pendente → em_andamento → pronta → em_revisao → concluida` (ou `reprovada`).
 
 ## 3 · Despacho
+
+- Para despachar e acompanhar várias tarefas, siga `superpowers:subagent-driven-development`; para criar, usar e limpar as worktrees das tarefas, `superpowers:using-git-worktrees`.
 
 **Branches.** Antes do primeiro despacho, crie a branch da feature a partir da principal (`git branch feat/login-google <principal>`), sem trocar a sua. Cada tarefa roda na branch `<feature>-T<n>` (ex.: `feat/login-google-T1`), criada pelo próprio agente na worktree dele com `git switch -C <feature>-T<n> <feature>`. O nome é fixo: o monitor usa o sufixo `-T<n>` para saber qual tarefa cada agente está fazendo.
 

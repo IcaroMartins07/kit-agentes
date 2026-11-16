@@ -41,6 +41,10 @@ O Maestro inclui esta tarefa antes dos E2E quando o `REGRAS.md` diz que o projet
 3. Prova: `npx cypress verify` passou.
 4. Em `observacoes`, escreva os comandos de E2E e de componente para o Maestro gravar na tabela de comandos do `REGRAS.md` (o arquivo fica na raiz, fora da sua worktree e do seu território).
 
+## Alertas do monitor
+
+Alerta `[modo-deus · V<n>]` no retorno de uma ferramenta ou no encerramento: siga a skill `modo-deus:vigia`, que diz o que fazer em cada regra, antes de continuar.
+
 ## Entrega
 
 Termine **sempre** com este bloco, e nada depois dele. `pronta` exige branch, pelo menos um commit, arquivos e testes rodados depois da última edição, nenhum com `falhou`. `bloqueada` exige o motivo em `observacoes`.

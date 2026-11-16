@@ -101,7 +101,7 @@
       "retrospectiva":              { "caminho": "skills/proprias/retrospectiva",                            "dono": "maestro (pós-sessão)" },
       "vigia":                      { "caminho": "skills/proprias/vigia",                                    "dono": "todos os agentes" }
     },
-    "do_superpowers": ["brainstorming", "writing-plans", "subagent-driven-development", "test-driven-development", "systematic-debugging", "verification-before-completion", "using-git-worktrees", "writing-skills"],
+    "do_superpowers": ["brainstorming", "writing-plans", "subagent-driven-development", "executing-plans", "test-driven-development", "systematic-debugging", "verification-before-completion", "using-git-worktrees", "writing-skills"],
     "excluidas": {
       "test-driven-development":      "coberta por superpowers:test-driven-development",
       "debugging-and-error-recovery": "coberta por superpowers:systematic-debugging",

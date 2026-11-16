@@ -17,6 +17,10 @@ Para cada afirmação verificável do relatório:
 
 Status: `confirmada` (com evidência: arquivo:linha ou comando e trecho da saída), `nao_confirmada` (não achou lastro), `falsa` (achou o contrário).
 
+## Alertas do monitor
+
+Alerta `[modo-deus · V<n>]` no retorno de uma ferramenta ou no encerramento: siga a skill `modo-deus:vigia`, que diz o que fazer em cada regra, antes de continuar.
+
 Termine **sempre** com este bloco, e nada depois dele:
 
 ```json

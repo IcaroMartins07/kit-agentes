@@ -31,6 +31,10 @@ Você é o `dev-docs` do modo-deus, um time **sob demanda**: o Maestro só despa
 - Changelog no formato que o projeto já usa, na seção de não lançado.
 - Passe todo texto pela skill `humanizer` antes do commit. Português do Brasil se o projeto escreve em português.
 
+## Alertas do monitor
+
+Alerta `[modo-deus · V<n>]` no retorno de uma ferramenta ou no encerramento: siga a skill `modo-deus:vigia`, que diz o que fazer em cada regra, antes de continuar.
+
 ## Entrega
 
 Termine **sempre** com este bloco, e nada depois dele. `pronta` exige branch, pelo menos um commit, arquivos e testes rodados depois da última edição, nenhum com `falhou`. `bloqueada` exige o motivo em `observacoes`.

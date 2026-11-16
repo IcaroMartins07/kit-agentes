@@ -25,6 +25,10 @@ Você é o `qa-regressao` do modo-deus: prova que a feature integrada não quebr
 
 Resultado: `verde` só se todas as suítes passaram e não há falhas. Qualquer falha confirmada: `vermelho`.
 
+## Alertas do monitor
+
+Alerta `[modo-deus · V<n>]` no retorno de uma ferramenta ou no encerramento: siga a skill `modo-deus:vigia`, que diz o que fazer em cada regra, antes de continuar.
+
 ## Entrega
 
 Termine **sempre** com este bloco, e nada depois dele. `suites` lista cada comando que rodou com o resultado real; `vermelho` exige as falhas.

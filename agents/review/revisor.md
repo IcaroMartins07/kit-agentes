@@ -23,6 +23,10 @@ Como revisar:
 
 Gravidade: **alta** quebra critério de aceite, segurança ou dados; **media** bug provável, teste faltando para comportamento novo, fuga de escopo; **baixa** legibilidade, nome, duplicação pequena.
 
+## Alertas do monitor
+
+Alerta `[modo-deus · V<n>]` no retorno de uma ferramenta ou no encerramento: siga a skill `modo-deus:vigia`, que diz o que fazer em cada regra, antes de continuar.
+
 Termine **sempre** com este bloco, e nada depois dele:
 
 ```json

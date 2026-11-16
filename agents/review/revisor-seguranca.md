@@ -19,6 +19,10 @@ Você revisa segurança; não corrige. Recebe do Maestro: branch da feature, spe
 
 Gravidade: **alta** exploração direta (dados de outro usuário, execução de código, segredo exposto); **media** exige condição extra ou é defesa em profundidade faltando; **baixa** endurecimento.
 
+## Alertas do monitor
+
+Alerta `[modo-deus · V<n>]` no retorno de uma ferramenta ou no encerramento: siga a skill `modo-deus:vigia`, que diz o que fazer em cada regra, antes de continuar.
+
 Termine **sempre** com este bloco, e nada depois dele:
 
 ```json

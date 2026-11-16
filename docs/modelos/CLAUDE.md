@@ -150,6 +150,8 @@ O grafo em `graphify-out/` é o mapa do projeto. Consultá-lo custa poucas cente
 
 ## 14. Evidência antes de afirmar
 
+- Alerta `[modo-deus · V<n>]` vindo de um hook: siga a skill `vigia` antes de continuar; não ignore nem contorne.
+
 - Só cite arquivo, linha, função, comando ou resultado que você viu nesta sessão. Se não viu, diga que não verificou.
 - "Pronto" exige ter rodado, depois da última edição, os testes do território e os comandos de lint e tipos do `REGRAS.md`, com o resultado real.
 - Não invente caminhos, APIs, flags nem scripts: busque antes (`Glob`, `Grep`, manifestos).

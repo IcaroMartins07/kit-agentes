@@ -2,6 +2,12 @@
 
 ## [não lançado]
 
+### Reorganização e garantia de uso (2026-11-16)
+- Oito pastas: `skills/`, `mods/`, `plugins/`, `hooks/`, `agents/` (em `maestro/`, `dev/`, `qa/`, `review/`), `docs/`, `commands/`, `testes/`. Agentes listados no `plugin.json` para manter os nomes `modo-deus:<agente>` (confirmado numa sessão real).
+- `plugins/conectores.json` concentra plugins, marketplaces e graphify; `instalar.mjs dependencias <projeto>` instala com `--scope local` (só no projeto) por padrão, `--escopo user` para global.
+- Auditoria de uso: `idea-refine`, `playwright-skill`, `vigia`, `superpowers:subagent-driven-development`, `superpowers:using-git-worktrees`, `superpowers:executing-plans` e o plugin `frontend-design` estavam declarados sem ninguém usar; agora estão ligados ao Maestro, ao `/build`, ao `dev-front`, aos QAs de tela e a todos os agentes (alertas do monitor).
+- `testes/uso.test.mjs`: prova que toda skill, skill do superpowers, conector, mod e módulo de hook é usado, e que a trava cobra cada skill de construção e de PR e o contrato cobra todo agente que entrega.
+
 ### Integração F4–F7 (2026-11-15)
 - As quatro fases foram feitas em paralelo por subagentes, cada um na própria worktree e branch (`fase/f4-times`, `fase/f5-monitor`, `fase/f6-retro`, `fase/f7-integracao`), e integradas em `fases/integracao` sem conflito de merge.
 - Ajustes da integração: skills `retrospectiva` e `vigia` registradas no plugin; `qa-cypress` alinhada às duas tarefas de configuração; cache da trava movido para `.claude/modo-deus/cache/` (nenhum hook escreve fora da pasta do kit); corte `retro/ULTIMA.json` para o Stop não recriar a retro pendente com ocorrências já analisadas; `npm test` via `scripts/testar.mjs` (node 18–22); teste do plugin pula sem o CLI em Windows pt-BR.
