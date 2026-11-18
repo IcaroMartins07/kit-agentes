@@ -176,3 +176,29 @@ test("skills pré-carregadas existem no plugin; o Maestro só despacha agentes q
   const nomes = new Set(agentes.map((f) => frontmatter(`agents/${f}`).name));
   for (const a of despacha) if (a.startsWith("modo-deus:")) assert.ok(nomes.has(a.split(":")[1]), `${a} não existe em agents/`);
 });
+
+test("plano: critério com Dev e QA em paralelo exige contrato; contrato malformado é recusado", () => {
+  let p = exemplo();
+  delete p.spec.criterios_aceite[0].contrato;
+  assert.ok(validarPlano(p).some((e) => e.includes("CA1") && e.includes("contrato")));
+  p = exemplo();
+  p.spec.criterios_aceite[0].contrato = { ids_teste: "login-google" };
+  assert.ok(validarPlano(p).some((e) => e.includes("ids_teste")));
+  p = exemplo();
+  p.spec.criterios_aceite[0].contrato = {};
+  assert.ok(validarPlano(p).some((e) => e.includes("CA1")));
+});
+
+test("plano: em andamento de antes da regra do contrato continua válido; plano novo exige, mesmo gravado como aprovado", () => {
+  const p = exemplo();
+  for (const c of p.spec.criterios_aceite) delete c.contrato;
+  assert.ok(validarPlano(p).some((e) => e.includes("contrato")), "rascunho sem contrato deveria ser recusado");
+  p.status = "aprovado";
+  p.aprovado_em = "2026-11-10";
+  assert.ok(validarPlano(p).some((e) => e.includes("contrato")), "plano novo gravado direto como aprovado também precisa de contrato");
+  p.tarefas[0].status = "em_andamento";
+  for (const status of ["aprovado", "executando", "revisao"]) {
+    p.status = status;
+    assert.deepEqual(validarPlano(p), [], status);
+  }
+});

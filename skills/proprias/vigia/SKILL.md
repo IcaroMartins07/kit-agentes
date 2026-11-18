@@ -28,6 +28,7 @@ Regra geral: não discuta com o alerta nem tente contorná-lo (outro caminho, Ba
 | **V9** ação perigosa | push forçado, deploy, segredo… | Não contorne. Peça ao usuário. | Leve ao usuário. |
 | **V10** teste moldado ao código | QA lendo a implementação da tarefa antes de escrever o teste | Feche o arquivo. Escreva o teste a partir dos critérios de aceite da spec; leia a implementação só depois, para depurar falha. | Nada, se o teste nasceu do critério; senão peça outro QA. |
 | **V11** esforço errado | tarefa `simples` reprovada na revisão ou que estourou o teto | — | Reclassifique como complexa (`esforco: high`). A retro usa o registro para recalibrar a lista de `complexidade` do kit. |
+| **V12** dependência sem auditoria | entrega `pronta` muda manifesto ou lockfile e o agente não rodou auditoria | Rode o comando Auditoria do `REGRAS.md`, cite o resultado em `testes` e trate vulnerabilidade alta nova antes de entregar. | Sem comando de auditoria no `REGRAS.md`? Peça ao usuário para completar. |
 
 ## Onde ver
 

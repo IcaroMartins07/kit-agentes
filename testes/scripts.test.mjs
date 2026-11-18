@@ -1,4 +1,4 @@
-// skills/atualizar-terceiros.mjs e migrar-v1.mjs.
+// skills/atualizar-terceiros.mjs.
 // Sem rede: a origem das skills é um repositório git criado no temp. HOME e projetos também são temporários.
 import { test, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
@@ -6,11 +6,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import crypto from "node:crypto";
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { atualizar, lerTabela, alteracoesLocais, ErroUso as ErroAtualizar } from "../skills/atualizar-terceiros.mjs";
-import { migrarGlobal, migrarProjeto, semHooksV1, semBlocoV1, ErroUso as ErroMigrar } from "../migrar-v1.mjs";
-import { instalar } from "../instalar.mjs";
 
 const KIT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const silencio = () => {};
@@ -167,153 +165,4 @@ test("atualizar-terceiros: --commit de um pacote só; erro de origem não derrub
   const r2 = atualizar({ kitDir: m.kitDir, origem: m.origem, log: silencio });
   assert.ok(r2.find((r) => r.entrada.pacote === "pacote-b").erro);
   assert.ok(!r2.find((r) => r.entrada.pacote === "pacote-a").erro);
-});
-
-// ================= migrar-v1 =================
-
-const V1_SKILLS = ["humanizer", "interview-me", "test-driven-development", "using-agent-skills", "skill-orfa"];
-function montarHomeV1({ plugin = true } = {}) {
-  const claude = path.join(process.env.MODO_DEUS_HOME, ".claude");
-  for (const s of [...V1_SKILLS, "minha-skill", "graphify"]) escrever(path.join(claude, "skills", s, "SKILL.md"), `---\nname: ${s}\n---\n`);
-  escrever(path.join(claude, "fluxo-skills.txt"), V1_SKILLS.join("\n") + "\n");
-  escrever(path.join(claude, "settings.json"), "{ \"hooks\": {} }\n");
-  if (plugin) escrever(path.join(claude, "plugins", "installed_plugins.json"), JSON.stringify({ version: 2, plugins: { "modo-deus@modo-deus": [{ scope: "user" }] } }));
-  return claude;
-}
-
-const HOOK_V1 = (s) => ({ type: "command", command: `bash "$CLAUDE_PROJECT_DIR/.claude/fluxo/hooks/${s}"` });
-const SETTINGS_V1 = {
-  permissions: { allow: ["Bash(ls)"] },
-  hooks: {
-    SessionStart: [{ hooks: [HOOK_V1("checar-skills.sh")] }, { hooks: [{ type: "command", command: "node meu-hook.js" }] }],
-    UserPromptSubmit: [{ hooks: [HOOK_V1("orquestrar.sh")] }],
-    PreToolUse: [{ matcher: "Edit|Write|MultiEdit|NotebookEdit|Bash", hooks: [HOOK_V1("exigir-skill.sh"), { type: "command", command: "node guarda.js" }] }],
-  },
-};
-const EXCLUDE_V1 = "# git ls-files --others --exclude-from=.git/info/exclude\nmeu-local.txt\n\n# fluxo-agentes (kit local)\n.claude/fluxo/\n.claude/settings.local.json\n.claude/commands/build.md\n.claude/commands/spec.md\n# /fluxo-agentes\noutra-coisa/\n";
-
-function montarProjetoV1() {
-  const repo = path.join(tmp, "projeto");
-  fs.mkdirSync(repo);
-  git(repo, "init", "-q");
-  escrever(path.join(repo, "package.json"), "{}\n");
-  escrever(path.join(repo, ".claude", "commands", "versionado.md"), "do projeto\n");
-  commitar(repo, "init");
-  escrever(path.join(repo, ".claude", "fluxo", "hooks", "exigir-skill.sh"), "#!/bin/bash\n");
-  escrever(path.join(repo, ".claude", "fluxo", "REGRAS.md"), "# Regras preenchidas\n");
-  escrever(path.join(repo, ".claude", "fluxo", "instalados.txt"), ".claude/commands/build.md\n.claude/commands/spec.md\n.claude/commands/versionado.md\n../fora.md\n");
-  escrever(path.join(repo, ".claude", "commands", "build.md"), "v1\n");
-  escrever(path.join(repo, ".claude", "commands", "spec.md"), "v1\n");
-  escrever(path.join(repo, ".claude", "commands", "meu.md"), "do usuário\n");
-  escrever(path.join(repo, ".claude", "settings.local.json"), JSON.stringify(SETTINGS_V1, null, 2) + "\n");
-  escrever(path.join(repo, ".git", "info", "exclude"), EXCLUDE_V1);
-  return repo;
-}
-
-test("migrar-v1: funções puras tiram só o que é da v1", () => {
-  const { dados, removidos } = semHooksV1(SETTINGS_V1);
-  assert.equal(removidos, 3);
-  assert.deepEqual(dados, {
-    permissions: { allow: ["Bash(ls)"] },
-    hooks: {
-      SessionStart: [{ hooks: [{ type: "command", command: "node meu-hook.js" }] }],
-      PreToolUse: [{ matcher: "Edit|Write|MultiEdit|NotebookEdit|Bash", hooks: [{ type: "command", command: "node guarda.js" }] }],
-    },
-  });
-  assert.deepEqual(semBlocoV1(EXCLUDE_V1), { achou: true, texto: "# git ls-files --others --exclude-from=.git/info/exclude\nmeu-local.txt\n\noutra-coisa/\n" });
-  assert.equal(semBlocoV1("a\n").achou, false);
-});
-
-test("migrar-v1: simulação (global e projeto) não altera nada", () => {
-  const claude = montarHomeV1();
-  const repo = montarProjetoV1();
-  const antesHome = arvore(process.env.MODO_DEUS_HOME);
-  const antesRepo = arvore(repo);
-  const log = [];
-  const g = migrarGlobal({ log: (l) => log.push(l) });
-  assert.deepEqual(g.removidas.sort(), ["humanizer", "interview-me", "test-driven-development", "using-agent-skills"]);
-  assert.deepEqual(g.mantidas, ["skill-orfa"]);
-  assert.equal(g.backup, null);
-  const p = migrarProjeto(repo, { log: (l) => log.push(l) });
-  assert.equal(p.itens.length, 5, p.itens.join("\n")); // pasta, 2 comandos, settings, exclude
-  assert.equal(p.backup, null);
-  assert.deepEqual(arvore(process.env.MODO_DEUS_HOME), antesHome);
-  assert.deepEqual(arvore(repo), antesRepo);
-  assert.ok(fs.existsSync(path.join(claude, "skills", "humanizer")));
-  assert.ok(log.some((l) => /pulado\s+\.claude\/commands\/versionado\.md/.test(l)));
-  assert.ok(log.some((l) => /instalar\.mjs/.test(l)));
-});
-
-test("migrar-v1 --global --aplicar: exige o plugin, faz backup e remove só as skills cobertas", () => {
-  const claude = montarHomeV1({ plugin: false });
-  const antes = arvore(process.env.MODO_DEUS_HOME);
-  assert.throws(() => migrarGlobal({ aplicar: true, log: silencio }), ErroMigrar);
-  assert.deepEqual(arvore(process.env.MODO_DEUS_HOME), antes, "recusa não pode deixar nada pela metade");
-
-  escrever(path.join(claude, "plugins", "installed_plugins.json"), JSON.stringify({ version: 2, plugins: { "modo-deus@local": [{}] } }));
-  const settingsAntes = fs.readFileSync(path.join(claude, "settings.json"));
-  const g = migrarGlobal({ aplicar: true, log: silencio });
-  for (const s of ["humanizer", "interview-me", "test-driven-development", "using-agent-skills"]) {
-    assert.ok(!fs.existsSync(path.join(claude, "skills", s)), s);
-    assert.ok(fs.existsSync(path.join(g.backup, "global", "skills", s, "SKILL.md")), `backup de ${s}`);
-  }
-  for (const s of ["skill-orfa", "minha-skill", "graphify"]) assert.ok(fs.existsSync(path.join(claude, "skills", s)), s);
-  assert.equal(ler(path.join(claude, "fluxo-skills.txt")), "skill-orfa\n");
-  assert.equal(ler(path.join(g.backup, "global", "fluxo-skills.txt")), V1_SKILLS.join("\n") + "\n");
-  assert.ok(g.backup.startsWith(path.join(claude, "modo-deus", "backups", "migracao-v1-")));
-  assert.ok(fs.readFileSync(path.join(claude, "settings.json")).equals(settingsAntes));
-});
-
-test("migrar-v1 <projeto> --aplicar: remove só a v1, preserva o do usuário e o kit v2 instala em seguida", () => {
-  montarHomeV1();
-  const repo = montarProjetoV1();
-  const p = migrarProjeto(repo, { aplicar: true, log: silencio });
-  assert.ok(!fs.existsSync(path.join(repo, ".claude", "fluxo")));
-  assert.ok(!fs.existsSync(path.join(repo, ".claude", "commands", "build.md")));
-  assert.ok(!fs.existsSync(path.join(repo, ".claude", "commands", "spec.md")));
-  assert.equal(ler(path.join(repo, ".claude", "commands", "meu.md")), "do usuário\n");
-  assert.equal(ler(path.join(repo, ".claude", "commands", "versionado.md")), "do projeto\n");
-  assert.ok(!fs.existsSync(path.join(tmp, "fora.md")));
-  const s = JSON.parse(ler(path.join(repo, ".claude", "settings.local.json")));
-  assert.deepEqual(s.permissions, { allow: ["Bash(ls)"] });
-  assert.deepEqual(Object.keys(s.hooks).sort(), ["PreToolUse", "SessionStart"]);
-  assert.doesNotMatch(JSON.stringify(s), /\.claude\/fluxo/);
-  assert.match(JSON.stringify(s), /meu-hook\.js/);
-  assert.match(JSON.stringify(s), /guarda\.js/);
-  assert.equal(ler(path.join(repo, ".git", "info", "exclude")), "# git ls-files --others --exclude-from=.git/info/exclude\nmeu-local.txt\n\noutra-coisa/\n");
-
-  // backup completo
-  assert.ok(p.backup.startsWith(path.join(process.env.MODO_DEUS_HOME, ".claude", "modo-deus", "backups", "migracao-v1-")));
-  assert.equal(ler(path.join(p.backup, "fluxo", "REGRAS.md")), "# Regras preenchidas\n");
-  assert.equal(ler(path.join(p.backup, "commands", "build.md")), "v1\n");
-  assert.deepEqual(JSON.parse(ler(path.join(p.backup, "settings.local.json"))), SETTINGS_V1);
-  assert.equal(ler(path.join(p.backup, "exclude")), EXCLUDE_V1);
-
-  // Rodar de novo: nada a fazer.
-  assert.equal(migrarProjeto(repo, { aplicar: true, log: silencio }).itens.length, 0);
-
-  // Kit v2 entra por cima sem perder as entradas do usuário.
-  instalar(repo, { semGrafo: true, log: silencio });
-  const s2 = JSON.parse(ler(path.join(repo, ".claude", "settings.local.json")));
-  assert.match(JSON.stringify(s2.hooks), /meu-hook\.js/);
-  assert.ok(s2.permissions.allow.includes("Bash(ls)"));
-  const exc = ler(path.join(repo, ".git", "info", "exclude"));
-  assert.match(exc, /^meu-local\.txt$/m);
-  assert.match(exc, /^# modo-deus \(kit local\)$/m);
-  assert.doesNotMatch(exc, /fluxo-agentes/);
-});
-
-test("migrar-v1 pela linha de comando: passos separados e simulação por padrão", () => {
-  montarHomeV1();
-  const repo = montarProjetoV1();
-  const cli = (...a) => spawnSync(process.execPath, [path.join(KIT, "migrar-v1.mjs"), ...a], { encoding: "utf8", env: { ...process.env } });
-  const antes = arvore(repo);
-  const r = cli(repo);
-  assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /\[simulação\] backup/);
-  assert.deepEqual(arvore(repo), antes);
-  assert.equal(cli().status, 1);
-  assert.equal(cli("--global", repo).status, 1);
-  assert.match(cli("--global").stdout, /remover\s+~\/\.claude\/skills\/humanizer/);
-  assert.equal(cli(path.join(tmp, "nao-existe")).status, 1);
 });

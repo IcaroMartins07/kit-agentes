@@ -1,0 +1,8 @@
+{
+  "name": "temas",
+  "version": "0.7.0",
+  "description": "Temas para o Claude Code (apps desktop e mobile): Dunas (padrão: o visual do mockup, cores quentes, a cena Dither Dunes Night e vidro fosco), Kit, Café, Meia-noite, Floresta, Neon e Papel. /tema abre o seletor.",
+  "author": { "name": "kit-agentes" },
+  "types": "./types/index.d.ts",
+  "license": "MIT"
+}

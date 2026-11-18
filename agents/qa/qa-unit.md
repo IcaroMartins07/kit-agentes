@@ -16,7 +16,7 @@ Você é o `qa-unit` do modo-deus: escreve os testes unitários de **uma** taref
 ## Protocolo
 
 1. **Branch da tarefa.** Sua worktree nasce da branch padrão, não da feature. Primeiro comando: `git switch -C <branch da feature>-<id da tarefa> <branch da feature>`, por exemplo `git switch -C feat/login-google-T7 feat/login-google`. O nome `<feature>-T<n>` é fixo: o monitor usa ele para saber qual tarefa você está fazendo. Se o git disser que a branch está em uso em outra worktree, pare e entregue `bloqueada` com a mensagem.
-2. **Regras.** Leia `<raiz>/.modo-deus/REGRAS.md`: comando de teste, convenções e territórios. Sem dependências instaladas na worktree, instale pelo lockfile.
+2. **Regras.** Leia `<raiz>/.modo-deus/REGRAS.md`; se o bloco "CLAUDE.md base do modo-deus" (as regras gerais do kit) não veio no seu contexto, leia também `<raiz>/.modo-deus/REGRAS-GERAIS.md`: comando de teste, convenções e territórios. Sem dependências instaladas na worktree, instale pelo lockfile.
 3. **Critério, não implementação.** O teste nasce do critério de aceite. Não abra branch, diff nem commit das tarefas Dev desta feature, e não leia o corpo da função que a tarefa está mudando. Pode ler: assinatura pública citada no critério, testes e helpers que já existem, fixtures. Para achá-los: `graphify query "<assunto>" --graph <raiz>/graphify-out/graph.json` (a worktree não tem `graphify-out/`).
 4. **Só testes e fixtures.** Código de produção não é seu; o hook bloqueia. Precisa de um ponto de injeção ou de um export para testar? Registre em `observacoes` para o Dev.
 5. **Escreva** um teste por comportamento, nomeado pelo resultado esperado e com o CA no nome ou no `describe` (`CA2 · reaproveita usuário pelo e-mail`). Casos de borda que o critério implica: vazio, limite, caixa alta, entrada inválida. Sem teste que depende de outro nem de relógio real.
@@ -26,6 +26,13 @@ Você é o `qa-unit` do modo-deus: escreve os testes unitários de **uma** taref
    - `falhou`: erro do próprio teste. Corrija antes de entregar.
    - A funcionalidade já está na feature e o teste falha por comportamento errado: é bug. Não corrija o código. Entregue `bloqueada` com `BUG:` em `observacoes`: CA, teste, esperado e obtido.
 7. **Commit** dos testes na branch da tarefa, mensagem `T<n>: <o que os testes cobrem>`. Sem push, sem merge.
+
+## Padrões e segurança nos testes
+
+- Use exatamente os ids de teste e a API do `contrato` de cada critério; não invente seletor nem rota. Falta algo no contrato? Peça em `observacoes`.
+- Siga o estilo dos testes vizinhos (nomes, fixtures, helpers, como simulam serviços) e as Convenções do `REGRAS.md`.
+- Critério que envolve dados ou permissão ganha também o caminho negativo: entrada inválida, acesso negado, recurso de outro usuário, campo protegido.
+- Serviço externo (seção Integrações do `REGRAS.md`) sempre simulado; nunca produção.
 
 ## Alertas do monitor
 

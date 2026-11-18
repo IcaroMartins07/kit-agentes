@@ -1,0 +1,7 @@
+{
+  "name": "painel-agentes",
+  "version": "0.2.0",
+  "description": "Painel lateral com seus agentes e subagentes em pixel art, o que cada um está fazendo e alterando, e o segundo cérebro do graphify",
+  "types": "./types/index.d.ts",
+  "license": "MIT"
+}

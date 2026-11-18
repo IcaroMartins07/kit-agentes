@@ -17,8 +17,8 @@ import { comandosDe, camposAbertos } from "./hooks/src/comum.mjs";
 
 const KIT = path.dirname(fileURLToPath(import.meta.url));
 const lerJson = (f) => JSON.parse(fs.readFileSync(f, "utf8"));
-// Os conectores (plugins, marketplaces, graphify) ficam em plugins/conectores.json; o resto em kit.json.
-const kit = { ...lerJson(path.join(KIT, "kit.json")), dependencias: lerJson(path.join(KIT, "plugins", "conectores.json")) };
+// Os conectores (plugins, marketplaces, graphify) ficam em hooks/conectores.json; o resto em kit.json.
+const kit = { ...lerJson(path.join(KIT, "kit.json")), dependencias: lerJson(path.join(KIT, "hooks", "conectores.json")) };
 const MARCA_INI = "# modo-deus (kit local)";
 const MARCA_FIM = "# /modo-deus";
 const PASTA = ".modo-deus";
@@ -149,8 +149,40 @@ function condicaoOk(raiz, c) {
 }
 
 // ---------- detecção do projeto ----------
+// Serviços externos reconhecidos pela dependência (prefixo de pacote vale para escopos, ex.: @aws-sdk/...).
+const INTEGRACOES_NODE = [
+  ["stripe", "Stripe (pagamento)"], ["@stripe", "Stripe (pagamento)"], ["@aws-sdk", "AWS SDK"], ["aws-sdk", "AWS SDK"],
+  ["firebase", "Firebase"], ["firebase-admin", "Firebase Admin"], ["@supabase/supabase-js", "Supabase"], ["openai", "OpenAI API"],
+  ["@anthropic-ai/sdk", "Anthropic API"], ["@sentry", "Sentry (erros)"], ["next-auth", "NextAuth (autenticação)"], ["@auth/core", "Auth.js (autenticação)"],
+  ["@clerk", "Clerk (autenticação)"], ["resend", "Resend (e-mail)"], ["nodemailer", "SMTP via Nodemailer"], ["@sendgrid", "SendGrid (e-mail)"],
+  ["twilio", "Twilio (SMS)"], ["redis", "Redis"], ["ioredis", "Redis"], ["bullmq", "BullMQ (fila)"], ["kafkajs", "Kafka"], ["amqplib", "RabbitMQ"],
+  ["mongoose", "MongoDB"], ["mongodb", "MongoDB"], ["pg", "PostgreSQL"], ["mysql2", "MySQL"], ["@prisma/client", "Prisma (banco)"],
+  ["@google-cloud", "Google Cloud"], ["googleapis", "APIs do Google"], ["posthog-js", "PostHog (analytics)"], ["@vercel/analytics", "Vercel Analytics"],
+]
+const INTEGRACOES_PY = [
+  ["boto3", "AWS SDK"], ["stripe", "Stripe (pagamento)"], ["openai", "OpenAI API"], ["anthropic", "Anthropic API"], ["sentry-sdk", "Sentry (erros)"],
+  ["redis", "Redis"], ["celery", "Celery (fila)"], ["psycopg", "PostgreSQL"], ["psycopg2", "PostgreSQL"], ["sqlalchemy", "SQLAlchemy (banco)"],
+  ["firebase-admin", "Firebase Admin"], ["supabase", "Supabase"], ["pymongo", "MongoDB"], ["requests", "HTTP (requests)"], ["httpx", "HTTP (httpx)"],
+]
+// Configs que dizem o padrão de código do projeto.
+const CONFIGS = [
+  [["eslint.config.js", "eslint.config.mjs", "eslint.config.cjs", "eslint.config.ts", ".eslintrc", ".eslintrc.js", ".eslintrc.cjs", ".eslintrc.json", ".eslintrc.yml"], "Lint: ESLint"],
+  [[".prettierrc", ".prettierrc.json", ".prettierrc.js", ".prettierrc.cjs", ".prettierrc.yml", "prettier.config.js", "prettier.config.mjs"], "Formatação: Prettier"],
+  [["biome.json", "biome.jsonc"], "Lint e formatação: Biome"],
+  [[".editorconfig"], "Editor: EditorConfig"],
+  [["ruff.toml", ".ruff.toml"], "Lint e formatação: Ruff"],
+  [[".flake8"], "Lint: flake8"],
+  [[".golangci.yml", ".golangci.yaml"], "Lint: golangci-lint"],
+  [["rustfmt.toml", ".rustfmt.toml"], "Formatação: rustfmt"],
+  [["analysis_options.yaml"], "Lint: Dart analyzer"],
+  [[".stylelintrc", ".stylelintrc.json", "stylelint.config.js"], "Lint de CSS: Stylelint"],
+]
+// Comandos que muitos projetos não têm: sem detecção, viram pendência assumida, não aviso.
+const OPCIONAIS = new Set(["Desempenho", "Segredos"])
+const existeAlgum = (raiz, nomes) => nomes.some((n) => fs.existsSync(path.join(raiz, n)))
+
 function detectar(raiz) {
-  const d = { stack: [], comandos: {}, territorios: {}, sobDemanda: {}, cypress: false, runner: null, manifestos: [] };
+  const d = { stack: [], comandos: {}, territorios: {}, sobDemanda: {}, cypress: false, runner: null, manifestos: [], convencoes: [], integracoes: [] };
   const existe = (f) => fs.existsSync(path.join(raiz, f));
   let pkg = null;
   if (existe("package.json")) {
@@ -176,7 +208,13 @@ function detectar(raiz) {
       Tipos: rodar(achar("typecheck", "type-check", "types", "tsc", "check-types")),
       Build: rodar(achar("build")),
       E2E: rodar(achar("test:e2e", "e2e", "cypress:run", "cy:run")),
+      Desempenho: rodar(achar("perf", "bench", "benchmark", "lighthouse", "test:perf")),
+      Segredos: rodar(achar("secrets", "gitleaks", "scan:secrets")),
+      Auditoria: s.audit ? rodar("audit") : pm === "bun" ? null : pm === "yarn" ? "yarn npm audit" : `${pm} audit`,
     };
+    for (const [dep, nome] of INTEGRACOES_NODE) if (Object.keys(deps).some((k) => k === dep || k.startsWith(dep + "/"))) d.integracoes.push(nome);
+    if (deps.husky || deps["lint-staged"]) d.convencoes.push("Hooks de commit: " + ["husky", "lint-staged"].filter((n) => deps[n]).join(" + "));
+    if (deps["@commitlint/cli"] || existeAlgum(raiz, ["commitlint.config.js", "commitlint.config.cjs", "commitlint.config.mjs", "commitlint.config.ts", ".commitlintrc", ".commitlintrc.json"])) d.convencoes.push("Commits: Conventional Commits (commitlint)");
     d.cypress = !!deps.cypress;
     d.runner = deps.vitest ? "Vitest" : deps.jest ? "Jest" : null;
   }
@@ -187,6 +225,32 @@ function detectar(raiz) {
     }
   }
   if (!d.runner && (existe("pytest.ini") || existe("conftest.py"))) d.runner = "pytest";
+  // Python: integrações e auditoria pelo texto dos manifestos.
+  const py = ["pyproject.toml", "requirements.txt"].filter(existe).map((f) => fs.readFileSync(path.join(raiz, f), "utf8").toLowerCase()).join("\n");
+  if (py) {
+    for (const [dep, nome] of INTEGRACOES_PY) if (new RegExp(`(^|[\\s"'])${dep}([\\s=<>~\\[;"']|$)`, "m").test(py)) d.integracoes.push(nome);
+    if (/pip-audit/.test(py)) d.comandos.Auditoria ||= "pip-audit";
+    if (/\[tool\.ruff/.test(py)) d.convencoes.push("Lint e formatação: Ruff (pyproject.toml)");
+    if (/\[tool\.black/.test(py)) d.convencoes.push("Formatação: Black (pyproject.toml)");
+    if (/\[tool\.mypy/.test(py)) d.convencoes.push("Tipos: mypy (pyproject.toml)");
+  }
+  for (const [nomes, texto] of CONFIGS) {
+    const achado = nomes.find((n) => existe(n));
+    if (achado) d.convencoes.push(`${texto} (${achado})`);
+  }
+  if (pkg?.prettier && !d.convencoes.some((c) => c.startsWith("Formatação: Prettier"))) d.convencoes.push("Formatação: Prettier (package.json)");
+  try {
+    const ts = fs.readFileSync(path.join(raiz, "tsconfig.json"), "utf8");
+    if (/"strict"\s*:\s*true/.test(ts)) d.convencoes.push("TypeScript em modo strict (tsconfig.json)");
+  } catch { /* sem tsconfig */ }
+  // Variáveis de ambiente: só os nomes do .env.example (nunca valores, nunca o .env de verdade).
+  for (const f of [".env.example", ".env.sample", ".env.template"]) {
+    if (!existe(f)) continue;
+    const nomes = fs.readFileSync(path.join(raiz, f), "utf8").split(/\r?\n/).map((l) => /^\s*(?:export\s+)?([A-Z][A-Z0-9_]*)\s*=/.exec(l)?.[1]).filter(Boolean);
+    if (nomes.length) d.integracoes.push(`Variáveis de ambiente (${f}): ${nomes.slice(0, 30).map((n) => "`" + n + "`").join(", ")}${nomes.length > 30 ? "…" : ""}`);
+    break;
+  }
+  d.integracoes = [...new Set(d.integracoes)];
   d.cypress ||= fs.readdirSync(raiz).some((n) => /^cypress\.config\./.test(n));
 
   for (const [t, padroes] of Object.entries(kit.territorios)) {
@@ -210,7 +274,7 @@ function renderRegras(raiz, d, times) {
       : "- Linguagem e versão: <ex.: TypeScript 5.x, Node 22>\n- Framework: <ex.: Next.js 15>\n- Banco: <ex.: PostgreSQL via Supabase>\n- Confirme versões em: <package.json, pyproject.toml...>",
     comandos:
       "| Ação | Comando |\n|---|---|\n" +
-      ["Instalar", "Rodar local", "Testes", "Lint", "Tipos", "Build", "E2E"].map((a) => `| ${a} | ${d.comandos[a] ? "`" + d.comandos[a] + "`" : ph} |`).join("\n"),
+      ["Instalar", "Rodar local", "Testes", "Lint", "Tipos", "Build", "E2E", "Auditoria", "Desempenho", "Segredos"].map((a) => `| ${a} | ${d.comandos[a] ? "`" + d.comandos[a] + "`" : OPCIONAIS.has(a) ? "<a definir>" : ph} |`).join("\n"),
     times:
       "| Time | Modo | Detectado no projeto |\n|---|---|---|\n" +
       Object.keys(kit.sinais_sob_demanda).map((tm) => `| ${tm} | ${times[tm] || "auto"} | ${d.sobDemanda[tm] ? "sim" : "não"} |`).join("\n"),
@@ -221,6 +285,8 @@ function renderRegras(raiz, d, times) {
         return `- **${tm}**: ${ps.length ? ps.map((p) => "`" + p + "`").join(", ") : "<nenhuma pasta detectada: preencha ou escreva <a definir>>"}`;
       })
       .join("\n"),
+    convencoes: d.convencoes.length ? d.convencoes.map((x) => `- ${x}`).join("\n") : "- Nenhuma config de lint ou formatação detectada: <ferramentas e regras de estilo, ou <a definir>>",
+    integracoes: d.integracoes.length ? d.integracoes.map((x) => `- ${x}`).join("\n") + "\n- Confirme e complete: <serviços sem SDK, como APIs chamadas por HTTP; ou <a definir>>" : "- Nenhum SDK de serviço externo detectado: <APIs, filas, pagamento, e-mail; ou <a definir>>",
     testes: [
       `- Runner de unidade/integração: ${d.runner || "<runner do projeto>"}`,
       `- E2E e componente: Cypress, ${d.cypress ? "já configurado" : "ainda não configurado; o Maestro oferece configurar na primeira tarefa de E2E e só instala com sua confirmação"}`,
@@ -245,7 +311,7 @@ function lerSettings(raiz) {
 }
 
 // ---------- status line ----------
-export const comandoStatusline = () => `node "${path.join(KIT, "mods", "statusline.mjs").replace(/\\/g, "/")}"`;
+export const comandoStatusline = () => `node "${path.join(KIT, "hooks", "ferramentas", "statusline.mjs").replace(/\\/g, "/")}"`;
 
 // ---------- allowlist ----------
 // Comandos do REGRAS.md e consultas que só leem: liberados sem pergunta. A cerca (V9) continua valendo.
@@ -515,7 +581,11 @@ export function doctor(caminho, { log = console.log } = {}) {
       const sujos = (git(raiz, "status", "--porcelain", "--", ".claude") || "").split("\n").filter((l) => l.includes(PASTA) || l.includes(SETTINGS));
       sujos.length ? erro(`arquivos do kit aparecem no git status: ${sujos.join("; ")}`) : ok("git status limpo dos arquivos do kit");
 
-      detectar(raiz).cypress ? ok("Cypress configurado") : aviso("Cypress não configurado (o Maestro oferece na primeira tarefa de E2E)");
+      const det = detectar(raiz);
+      const regrasTxt = fs.existsSync(regrasF) ? fs.readFileSync(regrasF, "utf8") : "";
+      const novas = det.convencoes.filter((c) => !regrasTxt.includes(c));
+      novas.length ? aviso(`convenções do projeto fora do REGRAS.md (mudaram depois da instalação?): ${novas.join("; ")}`) : ok("convenções do REGRAS.md em dia");
+      det.cypress ? ok("Cypress configurado") : aviso("Cypress não configurado (o Maestro oferece na primeira tarefa de E2E)");
 
       const velho = grafoDesatualizado(raiz);
       if (velho === null) aviso(`grafo ausente: rode \`graphify update .\` no projeto (ou instale de novo)`);

@@ -243,3 +243,26 @@ test("integração F5×F6: depois do /retro, o Stop da mesma sessão não recria
   assert.equal(p.bloqueios, 0);
   fs.rmSync(raiz, { recursive: true, force: true });
 });
+
+test("retro: itens da Revisão recorrentes por time e categoria apontam a skill que deveria ter evitado", () => {
+  const raiz = projeto();
+  const plano = {
+    tarefas: [{ id: "T1", time: "dev-front" }, { id: "T2", time: "dev-back" }],
+    itens_revisao: [
+      { id: "R1", tarefa: "T1", gravidade: "media", categoria: "padrao", motivo: "hook novo fora do padrão de useQuery", status: "resolvido" },
+      { id: "R2", tarefa: "T1", gravidade: "baixa", categoria: "padrao", motivo: "nome de arquivo em camelCase", status: "aberto" },
+      { id: "R3", tarefa: "T2", gravidade: "media", categoria: "desempenho", motivo: "N+1 na listagem", status: "aberto" },
+      { id: "R4", tarefa: "T1", gravidade: "baixa", categoria: "padrao", motivo: "descartado pelo Maestro", status: "descartado" },
+    ],
+  };
+  fs.mkdirSync(path.join(raiz, ".modo-deus"), { recursive: true });
+  fs.writeFileSync(path.join(raiz, ".modo-deus", "plano.json"), JSON.stringify(plano));
+  const r = coletar(raiz);
+  const c = r.causas.find((x) => x.causa === "revisao_recorrente");
+  assert.ok(c, "causa revisao_recorrente ausente");
+  assert.equal(c.total, 2, "só o grupo com 2+ itens não descartados conta");
+  assert.equal(c.alvos[0].time, "dev-front");
+  assert.equal(c.alvos[0].categoria, "padrao");
+  assert.match(c.alvos[0].alvo, /Padrões/);
+  assert.equal(r.plano.revisao_por_alvo.find((g) => g.categoria === "desempenho").total, 1);
+});

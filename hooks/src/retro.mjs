@@ -16,15 +16,28 @@ const RE_DATA = /^\d{4}-\d{2}-\d{2}$/;
 export const CAUSAS = {
   skill_nao_disparou: { regras: ["trava"], descricao: "a trava de fase bloqueou: a skill ou o passo que deveria ter rodado antes não disparou" },
   instrucao_ambigua: { regras: ["contrato"], descricao: "o agente não entregou no formato combinado (contrato): instrução ambígua ou incompleta" },
-  passo_pulado: { regras: ["V5", "V6"], descricao: "pronto sem prova ou afirmação sem lastro: um passo do fluxo foi pulado" },
+  passo_pulado: { regras: ["V5", "V6", "V12"], descricao: "pronto sem prova, afirmação sem lastro ou dependência sem auditoria: um passo do fluxo foi pulado" },
   esforco_errado: { regras: ["V11"], descricao: "tarefa classificada como simples reprovou ou estourou: a regra de esforço errou" },
   fuga: { regras: ["V1", "V2", "V10"], descricao: "fuga de escopo, de território ou teste moldado ao código" },
   alucinacao: { regras: ["V3", "V4", "V6"], descricao: "arquivo, símbolo, comando ou afirmação que não existem" },
   loop_estouro: { regras: ["V7", "V8"], descricao: "loop ou estouro de tempo/chamadas" },
+  revisao_recorrente: { regras: [], descricao: "a Revisão cobrou o mesmo tipo de problema do mesmo time 2 ou mais vezes: a skill ou o passo do agente que deveria evitar não está funcionando" },
   falso_positivo_suspeito: { regras: [], descricao: "a mesma regra bloqueou o mesmo alvo várias vezes e o agente seguiu por outro caminho com sucesso" },
 };
 
 const lista = (v) => (Array.isArray(v) ? v : []);
+
+// Categoria do item de revisão → onde o kit deveria ter evitado o problema (alvo provável da proposta).
+export const ALVO_DA_CATEGORIA = {
+  padrao: "passo Padrões dos agentes Dev e §2 do CLAUDE.md base",
+  seguranca: "skill security-and-hardening e o Foco do agente",
+  desempenho: "skill performance-optimization e o Foco do agente",
+  correcao: "superpowers:test-driven-development e o contrato do critério no plano",
+  teste: "agentes QA, qa-cypress e superpowers:test-driven-development",
+  escopo: "plano do Maestro (skill modo-deus) e code-simplification",
+  legibilidade: "skill code-simplification e §4 do CLAUDE.md base",
+  sem_categoria: "leia os motivos e classifique antes de propor",
+};
 const lerJson = (f) => {
   try { return JSON.parse(fs.readFileSync(f, "utf8")); } catch { return null; }
 };
@@ -109,7 +122,7 @@ export function falsosPositivos(eventos) {
 // ---------- plano ----------
 export function analisarPlano(raiz) {
   const plano = lerJson(path.join(raiz, PASTA, "plano.json"));
-  const vazio = { existe: false, tarefas_reprovadas: [], rodadas_revisao: {}, itens_abertos: { alta: 0, media: 0, baixa: 0 }, itens_abertos_lista: [], v11: [] };
+  const vazio = { existe: false, tarefas_reprovadas: [], rodadas_revisao: {}, itens_abertos: { alta: 0, media: 0, baixa: 0 }, itens_abertos_lista: [], v11: [], revisao_por_alvo: [] };
   if (!plano || typeof plano !== "object") return vazio;
   const tarefas = lista(plano.tarefas);
   const reprovada = (t) => t?.status === "reprovada" || (t?.rodadas_revisao || 0) > 0;
@@ -130,7 +143,25 @@ export function analisarPlano(raiz) {
     itens_abertos_lista: abertos.slice(0, 20).map((r) => ({ id: r.id, tarefa: r.tarefa, gravidade: r.gravidade, motivo: r.motivo })),
     // V11: tarefa classificada como simples que reprovou na revisão
     v11: tarefas.filter((t) => t?.classe === "simples" && reprovada(t)).map((t) => ({ ...resumo(t), itens: motivosDe(t.id).slice(0, MAX_EXEMPLOS) })),
+    revisao_por_alvo: revisaoPorAlvo(tarefas, lista(plano.itens_revisao)),
   };
+}
+
+// Itens de revisão (abertos ou não) agrupados por time e categoria, do mais frequente ao menos.
+function revisaoPorAlvo(tarefas, itens) {
+  const timeDe = new Map(tarefas.map((t) => [t?.id, t?.time || "sem_time"]));
+  const grupos = new Map();
+  for (const r of itens) {
+    if (!r || r.status === "descartado") continue;
+    const time = timeDe.get(r.tarefa) || "sem_time";
+    const categoria = r.categoria || "sem_categoria";
+    const k = `${time}:${categoria}`;
+    const g = grupos.get(k) || { time, categoria, alvo: ALVO_DA_CATEGORIA[categoria] || ALVO_DA_CATEGORIA.sem_categoria, total: 0, motivos: [] };
+    g.total++;
+    if (g.motivos.length < MAX_EXEMPLOS) g.motivos.push(`${r.tarefa} ${r.gravidade}: ${r.motivo}`);
+    grupos.set(k, g);
+  }
+  return [...grupos.values()].sort((a, b) => b.total - a.total);
 }
 
 // ---------- graphify ----------
@@ -219,6 +250,13 @@ export function coletar(raiz, { sessao = null, desde = null } = {}) {
       total += plano.v11.length;
       extra.tarefas = plano.v11;
       if (!regras.includes("V11")) regras.push("V11");
+    }
+    if (causa === "revisao_recorrente") {
+      const rec = plano.revisao_por_alvo.filter((g) => g.total >= 2);
+      total = rec.reduce((n, g) => n + g.total, 0);
+      exemplos = [];
+      regras = ["revisao"];
+      if (rec.length) extra.alvos = rec;
     }
     if (causa === "falso_positivo_suspeito") {
       total = fps.length;

@@ -5,7 +5,7 @@ argument-hint: [contexto da entrega]
 Use a skill shipping-and-launch para preparar a entrega: $ARGUMENTS
 
 - Confirme que /review foi feito e que os problemas graves foram resolvidos.
-- Rode a validação completa do projeto (testes, lint, tipos, build) e mostre o resultado.
+- Rode a validação completa do projeto (testes, lint, tipos, build, a Auditoria de dependências e, se houver, os comandos Segredos e Desempenho do `REGRAS.md`) e mostre o resultado.
 - Proponha a mensagem de commit e a descrição do PR; use a skill humanizer no texto do PR.
 - Não faça commit, push nem abra PR sem minha confirmação.
 

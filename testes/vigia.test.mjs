@@ -9,7 +9,7 @@ import path from "node:path";
 import { execFileSync, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { gravarEstado } from "../hooks/src/vigia.mjs";
-import { gerarPainel } from "../mods/painel/gerar.mjs";
+import { gerarPainel } from "../hooks/ferramentas/painel-status.mjs";
 import { instalar, remover } from "../instalar.mjs";
 
 const KIT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -378,14 +378,14 @@ test("Stop com alerta e bloqueio grava PENDENTE.json; SessionStart avisa", () =>
 });
 
 // ================= status line =================
-const statusline = (entrada) => rodar(path.join(KIT, "mods", "statusline.mjs"), entrada);
+const statusline = (entrada) => rodar(path.join(KIT, "hooks", "ferramentas", "statusline.mjs"), entrada);
 
-test("status line: perfil, plano, times, alertas e duração; projeto sem kit fica vazio", () => {
+test("status line: perfil, plano, times e alertas (sem duração); projeto sem kit fica vazio", () => {
   const s = sessao();
   falha(s, "bash: pnpm: command not found");
   const r = statusline({ session_id: s, workspace: { current_dir: repo }, cost: { total_duration_ms: 22 * 60000 } });
   assert.equal(r.status, 0, r.stderr);
-  assert.equal(r.stdout.trim(), "estrito · executando · dev 0/1 · qa 0/1 · 1 alerta · 22 min");
+  assert.equal(r.stdout.trim(), "estrito · executando · dev 0/1 · qa 0/1 · 1 alerta");
   const fora = path.join(tmp, "fora");
   fs.mkdirSync(fora, { recursive: true });
   git(fora, "init", "-q");
@@ -408,7 +408,7 @@ test("painel: texto e HTML autocontido com linha do tempo por agente", () => {
   assert.match(html, /class="barra"/);
   assert.doesNotMatch(html, /<script[^>]+src=|<link[^>]+href=|https?:\/\//, "sem CDN");
 
-  const cli = spawnSync(process.execPath, [path.join(KIT, "mods", "painel", "gerar.mjs"), repo, "--sessao", s], { encoding: "utf8", env: { ...process.env, CLAUDE_PROJECT_DIR: "" } });
+  const cli = spawnSync(process.execPath, [path.join(KIT, "hooks", "ferramentas", "painel-status.mjs"), repo, "--sessao", s], { encoding: "utf8", env: { ...process.env, CLAUDE_PROJECT_DIR: "" } });
   assert.equal(cli.status, 0, cli.stderr);
   assert.match(cli.stdout, /Painel: .*index\.html/);
 });
@@ -433,7 +433,7 @@ test("instalador: --statusline grava, reinstalação sem a flag mantém, --remov
 
     instalar(r2, { semGrafo: true, statusline: true, log: silencio });
     assert.equal(settings().statusLine.type, "command");
-    assert.match(settings().statusLine.command, /^node ".*\/mods\/statusline\.mjs"$/);
+    assert.match(settings().statusLine.command, /^node ".*\/hooks\/ferramentas\/statusline\.mjs"$/);
     const manifesto = JSON.parse(fs.readFileSync(path.join(r2, ".modo-deus/instalados.json"), "utf8"));
     assert.equal(manifesto.statusline, settings().statusLine.command);
 
@@ -456,4 +456,20 @@ test("instalador: --statusline grava, reinstalação sem a flag mantém, --remov
     if (antes === undefined) delete process.env.MODO_DEUS_HOME;
     else process.env.MODO_DEUS_HOME = antes;
   }
+});
+
+// ================= V12 · dependência sem auditoria =================
+test("V12 · entrega que muda lockfile sem auditoria alerta; com auditoria fica quieta", () => {
+  const msg = (arquivos) => "Feito.\n```json\n" + JSON.stringify({ tarefa: "T1", status: "pronta", branch: "feat/login-T1", commits: ["abc123"], arquivos, testes: [{ comando: "npm run test", resultado: "passou", resumo: "3 passaram" }] }) + "\n```";
+  const fim = (s, id, arquivos) => hook("evento", { session_id: s, hook_event_name: "SubagentStop", agent_type: "modo-deus:dev-back", agent_id: id, last_assistant_message: msg(arquivos) });
+  let s = sessao(), id = `v12-${s}`;
+  pre(s, "Bash", { command: "npm run test" }, { agente: "dev-back", id });
+  assert.match(contexto(fim(s, id, ["src/server/a.ts", "package-lock.json"])), /V12.*package-lock\.json/);
+  s = sessao(); id = `v12ok-${s}`;
+  pre(s, "Bash", { command: "npm audit --audit-level=high" }, { agente: "dev-back", id });
+  pre(s, "Bash", { command: "npm run test" }, { agente: "dev-back", id });
+  assert.doesNotMatch(contexto(fim(s, id, ["package-lock.json"])), /V12/);
+  s = sessao(); id = `v12sem-${s}`;
+  pre(s, "Bash", { command: "npm run test" }, { agente: "dev-back", id });
+  assert.doesNotMatch(contexto(fim(s, id, ["src/server/a.ts"])), /V12/);
 });

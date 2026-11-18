@@ -190,25 +190,3 @@ Not every task needs every skill. A bug fix might only need: `debugging-and-erro
 | Ship | documentation-and-adrs | Document the why, not just the what |
 | Ship | observability-and-instrumentation | Structured logs, RED metrics, traces, symptom-based alerts |
 | Ship | shipping-and-launch | Pre-launch checklist, monitoring, rollback plan |
-
-## Tabela de fases e trava
-
-Acréscimo do kit fluxo-agentes. Os hooks do projeto injetam esta seção no início da sessão e lembram dela a cada mensagem.
-
-| Fase | Comando | Skill a invocar antes de agir |
-|---|---|---|
-| Definir | `/spec` | `spec-driven-development` (`interview-me` ou `idea-refine` se a ideia ainda está vaga) |
-| Planejar | `/plan` | `planning-and-task-breakdown` |
-| Construir | `/build` | `incremental-implementation` + `test-driven-development`; telas: `frontend-ui-engineering`, `impeccable` |
-| Corrigir bug | `/build` | `debugging-and-error-recovery` |
-| Revisar | `/review` | `code-review-and-quality` |
-| Entregar | `/ship` | `shipping-and-launch` + `humanizer` no texto do PR |
-
-Tarefas pequenas (typo, ajuste de texto) podem ir direto para `/build`.
-
-### Trava (aplicada pelo hook `exigir-skill.sh`)
-
-- Editar ou criar arquivo de código, ou fazer `git commit` de código, exige que uma skill de construção (`incremental-implementation`, `test-driven-development`, `frontend-ui-engineering`) ou de bug (`debugging-and-error-recovery`) já tenha sido invocada na sessão.
-- Abrir PR ou MR (`gh pr create`, `glab mr create`, `git push -o merge_request.create`) exige `code-review-and-quality` e `humanizer` invocadas na sessão.
-- Documentação, configuração e arquivos em `.claude/` não são bloqueados.
-- Bloqueado: invoque a skill indicada na mensagem do hook e repita a ação. Não contorne a trava.

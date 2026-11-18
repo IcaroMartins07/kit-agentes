@@ -28,7 +28,7 @@ const skillGraphifyFake = () => {
   fs.writeFileSync(path.join(d, "SKILL.md"), "x");
 };
 const temGraphify = (() => { try { execFileSync("graphify", ["--version"], { stdio: "ignore", shell: process.platform === "win32" }); return true; } catch { return false; } })();
-const CONECTORES = JSON.parse(fs.readFileSync(new URL("../plugins/conectores.json", import.meta.url), "utf8"));
+const CONECTORES = JSON.parse(fs.readFileSync(new URL("../hooks/conectores.json", import.meta.url), "utf8"));
 const TODOS_PLUGINS = CONECTORES.plugins;
 const pluginsFake = (...ids) => {
   const f = path.join(process.env.MODO_DEUS_HOME, ".claude", "plugins", "installed_plugins.json");
@@ -419,4 +419,20 @@ test("validação real: instalar dependência só na forma exata", async () => {
   assert.ok(r.includes("Bash(npm install)"));
   assert.ok(!r.includes("Bash(npm install:*)"));
   assert.ok(r.includes("Bash(npm run test:*)"));
+});
+
+test("REGRAS.md registra convenções, integrações (só nomes de variáveis) e o comando de auditoria", () => {
+  const pkg = JSON.parse(ler("package.json"));
+  pkg.dependencies = { stripe: "^14.0.0", "@aws-sdk/client-s3": "^3.0.0" };
+  pkg.devDependencies.husky = "^9.0.0";
+  escrever("package.json", JSON.stringify(pkg));
+  escrever("eslint.config.js", "export default []");
+  escrever(".prettierrc", "{}");
+  escrever("tsconfig.json", '{ "compilerOptions": { "strict": true } }');
+  escrever(".env.example", "DATABASE_URL=postgres://x\nSTRIPE_SECRET_KEY=sk_test_segredo\n# comentário\n");
+  commitar("stack");
+  instalar(repo, { log: silencio });
+  const r = ler(".modo-deus/REGRAS.md");
+  for (const x of ["Lint: ESLint (eslint.config.js)", "Formatação: Prettier (.prettierrc)", "TypeScript em modo strict", "Hooks de commit: husky", "Stripe (pagamento)", "AWS SDK", "`DATABASE_URL`", "`STRIPE_SECRET_KEY`", "| Auditoria | `npm audit` |", "## Desempenho"]) assert.ok(r.includes(x), x);
+  assert.ok(!r.includes("sk_test_segredo"), "valor de variável de ambiente vazou para o REGRAS.md");
 });

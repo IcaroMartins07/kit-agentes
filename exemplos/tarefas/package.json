@@ -1,0 +1,13 @@
+{
+  "name": "tarefas-exemplo",
+  "private": true,
+  "type": "module",
+  "description": "Projeto de exemplo para testar o kit-agentes: uma lista de tarefas com API HTTP, sem dependências.",
+  "scripts": {
+    "start": "node src/servidor.mjs",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

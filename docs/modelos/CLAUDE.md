@@ -17,6 +17,7 @@ Regras gerais para todos os agentes do kit (Maestro e times), independentes de p
 ## 2. Convenções do projeto
 
 - Siga a organização, nomenclatura, bibliotecas e estilo já existentes antes de introduzir novos padrões.
+- Antes de escrever, analise o projeto: leia as seções Stack, Convenções e Integrações do `REGRAS.md`, a config do linter e do formatador, e 2 ou 3 arquivos vizinhos do mesmo tipo (achados pelo graphify). Imite nomes, estrutura, tratamento de erro, logs e estilo dos testes deles. Padrão novo só com motivo, citado na entrega.
 - Confirme versões e ferramentas nos manifests e configurações (`package.json`, `pyproject.toml`, `pom.xml`, `go.mod`, etc.), não na memória.
 - Use as ferramentas que o projeto já adota (linter, formatador, test runner). Não adicione ferramentas concorrentes.
 - Não adicione dependências sem necessidade clara. Prefira a biblioteca padrão e o que o projeto já usa.
@@ -44,6 +45,7 @@ Regras gerais para todos os agentes do kit (Maestro e times), independentes de p
 - Use tipagem forte onde a linguagem permitir. Evite escapes de tipo (`any`, casts forçados) e valide dados externos.
 - Trate estados de borda relevantes: nulo, vazio, erro, carregamento e concorrência.
 - Escreva código com aparência natural e consistente com o restante do repositório.
+- Antes de entregar, releia o que mudou com a skill `code-simplification`: tire excesso sem mudar comportamento, sem cortar validação, segurança, acessibilidade ou testes.
 
 ## 5. Tratamento de erros
 
@@ -77,7 +79,8 @@ Aplique estas verificações às partes afetadas pela tarefa. Informe problemas 
 - Não confie em dados do cliente para definir dono, perfil, preço ou permissões (mass assignment).
 
 ### Dependências e infraestrutura
-- Ao alterar dependências, mantenha o lockfile consistente e, quando houver ferramenta disponível, audite e informe os achados. Desconfie de pacotes desconhecidos ou com nomes parecidos.
+- Ao alterar dependências, mantenha o lockfile consistente e rode o comando Auditoria do `REGRAS.md` (ou o do gerenciador de pacotes); informe os achados. Vulnerabilidade alta nova bloqueia a entrega.
+- Integração externa (API, SDK, fila, pagamento, e-mail): use o cliente que o projeto já usa, credencial por variável de ambiente, timeout e tratamento de erro explícitos, e simulação nos testes. Nunca chame produção em teste. Desconfie de pacotes desconhecidos ou com nomes parecidos.
 - Exija HTTPS em produção e CORS com origens explícitas.
 - Containers: imagem oficial com versão fixa, usuário não-root e nenhum secret na imagem.
 - Não exponha banco ou serviços internos além do necessário. A aplicação usa usuário de banco de menor privilégio.
@@ -91,6 +94,8 @@ Aplique estas verificações às partes afetadas pela tarefa. Informe problemas 
 - Use transações em operações compostas.
 - Migrations explícitas, revisáveis e relacionadas à tarefa. Nunca altere uma migration já aplicada em outro ambiente.
 - Não otimize sem evidência: meça antes de complicar o código.
+- Em caminho crítico (seção Desempenho do `REGRAS.md`), consulta nova, lista, laço sobre dados ou tela pesada: siga a skill `performance-optimization` e diga na entrega o que mediu ou por que não precisou.
+- Front: não carregue o que a tela não usa (import pesado, imagem sem tamanho, re-render em laço).
 
 ## 8. Testes e validação
 

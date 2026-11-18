@@ -8,22 +8,36 @@
     {
       "name": "modo-deus",
       "description": "Kit de agentes: Maestro, times de Desenvolvimento, QA e Revisão, guardrails, monitoramento contra fuga e alucinação e autoaprimoramento das skills.",
-      "version": "0.2.0",
+      "version": "0.6.0",
       "source": "./",
       "category": "development"
     },
     {
       "name": "temas",
-      "description": "Mod: temas para os apps do Claude Code (Café, Meia-noite, Floresta, Neon, Papel); /tema abre o seletor.",
-      "version": "0.1.0",
-      "source": "./mods/painel/temas",
+      "description": "Mod: temas para os apps do Claude Code (Dunas, padrão: o visual do mockup com a cena Dither Dunes Night; Kit; Café, Meia-noite, Floresta, Neon, Papel); /tema abre o seletor.",
+      "version": "0.7.0",
+      "source": "./mods/kit/temas",
       "category": "mod"
     },
     {
       "name": "prompt-master",
       "description": "Mod: botão Prompt Master ao lado do prompt que reescreve o rascunho para revisão; modo automático opcional.",
-      "version": "0.1.0",
-      "source": "./mods/M7/prompt-master",
+      "version": "0.5.2",
+      "source": "./mods/kit/prompt-master",
+      "category": "mod"
+    },
+    {
+      "name": "reflect-mod",
+      "description": "Mod: Reflect (BayramAnnakov/claude-reflect) com a faixa ajustada pelo kit: uma sugestão por vez e compatível com o desktop.",
+      "version": "3.3.0-kit.1",
+      "source": "./mods/terceiros/reflect-mod",
+      "category": "mod"
+    },
+    {
+      "name": "painel-agentes",
+      "description": "Mod: painel global com abas Agentes (pixel art), Worktree (árvore no estilo do File Tree), Alterações, Cérebro (graphify), Orca e Skill (liga e desliga skills, plugins e mods; /gerenciador).",
+      "version": "0.2.0",
+      "source": "./mods/kit/painel-agentes",
       "category": "mod"
     }
   ]

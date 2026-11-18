@@ -39,11 +39,12 @@ Cada causa aponta para um alvo provável:
 |---|---|---|
 | `skill_nao_disparou` | trava | `description` da skill não cobre o gatilho, ou o comando não chama a skill |
 | `instrucao_ambigua` | contrato | o agente não sabe o formato de saída: corpo do agente em `agents/` ou exemplo da skill |
-| `passo_pulado` | V5, V6 | o fluxo da skill não exige a prova (teste rodado, evidência) no passo certo |
+| `passo_pulado` | V5, V6, V12 | o fluxo da skill não exige a prova (teste rodado, evidência, auditoria de dependências) no passo certo |
 | `esforco_errado` | V11 + `plano.v11` | regra de classificação simples/complexa da skill `modo-deus` (passo 2.3) |
 | `fuga` | V1, V2, V10 | escopo mal desenhado no plano, ou território do agente mal descrito |
 | `alucinacao` | V3, V4, V6 | o agente não consulta o grafo ou o `REGRAS.md` antes de agir |
 | `loop_estouro` | V7, V8 | tarefa grande demais ou critério de pronto vago |
+| `revisao_recorrente` | itens da Revisão (`plano.revisao_por_alvo`) | o mesmo time levou 2+ itens da mesma `categoria`: o campo `alvo` diz qual skill ou passo deveria ter evitado (padrão → passo Padrões; segurança → `security-and-hardening`; desempenho → `performance-optimization`; legibilidade → `code-simplification`…). A proposta muda essa skill ou o Foco do agente, não o revisor |
 | `falso_positivo_suspeito` | qualquer | o **detector** pode estar errado (veja abaixo) |
 
 **Heurística de falso positivo** (em `retro.mjs`, função `falsosPositivos`): na mesma sessão, o mesmo agente levou 2 ou mais bloqueios da mesma regra no mesmo alvo e, depois do último, usou a mesma ferramenta com sucesso em outro alvo. É só suspeita: leia os exemplos e decida se o detector errou ou se o agente contornou uma regra legítima (aí a causa é `fuga`, não falso positivo).
@@ -51,6 +52,8 @@ Cada causa aponta para um alvo provável:
 Para cada causa, separe:
 - **Lição do kit** (vale para qualquer projeto) → vira proposta de mudança no kit.
 - **Lição do projeto** (território, comando, convenção deste repositório) → vai para `.modo-deus/REGRAS.md` do projeto, com a aprovação do usuário. **Não** vai para a skill global e não precisa de eval.
+
+Item de revisão sem `categoria` (plano antigo) aparece como `sem_categoria`: leia os motivos e classifique antes de propor.
 
 Uma ocorrência isolada raramente justifica mudar o kit. Priorize causas que se repetem ou que custaram uma rodada de revisão.
 

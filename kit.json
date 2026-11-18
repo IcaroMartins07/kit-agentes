@@ -1,10 +1,10 @@
 {
   "$comentario": "Fonte de verdade do kit. Lida pelo instalar.mjs, pelos hooks (F2) e pelo Maestro (F3). Modelos usam alias (opus/sonnet/haiku), que resolvem para a geração atual (5.5).",
   "nome": "modo-deus",
-  "versao": "0.2.0",
+  "versao": "0.6.0",
   "node_minimo": 18,
 
-  "$conectores": "plugins/conectores.json",
+  "$conectores": "hooks/conectores.json",
 
   "perfis": {
     "leve":    { "descricao": "Trava de fase e cerca de segurança (V9). Sem monitor.", "trava": true, "cerca": true, "monitor": "desligado", "auditor_de_fatos": false },
@@ -72,7 +72,7 @@
     },
     "v3": { "falhas": 3, "janela": 10 },
     "v7": { "repeticoes": 4, "mesmo_erro": 3 },
-    "bloqueia_no_deus": ["V1", "V3", "V5", "V7", "V8"]
+    "bloqueia_no_deus": ["V1", "V3", "V5", "V7", "V8", "V12"]
   },
 
   "skills": {
@@ -84,7 +84,9 @@
       "incremental-implementation": { "caminho": "skills/terceiros/agent-skills/incremental-implementation", "dono": "dev" },
       "api-and-interface-design":   { "caminho": "skills/terceiros/agent-skills/api-and-interface-design",   "dono": "dev-back" },
       "source-driven-development":  { "caminho": "skills/terceiros/agent-skills/source-driven-development",  "dono": "dev" },
-      "security-and-hardening":     { "caminho": "skills/terceiros/agent-skills/security-and-hardening",     "dono": "dev-db, dev-back, revisor-seguranca" },
+      "security-and-hardening":     { "caminho": "skills/terceiros/agent-skills/security-and-hardening",     "dono": "dev-front, dev-back, dev-db, dev-devops, dev-mobile, dev-dados, revisor-seguranca" },
+      "performance-optimization":   { "caminho": "skills/terceiros/agent-skills/performance-optimization",   "dono": "dev-front, dev-back, dev-db, revisor" },
+      "code-simplification":        { "caminho": "skills/terceiros/agent-skills/code-simplification",        "dono": "dev (antes de entregar), CLAUDE.md base" },
       "ci-cd-and-automation":       { "caminho": "skills/terceiros/agent-skills/ci-cd-and-automation",       "dono": "dev-devops" },
       "documentation-and-adrs":     { "caminho": "skills/terceiros/agent-skills/documentation-and-adrs",     "dono": "dev-docs" },
       "frontend-ui-engineering":    { "caminho": "skills/terceiros/agent-skills/frontend-ui-engineering",    "dono": "dev-front" },

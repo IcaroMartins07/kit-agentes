@@ -21,6 +21,14 @@ Regras do projeto: `.modo-deus/REGRAS.md` (comandos, territórios, times, DoD). 
 | 6 | **Revisão**: `revisor`, `revisor-seguranca`, `auditor-de-fatos` | Revisão | |
 | 7 | **PR** na branch da feature, texto passado pela skill `humanizer` | você | **usuário faz o merge** |
 
+### Caminho rápido
+
+Pedido pequeno não passa pelo pipeline inteiro. Vale quando **tudo** isto é verdade: uma tarefa Dev só (mais a de teste, se precisar), classe `simples`, um território, sem integração, entrada externa, caminho crítico nem mudança de dependência. Então:
+
+- Spec e plano juntos, numa única pergunta de aprovação: 1 a 3 critérios e uma tarefa Dev, com `"rapido": true` no plano.
+- O Dev faz a mudança com TDD. Se o teste do critério fica no território `testes` (`test/`, `tests/`, `*.test.*`…), que o hook reserva ao QA, entra uma tarefa `qa-unit` em paralelo, ligada ao mesmo critério e com o mesmo `contrato`; ela conta como parte do caminho rápido. Sem regressão completa: a suíte do território e o lint bastam.
+- Revisão só com `revisor`. Reprovou, ou a tarefa cresceu além das condições acima? Sai do caminho rápido: `rapido: false`, classe `complexa` e o pipeline normal.
+
 Só há duas paradas. Entre elas, não peça licença: decida, registre no plano e siga. Pergunte fora delas só quando faltar informação que só o usuário tem e o custo de errar for alto.
 
 ## 1 · Spec
@@ -32,6 +40,7 @@ Só há duas paradas. Entre elas, não peça licença: decida, registre no plano
 
 ## 2 · Plano
 
+0. **Analise o projeto antes de planejar.** Leia Stack, Convenções, Integrações e Desempenho do `REGRAS.md`. Campo ainda aberto (padrões de código, integrações, caminhos críticos): preencha você mesmo olhando o código (2 ou 3 arquivos de cada camada, a config do linter, o `.env.example`, os clientes HTTP) e mostre o que preencheu junto do resumo do plano. Tarefa que toca integração, entrada externa ou caminho crítico é `complexa`.
 1. Para cada parte do pedido, ache os pontos de mudança com `graphify query` e `graphify affected "<símbolo>"`. O escopo da tarefa sai daí, não de suposição.
 2. Quebre em tarefas pequenas, uma por time (`dev-front`, `dev-back`, `dev-db`, `dev-devops`, `qa-*`). Times sob demanda (`dev-mobile`, `dev-dados`, `dev-docs`) só quando a tarefa toca o território deles e o `config.json` não os desligou.
 3. Classifique cada tarefa:
@@ -39,7 +48,7 @@ Só há duas paradas. Entre elas, não peça licença: decida, registre no plano
    - **complexa → esforço high**: contrato entre camadas, migração de dados, concorrência ou cache, autenticação ou autorização, bug sem causa óbvia, refatoração entre módulos, CI ou deploy.
    - Na dúvida, complexa. Tarefa reprovada na revisão volta com high.
 4. Tarefas sem dependência entre si rodam em paralelo e precisam de **escopos disjuntos**. Se dois times precisam do mesmo arquivo, encadeie com `depende_de`.
-5. Para cada tarefa Dev com comportamento novo, crie a tarefa QA correspondente (aceite ou E2E), em paralelo e ligada aos mesmos CAs.
+5. Para cada tarefa Dev com comportamento novo, crie a tarefa QA correspondente (aceite ou E2E), em paralelo e ligada aos mesmos CAs. Critério com Dev e QA em paralelo ganha `contrato`: os ids de teste (`data-cy`) e a API (rota, método, formato da resposta) que os dois seguem. O validador recusa o plano sem ele.
 6. Grave o plano e valide: `node "${CLAUDE_PLUGIN_ROOT}/hooks/src/plano.mjs" validar .modo-deus/plano.json`. O hook também recusa gravar plano fora do contrato.
 7. Mostre ao usuário um resumo (tarefas, times, classe, o que roda em paralelo) e peça aprovação com AskUserQuestion. Aprovado: `status: "aprovado"` e `aprovado_em` com a data.
 
@@ -54,8 +63,8 @@ Só há duas paradas. Entre elas, não peça licença: decida, registre no plano
   "spec": {
     "objetivo": "Usuário entra com a conta Google e cai no painel",
     "criterios_aceite": [
-      { "id": "CA1", "texto": "Botão 'Entrar com Google' na tela de login inicia o OAuth" },
-      { "id": "CA2", "texto": "Usuário novo é criado na primeira entrada; existente é reaproveitado pelo e-mail" }
+      { "id": "CA1", "texto": "Botão 'Entrar com Google' na tela de login inicia o OAuth", "contrato": { "ids_teste": ["login-google"], "api": "GET /api/auth/google/start → 302 para o Google" } },
+      { "id": "CA2", "texto": "Usuário novo é criado na primeira entrada; existente é reaproveitado pelo e-mail", "contrato": { "api": "GET /api/auth/google/callback?code=… → 302 para /painel com cookie de sessão" } }
     ],
     "fora_de_escopo": ["login com GitHub"]
   },
@@ -100,14 +109,14 @@ Status do plano: `rascunho → aprovado → executando → revisao → concluido
 **Despachar.**
 
 - Um subagente por tarefa, pelo nome do time (`modo-deus:dev-back`, `modo-deus:qa-e2e`…), com `effort` igual ao `esforco` da tarefa. Este manual é a instrução explícita para definir o esforço.
-- O prompt de cada tarefa leva: caminho absoluto da raiz do projeto, branch da feature, id, título, critérios de aceite completos, escopo, `pronto_quando`, `como_testar` e os comandos do `REGRAS.md`. Nada de "veja o plano": o subagente começa do zero, numa worktree sem `graphify-out/` (ele usa o grafo da raiz).
+- O prompt de cada tarefa leva: caminho absoluto da raiz do projeto, branch da feature, id, título, critérios de aceite completos, escopo, `pronto_quando`, `como_testar`, os comandos do `REGRAS.md` e, quando a tarefa tocar nisso, as Convenções, Integrações e Caminhos críticos que valem para ela. Nada de "veja o plano": o subagente começa do zero, numa worktree sem `graphify-out/` (ele usa o grafo da raiz).
 - Prompt de QA não leva detalhes da implementação; leva só os critérios.
 - Paralelize tarefas sem dependência. Marque `em_andamento` ao despachar.
 - Se o agente do time não existir nesta instalação, pare e diga ao usuário qual falta; não faça a tarefa você mesmo.
 
 **Ler a entrega.** Dev e QA terminam com um bloco ```json `{"tarefa", "status": "pronta"|"bloqueada", "branch", "commits", "arquivos", "testes", "observacoes"}`; o hook não deixa terminar sem ele.
 
-- `pronta`: tarefa vai para `pronta` no plano. Teste de QA com `falhou_esperado` é normal enquanto a tarefa Dev correspondente não foi integrada.
+- `pronta`: tarefa vai para `pronta` no plano. Se ela é `complexa`, revise cedo: antes de integrar, despache `modo-deus:revisor` só sobre ela (`git diff <feature>...<feature>-T<n>`, com os CAs dela). Reprovou: os itens voltam à tarefa e contam rodada. Tarefa simples segue direto. Teste de QA com `falhou_esperado` é normal enquanto a tarefa Dev correspondente não foi integrada.
 - `bloqueada` por escopo ou território: decida (amplie o escopo, crie tarefa para o time dono, encadeie com `depende_de`) e despache de novo. Se a decisão muda o que o usuário aprovou, escale.
 - `bloqueada` com `BUG:` em `observacoes` (QA achou bug): integre os testes e abra item para a tarefa Dev indicada; ela volta a `em_andamento`.
 - `observacoes` pedindo algo a outro time (`data-cy`, export, rota de teste) vira item para esse time.
@@ -115,6 +124,7 @@ Status do plano: `rascunho → aprovado → executando → revisao → concluido
 ## 4–5 · Integração e regressão
 
 - Junte as branches `<feature>-T<n>` das tarefas prontas na branch da feature (nunca na principal: o hook bloqueia). Conflito: devolva à tarefa mais recente, não resolva no código.
+- Depois de integrar, o grafo da raiz fica atrás da feature: o `qa-regressao` reconstrói o dele na worktree, e para a Revisão passe ao `revisor` os símbolos alterados (`git diff --stat`), para ele não confiar só no grafo antigo.
 - Depois de integrar, remova a worktree da tarefa (`git worktree remove <caminho>`) para que a branch `<feature>-T<n>` possa ser reaberta se a tarefa voltar da revisão.
 - Rode a suíte do `REGRAS.md`. Falhou: item para o time dono, tarefa volta a `em_andamento`.
 - Passo 5: despache `modo-deus:qa-regressao` com a raiz, a branch da feature, a principal, os símbolos alterados e as tarefas com escopo. Ele faz checkout destacado da feature, usa `graphify affected` para priorizar, roda todas as suítes e termina com `{"resultado": "verde"|"vermelho", "suites": [...], "falhas": [{"teste", "arquivo", "tarefa_provavel", "saida"}]}`. Vermelho: cada falha vira item para a `tarefa_provavel`; integre a correção e rode a regressão de novo. Só siga para a Revisão com verde.
@@ -123,7 +133,7 @@ Status do plano: `rascunho → aprovado → executando → revisao → concluido
 
 - Despache `revisor` e `revisor-seguranca` em paralelo com: branch da feature, spec, plano e o diff (`git diff <principal>...<feature>`).
 - Cada um termina com um bloco ```json `{"veredito": "aprovado"|"reprovado", "itens": [...]}`; o hook não deixa terminar sem ele.
-- Itens viram `itens_revisao` no plano e voltam ao time dono. A tarefa sobe `rodadas_revisao` e passa a esforço high.
+- Itens viram `itens_revisao` no plano (com a `categoria` que o revisor deu) e voltam ao time dono. A tarefa sobe `rodadas_revisao` e passa a esforço high.
 - **Máximo de 2 rodadas por tarefa.** Na 3ª, `status: "escalado"`: pare e mostre ao usuário o que travou.
 - Antes do PR, escreva o relatório final e despache `auditor-de-fatos` com ele. Afirmação `falsa` ou `nao_confirmada`: corrija o relatório (ou volte à tarefa) antes de seguir.
 

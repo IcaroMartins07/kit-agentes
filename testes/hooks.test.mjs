@@ -301,3 +301,15 @@ test("desempenho do PreToolUse (mediana de 9 execuções)", (t) => {
   fs.writeFileSync(path.join(tmp, "..", "modo-deus-desempenho.json"), JSON.stringify(r));
   for (const [k, v] of Object.entries(r)) assert.ok(v < 400, `${k}: ${v} ms`);
 });
+
+test("subagente do kit recebe as regras gerais: SubagentStart injeta e a sessão grava REGRAS-GERAIS.md", () => {
+  const base = fs.readFileSync(new URL("../docs/modelos/CLAUDE.md", import.meta.url), "utf8").trim();
+  const ini = rodar("evento", { hook_event_name: "SubagentStart", agent_type: "modo-deus:dev-front", agent_id: "g1" });
+  const ctx = JSON.parse(ini.stdout.trim().split("\n")[0]).hookSpecificOutput;
+  assert.equal(ctx.hookEventName, "SubagentStart");
+  assert.equal(ctx.additionalContext, base);
+  // agente de fora do kit não recebe nada
+  assert.equal(rodar("evento", { hook_event_name: "SubagentStart", agent_type: "Explore", agent_id: "g2" }).stdout.trim(), "");
+  rodar("sessao", { hook_event_name: "SessionStart", source: "startup" });
+  assert.equal(fs.readFileSync(path.join(repo, ".modo-deus", "REGRAS-GERAIS.md"), "utf8"), base + "\n");
+});

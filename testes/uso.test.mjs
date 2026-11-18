@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url";
 const KIT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const json = (f) => JSON.parse(fs.readFileSync(path.join(KIT, f), "utf8"));
 const kit = json("kit.json");
-const conectores = json("plugins/conectores.json");
+const conectores = json("hooks/conectores.json");
 const texto = (f) => fs.readFileSync(path.join(KIT, f), "utf8");
 const arquivos = (dir, ext = /\.md$/) =>
   fs.readdirSync(path.join(KIT, dir), { recursive: true }).map((f) => path.join(dir, String(f)).replace(/\\/g, "/")).filter((f) => ext.test(f));
@@ -38,7 +38,7 @@ test("toda skill do superpowers listada no kit é usada com o prefixo superpower
   assert.deepEqual(sem, [], `skills do superpowers sem uso: ${sem.join(", ")}`);
 });
 
-test("todo conector obrigatório (plugins/conectores.json) é usado por um agente, comando ou skill", () => {
+test("todo conector obrigatório (hooks/conectores.json) é usado por um agente, comando ou skill", () => {
   for (const id of conectores.plugins) {
     const nome = id.split("@")[0];
     assert.ok(USUARIOS.some(([, t]) => t.includes(nome)), `${id} está em conectores.json mas ninguém o usa`);
@@ -67,7 +67,7 @@ test("todo hook do hooks.json existe, e todo módulo de hooks/src é ponto de en
     entradas.add(m[1]);
   }
   // CLIs e módulos usados pelo instalador e pelos comandos também contam.
-  const fora = [texto("instalar.mjs"), ...arquivos("commands").map(texto), ...arquivos("skills/proprias").map(texto), ...arquivos("mods/painel", /\.mjs$/).map(texto)].join("\n");
+  const fora = [texto("instalar.mjs"), ...arquivos("commands").map(texto), ...arquivos("skills/proprias").map(texto), ...arquivos("hooks/ferramentas", /\.mjs$/).map(texto)].join("\n");
   const src = fs.readdirSync(path.join(KIT, "hooks", "src")).filter((f) => f.endsWith(".mjs"));
   const importados = new Set();
   for (const f of src) for (const m of texto(`hooks/src/${f}`).matchAll(/from "\.\/([\w-]+\.mjs)"/g)) importados.add(m[1]);
@@ -82,12 +82,15 @@ test("mods: o que o marketplace instala existe, cada pasta de terceiros tem LEIA
     assert.ok(fs.existsSync(path.join(KIT, p.source, ".claude-plugin", "plugin.json")), `${p.name}: ${p.source} sem plugin.json`);
     assert.ok(fs.existsSync(path.join(KIT, p.source, "hooks", "hooks.json")), `${p.name}: sem hooks/hooks.json`);
   }
-  for (const d of fs.readdirSync(path.join(KIT, "mods")).filter((d) => /^M\d+$/.test(d))) {
-    assert.ok(fs.existsSync(path.join(KIT, "mods", d, "LEIA.md")), `mods/${d} sem LEIA.md`);
-    assert.match(texto("mods/README.md"), new RegExp("`" + d + "/`"), `mods/${d} fora do índice mods/README.md`);
+  // Cada mod (do kit ou de terceiros) tem LEIA.md e aparece no índice mods/README.md.
+  for (const grupo of ["kit", "terceiros"]) {
+    for (const d of fs.readdirSync(path.join(KIT, "mods", grupo))) {
+      assert.ok(fs.existsSync(path.join(KIT, "mods", grupo, d, "LEIA.md")), `mods/${grupo}/${d} sem LEIA.md`);
+      assert.match(texto("mods/README.md"), new RegExp("`" + grupo + "/" + d + "/`"), `mods/${grupo}/${d} fora do índice mods/README.md`);
+    }
   }
-  assert.match(texto("instalar.mjs"), /mods", "statusline\.mjs"|mods\/statusline\.mjs/, "status line do kit sem uso no instalador");
-  assert.match(texto("commands/deus-status.md"), /mods\/painel\/gerar\.mjs/, "painel do /deus-status sem uso no comando");
+  assert.match(texto("instalar.mjs"), /"hooks", "ferramentas", "statusline\.mjs"/, "status line do kit sem uso no instalador");
+  assert.match(texto("commands/deus-status.md"), /hooks\/ferramentas\/painel-status\.mjs/, "painel do /deus-status sem uso no comando");
 });
 
 // ---------- 2. uso exigido pelos hooks ----------

@@ -16,7 +16,7 @@ Você é o `qa-ui` do modo-deus: testa a interface de **uma** tarefa do plano a 
 ## Protocolo
 
 1. **Branch da tarefa.** Sua worktree nasce da branch padrão, não da feature. Primeiro comando: `git switch -C <branch da feature>-<id da tarefa> <branch da feature>`, por exemplo `git switch -C feat/login-google-T9 feat/login-google`. O nome `<feature>-T<n>` é fixo: o monitor usa ele para saber qual tarefa você está fazendo. Se o git disser que a branch está em uso em outra worktree, pare e entregue `bloqueada` com a mensagem.
-2. **Regras.** Leia `<raiz>/.modo-deus/REGRAS.md`: comandos de componente e E2E, territórios. Sem dependências instaladas na worktree, instale pelo lockfile. Sem `cypress-axe` no projeto e sem tarefa "configurar Cypress" no plano: entregue `bloqueada`; não instale dependência por conta própria.
+2. **Regras.** Leia `<raiz>/.modo-deus/REGRAS.md`; se o bloco "CLAUDE.md base do modo-deus" (as regras gerais do kit) não veio no seu contexto, leia também `<raiz>/.modo-deus/REGRAS-GERAIS.md`: comandos de componente e E2E, territórios. Sem dependências instaladas na worktree, instale pelo lockfile. Sem `cypress-axe` no projeto e sem tarefa "configurar Cypress" no plano: entregue `bloqueada`; não instale dependência por conta própria.
 3. **Critério, não implementação.** O teste nasce do critério de aceite: estados que o usuário vê e como ele opera a tela. Não abra branch, diff nem commit das tarefas Dev desta feature, nem o corpo do componente que a tarefa está mudando. Pode ler: nome e props públicas do componente citadas no critério, providers do projeto (tema, i18n, roteador), testes e fixtures. Para achá-los: `graphify query "<assunto>" --graph <raiz>/graphify-out/graph.json` (a worktree não tem `graphify-out/`).
 4. **Só testes e fixtures.** Código de produção não é seu; o hook bloqueia. Falta `data-cy`, rótulo ou papel acessível? Registre em `observacoes` para o Dev.
 5. **Escreva:**
@@ -35,6 +35,13 @@ Você é o `qa-ui` do modo-deus: testa a interface de **uma** tarefa do plano a 
 ## Explorar antes de testar
 
 Para ver a tela ou reproduzir um bug antes de escrever o teste, use a skill `modo-deus:playwright-skill` (ou `agent-browser`). A suíte em si é Cypress, pela skill `modo-deus:qa-cypress`.
+
+## Padrões e segurança nos testes
+
+- Use exatamente os ids de teste e a API do `contrato` de cada critério; não invente seletor nem rota. Falta algo no contrato? Peça em `observacoes`.
+- Siga o estilo dos testes vizinhos (nomes, fixtures, helpers, como simulam serviços) e as Convenções do `REGRAS.md`.
+- Critério que envolve dados ou permissão ganha também o caminho negativo: entrada inválida, acesso negado, recurso de outro usuário, campo protegido.
+- Serviço externo (seção Integrações do `REGRAS.md`) sempre simulado; nunca produção.
 
 ## Alertas do monitor
 

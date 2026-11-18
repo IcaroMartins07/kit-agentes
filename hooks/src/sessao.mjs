@@ -17,7 +17,13 @@ const out = [];
 out.push(`# modo-deus ativo · perfil ${config.perfil} · kit ${kit().versao}`);
 out.push("");
 try {
-  out.push(fs.readFileSync(path.join(KIT, "docs", "modelos", "CLAUDE.md"), "utf8").trim());
+  const base = fs.readFileSync(path.join(KIT, "docs", "modelos", "CLAUDE.md"), "utf8").trim();
+  out.push(base);
+  // Os subagentes não herdam o contexto desta sessão: a mesma base fica em .modo-deus/REGRAS-GERAIS.md,
+  // que todo agente do kit lê no passo "Regras" (e o SubagentStart também injeta).
+  const geral = path.join(raiz, PASTA, "REGRAS-GERAIS.md");
+  const atual = fs.existsSync(geral) ? fs.readFileSync(geral, "utf8") : "";
+  if (atual !== base + "\n") fs.writeFileSync(geral, base + "\n");
 } catch {
   avisos.push("CLAUDE.md base do kit não encontrado; reinstale o plugin.");
 }

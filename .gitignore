@@ -53,3 +53,15 @@ desktop.ini
 
 # Worktrees de subagentes do Claude Code
 .claude/worktrees/
+
+# Instalação do próprio kit neste repositório (cada máquina gera a sua)
+/.modo-deus/
+
+# Saída das avaliações (claude plugin eval)
+testes/evals/results/
+
+# Logo do Orca: é do Orca, não vai para o repositório (veja mods/kit/painel-agentes/LEIA.md)
+mods/kit/painel-agentes/assets/orca-logo.svg
+
+# Tipos que o app gera ao carregar um mod (incluem os MCPs conectados nesta máquina)
+mods/**/.claude-plugin/types/

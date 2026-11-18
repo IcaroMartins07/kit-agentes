@@ -1,17 +1,26 @@
 # mods/
 
-Mods do Claude Code guardados com o kit. Estar aqui não instala nada; o estado de cada um está na tabela. cada pasta tem um `LEIA.md` com a origem, o commit, o comando de instalação e o que a revisão do código encontrou.
+Mods do Claude Code guardados com o kit, em duas pastas. Estar aqui não instala nada: os do kit entram pelo marketplace `kit-agentes` (`claude plugin install <nome>@kit-agentes`) e os de terceiros têm o comando no `LEIA.md` de cada um.
 
-| Pasta | Mod | Origem | Estado nesta máquina |
-|---|---|---|---|
-| `M1/` | savvy-progress | JohnnyVizz/claude-kit | instalado |
-| `M2/` | You Should Know | embutido no Claude Code | não ativado (só instruções) |
-| `M3/` | File Tree | data-goblin/claude-code-filetree | instalado (0.8.3) |
-| `M4/` | Cache Tax | karanb192/cache-tax | instalado (2.4.2) |
-| `M5/` | Reflect (reflect-mod) | BayramAnnakov/claude-reflect | instalado (3.3.0) |
-| `M6/` | Terminal Browser | zenbu-labs/terminal-browser | não instalado; exige WSL no Windows |
-| `M7/` | Prompt Master | criado no kit | carregado nesta sessão; não instalado |
+## `kit/`: criados no kit
 
-Do próprio kit, também aqui: `statusline.mjs` (status line do modo-deus, `instalar.mjs --statusline`), `painel/gerar.mjs` (gerador do `/deus-status`) e `painel/temas/` (mod de temas para os apps: Café, Meia-noite, Floresta, Neon e Papel; `/tema`).
+| Pasta | Mod | O que faz |
+|---|---|---|
+| `kit/painel-agentes/` | Painel de agentes | Painel global com as abas Agentes (pixel art), Worktree (árvore no estilo do File Tree), Alterações, Cérebro (graphify), Orca e Skill (liga e desliga skills, plugins e mods; `/gerenciador`) |
+| `kit/prompt-master/` | Prompt Master | Reescreve o prompt antes de enviar, com desfazer |
+| `kit/temas/` | Temas | Temas dos apps, com a cena das dunas (`/tema`) |
 
-Para atualizar um mod guardado, clone o repositório de origem e copie de novo a pasta do plugin, atualizando o commit no `LEIA.md`.
+## `terceiros/`: guardados com origem e commit
+
+| Pasta | Mod | Origem |
+|---|---|---|
+| `terceiros/savvy-progress/` | savvy-progress | JohnnyVizz/claude-kit |
+| `terceiros/you-should-know/` | You Should Know | embutido no Claude Code (só instruções) |
+| `terceiros/filetree/` | File Tree | data-goblin/claude-code-filetree |
+| `terceiros/reflect-mod/` | Reflect | BayramAnnakov/claude-reflect, ajustado no kit |
+| `terceiros/terminal-browser/` | Terminal Browser | zenbu-labs/terminal-browser (exige WSL no Windows) |
+| `terceiros/theme-examples/` | theme-examples | anthropics/claude-plugins-official |
+
+Cada pasta tem um `LEIA.md` com a origem, o commit, como instalar e o que a revisão do código encontrou. Para atualizar um mod de terceiros, clone a origem, copie de novo a pasta do plugin e atualize o commit no `LEIA.md`.
+
+As ferramentas do próprio kit que não são mods (a status line e o gerador do `/deus-status`) ficam em [`ferramentas/`](../ferramentas).

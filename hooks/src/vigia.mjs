@@ -371,6 +371,15 @@ export function vigiarEntrega(entrada, ctx, entrega) {
     if (modo === "completo" && bloqueiaNoDeus("V5")) bloqueio = { regra: "V5", motivo };
     else alertas.push({ regra: "V5", motivo });
   }
+  // V12: mexeu em dependência e não rodou a auditoria.
+  const DEP = /(^|[\\/])(package(-lock)?\.json|pnpm-lock\.yaml|yarn\.lock|bun\.lockb?|requirements[^\\/]*\.txt|pyproject\.toml|poetry\.lock|uv\.lock|Pipfile(\.lock)?|go\.(mod|sum)|Cargo\.(toml|lock)|Gemfile(\.lock)?|composer\.(json|lock)|pubspec\.(yaml|lock))$/;
+  const AUDIT = /\baudit\b|pip-audit|osv-scanner|govulncheck|cargo[- ]audit|bundle[- ]audit/;
+  const deps = (entrega.arquivos || []).filter((a) => typeof a === "string" && DEP.test(a));
+  if (deps.length && !bash.some((l) => AUDIT.test(String(l.alvo || "")))) {
+    const motivo = `entrega "pronta" de ${entrega.tarefa || "?"} mexe em dependência (${deps.join(", ")}) sem auditoria: rode o comando Auditoria do REGRAS.md e cite o resultado em testes.`;
+    if (modo === "completo" && bloqueiaNoDeus("V12") && !bloqueio) bloqueio = { regra: "V12", motivo };
+    else alertas.push({ regra: "V12", motivo });
+  }
   return { alertas, bloqueio };
 }
 

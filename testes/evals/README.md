@@ -8,6 +8,9 @@ evals/
     classificar-simples/     mudança pequena → simples / medium
     classificar-complexa/    migração + autorização → complexa / high
     plano-valido/            grava .modo-deus/plano.json no contrato
+    contrato-dev-qa/         critério dividido entre Dev e QA ganha contrato (ids de teste e API)
+    caminho-rapido/          troca de texto vai pelo caminho rápido
+    desempenho-caminho-critico/  listagem grande em caminho crítico: complexa e com medida de desempenho
   regressao/                 casos que nasceram de falhas reais (/retro)
   results/                   saída das execuções (fora do git)
 ```

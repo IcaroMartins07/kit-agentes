@@ -7,6 +7,11 @@
   },
   "scripts": {
     "test": "node testes/rodar.mjs",
-    "doctor": "node instalar.mjs doctor"
-  }
+    "doctor": "node instalar.mjs doctor",
+    "agents-mode": "node agents-mode.mjs"
+  },
+  "bin": {
+    "agents-mode": "agents-mode.mjs"
+  },
+  "license": "MIT"
 }

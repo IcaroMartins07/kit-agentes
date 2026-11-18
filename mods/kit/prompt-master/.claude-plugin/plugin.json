@@ -1,0 +1,17 @@
+{
+  "name": "prompt-master",
+  "version": "0.5.2",
+  "description": "Botão Prompt Master ao lado do prompt: reescreve o rascunho com um modelo para você revisar antes de enviar; modo automático opcional.",
+  "author": { "name": "kit-agentes" },
+  "types": "./types/index.d.ts",
+  "license": "MIT",
+  "userConfig": {
+    "modelo": {
+      "type": "string",
+      "title": "Modelo da reescrita",
+      "description": "sonnet equilibra qualidade e custo; haiku é o mais barato; opus o mais caprichado",
+      "default": "sonnet",
+      "options": ["sonnet", "haiku", "opus"]
+    }
+  }
+}

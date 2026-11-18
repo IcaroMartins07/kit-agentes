@@ -2,6 +2,33 @@
 
 ## [não lançado]
 
+### 0.6.0 · pronto para o GitHub (2026-11-18)
+- Sete pastas: agents, commands, skills, hooks, mods, docs e testes, mais exemplos/. `agents-mode.mjs` na raiz; dependências em `hooks/conectores.json`; status line e painel do `/deus-status` em `hooks/ferramentas/`.
+- Saiu o legado (v1 em docs/referencia, `migrar-v1.mjs`, planos internos, o maestro histórico e a lista da v1), com cópia em `~/.claude/modo-deus/backups/legado-2026-11-18`.
+- Licença MIT no kit e nos mods do kit; o `LICENSE` original de cada componente de terceiros na pasta dele (impeccable é Apache 2.0); `TERCEIROS.md` atualizado.
+- Primeira execução real do `/deus` (projeto de exemplo, 4 min, US$ 2): o GIF do README sai dela. Ela mostrou e corrigiu: o caminho rápido agora prevê a tarefa `qa-unit` quando o teste fica no território do QA, e o contrato Dev/QA só é dispensado em plano que já começou (antes, plano novo gravado direto como aprovado escapava). Fica aberto: a cerca bloqueia o merge das tarefas feito numa worktree de integração.
+- README principal reescrito (selos, GIF, diagrama do fluxo, instalação, perfis, interface, estrutura) e README em cada pasta; `CONTRIBUTING.md`, `SECURITY.md` e modelos de issue e PR; imagens em `docs/imagens/`; projeto de exemplo em `exemplos/tarefas`.
+
+### 0.5.0 · agents-mode e estrutura pronta para publicar (2026-11-18)
+- `agents-mode` (`bin/agents-mode.mjs`, `npm link`): instala ou atualiza o plugin do kit e os mods do kit já instalados, as dependências, o kit no projeto e roda o doctor, nessa ordem.
+- Mods em `mods/kit/` (painel-agentes, prompt-master, temas, maestro histórico) e `mods/terceiros/` (savvy-progress, filetree, reflect-mod, terminal-browser, theme-examples, you-should-know), com nomes no lugar de M1–M9 e o `LEIA.md` dentro de cada pasta. Status line e painel do `/deus-status` em `ferramentas/`.
+- Publicação: `.gitignore` tira a instalação local (`/.modo-deus/`), os resultados de eval e a logo do Orca; README sem caminhos desta máquina; `TERCEIROS.md` com origem e licença de cada componente de terceiros.
+
+### 0.4.0 · fluxo mais enxuto e retro que aponta a skill que falhou (2026-11-18)
+- Contexto enxuto: segurança, desempenho e simplificação saem da pré-carga e são invocadas sob demanda; `REGRAS-GERAIS.md` só quando as regras não vieram no contexto.
+- Contrato Dev/QA no plano (`contrato: { ids_teste, api }`), exigido pelo validador quando os dois dividem um critério.
+- V12: dependência alterada sem auditoria. Comandos Desempenho e Segredos no `REGRAS.md`.
+- Revisão cedo das tarefas complexas, caminho rápido para mudança pequena, grafo da feature reconstruído na regressão, `doctor` avisa convenção nova.
+- Autoaprimoramento: itens de revisão com `categoria`; causa `revisao_recorrente` na retro com a skill alvo; três evals novos (`contrato-dev-qa`, `caminho-rapido`, `desempenho-caminho-critico`).
+- 14 skills soltas duplicadas do kit desativadas nesta máquina. 263 testes.
+
+### 0.3.0 · padrões do projeto, segurança, qualidade e desempenho em todas as etapas (2026-11-18)
+- Regras gerais nos subagentes: `SubagentStart` injeta o `CLAUDE.md` base; a sessão grava `.modo-deus/REGRAS-GERAIS.md`, lido no passo "Regras" de todo Dev e QA.
+- `instalar.mjs` detecta convenções (linter, formatador, tipos, hooks de commit), integrações (SDKs Node e Python e nomes do `.env.example`) e o comando de auditoria de dependências; o `REGRAS.md` ganhou as seções Integrações e Desempenho e quatro itens no Definition of Done.
+- Skills novas no kit: `performance-optimization` (`dev-front`, `dev-back`, `dev-db`, `revisor`) e `code-simplification` (todo Dev antes de entregar). `security-and-hardening` passou a valer para todos os Dev de código.
+- Passo **Padrões** em todo Dev; padrões e caminho negativo de segurança nos QAs; `revisor` com Consistência e Desempenho; `revisor-seguranca` com auditoria de dependências e integrações; Maestro analisa o projeto antes do plano (passo 0); `/spec`, `/plan`, `/build`, `/review` e `/ship` alinhados.
+- Análise completa e correções em `docs/FLUXO-E-SKILLS.md`. 260 testes.
+
 ### Reorganização e garantia de uso (2026-11-16)
 - Oito pastas: `skills/`, `mods/`, `plugins/`, `hooks/`, `agents/` (em `maestro/`, `dev/`, `qa/`, `review/`), `docs/`, `commands/`, `testes/`. Agentes listados no `plugin.json` para manter os nomes `modo-deus:<agente>` (confirmado numa sessão real).
 - `plugins/conectores.json` concentra plugins, marketplaces e graphify; `instalar.mjs dependencias <projeto>` instala com `--scope local` (só no projeto) por padrão, `--escopo user` para global.

@@ -29,6 +29,9 @@ function sobrepoe(a, b) {
   return null;
 }
 
+// Tipo do problema apontado pela Revisão: a retro usa para achar a skill que deveria ter evitado.
+export const CATEGORIAS = ["padrao", "seguranca", "desempenho", "correcao", "teste", "escopo", "legibilidade"];
+
 export function validarPlano(plano, { kit = kitPadrao(), config = {} } = {}) {
   const e = [];
   if (!plano || typeof plano !== "object" || Array.isArray(plano)) return ["o plano precisa ser um objeto JSON"];
@@ -48,10 +51,26 @@ export function validarPlano(plano, { kit = kitPadrao(), config = {} } = {}) {
     else if (idsCa.has(c.id)) e.push(`critério ${c.id} repetido`);
     else idsCa.add(c.id);
     if (!ehTexto(c?.texto)) e.push(`critério ${c?.id || i}: texto obrigatório`);
+    if (c?.contrato !== undefined) {
+      const k = c.contrato;
+      const ids = k?.ids_teste;
+      if (!k || typeof k !== "object" || Array.isArray(k)) e.push(`critério ${c?.id || i}: contrato deve ser um objeto { ids_teste, api }`);
+      else if ((ids !== undefined && (!Array.isArray(ids) || !ids.every(ehTexto))) || (k.api !== undefined && !ehTexto(k.api)) || (!lista(ids).length && !ehTexto(k.api))) e.push(`critério ${c?.id || i}: contrato precisa de ids_teste (lista de textos) e/ou api (texto)`);
+    }
   }
 
   const tarefas = lista(plano.tarefas);
   if (!tarefas.length) e.push("tarefas: o plano precisa de pelo menos uma tarefa");
+  // Dev e QA no mesmo critério trabalham em paralelo sem ler um ao outro: o contrato combina seletores e API antes.
+  // Plano que já começou (alguma tarefa saiu de "pendente") segue como foi aprovado, mesmo de antes da regra da 0.4.0;
+  // plano novo precisa do contrato, inclusive o gravado direto como "aprovado".
+  const QA_PARALELO = ["qa-unit", "qa-integracao", "qa-e2e", "qa-ui"];
+  const comecou = tarefas.some((t) => t?.status && t.status !== "pendente");
+  for (const c of comecou ? [] : cas) {
+    if (!c?.id || c.contrato) continue;
+    const doCa = tarefas.filter((t) => lista(t?.criterios).includes(c.id));
+    if (doCa.some((t) => String(t?.time || "").startsWith("dev-") && t.time !== "dev-docs") && doCa.some((t) => QA_PARALELO.includes(t?.time))) e.push(`critério ${c.id}: Dev e QA trabalham nele em paralelo; defina contrato { ids_teste, api } para os dois seguirem o mesmo`);
+  }
   const ids = new Map();
   for (const [i, t] of tarefas.entries()) {
     const nome = t?.id || `tarefas[${i}]`;
@@ -104,6 +123,7 @@ export function validarPlano(plano, { kit = kitPadrao(), config = {} } = {}) {
     if (!["alta", "media", "baixa"].includes(r?.gravidade)) e.push(`${n}: gravidade alta, media ou baixa`);
     if (!ehTexto(r?.motivo)) e.push(`${n}: motivo obrigatório`);
     if (!["aberto", "resolvido", "descartado"].includes(r?.status)) e.push(`${n}: status aberto, resolvido ou descartado`);
+    if (r?.categoria !== undefined && !CATEGORIAS.includes(r.categoria)) e.push(`${n}: categoria deve ser uma de: ${CATEGORIAS.join(", ")}`);
   }
   return e;
 }
@@ -129,6 +149,7 @@ export function lerVeredito(texto) {
     if (!ehTexto(it?.arquivo)) e.push(`itens[${i}].arquivo obrigatório`);
     if (it?.linha !== undefined && !Number.isInteger(it.linha)) e.push(`itens[${i}].linha deve ser número inteiro`);
     if (!ehTexto(it?.motivo)) e.push(`itens[${i}].motivo obrigatório`);
+    if (it?.categoria !== undefined && !CATEGORIAS.includes(it.categoria)) e.push(`itens[${i}].categoria: uma de ${CATEGORIAS.join(", ")}`);
   }
   if (v.veredito === "reprovado" && !itens.some((it) => it?.gravidade === "alta" || it?.gravidade === "media")) e.push("reprovado exige pelo menos um item de gravidade alta ou media");
   if (v.veredito === "aprovado" && itens.some((it) => it?.gravidade === "alta")) e.push("aprovado não pode ter item de gravidade alta");

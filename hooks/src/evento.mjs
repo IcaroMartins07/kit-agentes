@@ -3,7 +3,9 @@
 //  - PostToolUseFailure: V4 (comando inexistente), V7 (mesmo erro repetido), V3 (falha de arquivo).
 //  - SubagentStop de Dev/QA com entrega "pronta": V5 (testes depois da última edição) e V6 (comando citado sem lastro).
 //  - Stop: marcador de retrospectiva quando a sessão teve alerta ou bloqueio.
-import { lerEntrada, acharProjeto, lerConfig, registrar, monitorLigado, agenteDa } from "./comum.mjs";
+import fs from "node:fs";
+import path from "node:path";
+import { KIT, lerEntrada, acharProjeto, lerConfig, registrar, monitorLigado, agenteDa } from "./comum.mjs";
 import { contratoDe } from "./plano.mjs";
 import { vigiarFalha, vigiarEntrega, marcarPendente, ocorrencia, textoAlertas, lerEstado, gravarEstado } from "./vigia.mjs";
 
@@ -35,6 +37,14 @@ if (evento === "PostToolUseFailure") {
     process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: "PostToolUseFailure", additionalContext: textoAlertas(alertas) } }) + "\n");
   }
   process.exit(0);
+}
+
+// ---------- SubagentStart: regras gerais do kit para o subagente (ele não herda o contexto da sessão) ----------
+if (evento === "SubagentStart" && (entrada.agent_type || "").startsWith("modo-deus:")) {
+  try {
+    const base = fs.readFileSync(path.join(KIT, "docs", "modelos", "CLAUDE.md"), "utf8").trim();
+    process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: "SubagentStart", additionalContext: base } }) + "\n");
+  } catch { /* sem a base: o agente lê .modo-deus/REGRAS-GERAIS.md */ }
 }
 
 // ---------- SubagentStart: relógio do V8 ----------

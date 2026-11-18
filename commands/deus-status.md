@@ -1,11 +1,11 @@
 ---
 description: Situação do modo-deus — fases, tarefas por status, subagentes, alertas por regra e o painel HTML
 argument-hint: [--todas | --sessao <id>]
-allowed-tools: Bash(node "${CLAUDE_PLUGIN_ROOT}/mods/painel/gerar.mjs" *)
+allowed-tools: Bash(node "${CLAUDE_PLUGIN_ROOT}/hooks/ferramentas/painel-status.mjs" *)
 ---
 Situação atual, gerada pelo kit (não reescreva os números):
 
-!`node "${CLAUDE_PLUGIN_ROOT}/mods/painel/gerar.mjs" "${CLAUDE_PROJECT_DIR}" $ARGUMENTS`
+!`node "${CLAUDE_PLUGIN_ROOT}/hooks/ferramentas/painel-status.mjs" "${CLAUDE_PROJECT_DIR}" $ARGUMENTS`
 
 Depois, em até cinco linhas:
 
