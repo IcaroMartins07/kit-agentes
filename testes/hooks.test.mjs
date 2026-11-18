@@ -313,3 +313,9 @@ test("subagente do kit recebe as regras gerais: SubagentStart injeta e a sessão
   rodar("sessao", { hook_event_name: "SessionStart", source: "startup" });
   assert.equal(fs.readFileSync(path.join(repo, ".modo-deus", "REGRAS-GERAIS.md"), "utf8"), base + "\n");
 });
+
+// O kit só auxilia: nada dele entra no git do projeto, nem à força.
+espera(2, "V9 · git add -f de .modo-deus", () => pre("Bash", { command: "git add -f .modo-deus/plano.json" }));
+espera(2, "V9 · git add --force das worktrees dos agentes", () => pre("Bash", { command: "git add --force .claude/worktrees" }));
+espera(2, "V9 · git add -f do grafo", () => pre("Bash", { command: "git add -f graphify-out/graph.json" }));
+espera(0, "V9 · git add normal do código passa", () => pre("Bash", { command: "git add src/app.ts" }));

@@ -24,6 +24,8 @@ const MARCA_FIM = "# /modo-deus";
 const PASTA = ".modo-deus";
 const PASTA_ANTIGA = ".claude/modo-deus";
 const SETTINGS = ".claude/settings.local.json";
+// Onde o Claude Code cria as worktrees dos agentes (isolation: worktree): também ficam fora do git do projeto.
+const WORKTREES = ".claude/worktrees";
 const MODOS_TIME = ["auto", "ligado", "desligado"];
 
 const home = () => process.env.MODO_DEUS_HOME || os.homedir();
@@ -461,7 +463,7 @@ export function instalar(caminho, { perfil = null, times = {}, dryRun = false, s
   fazer(`exclude  ${path.relative(raiz, exc).replace(/\\/g, "/")} (vale também para worktrees)`, () => {
     fs.mkdirSync(path.dirname(exc), { recursive: true });
     const atual = fs.existsSync(exc) ? fs.readFileSync(exc, "utf8") : "";
-    fs.writeFileSync(exc, blocoExclude(atual, [`${PASTA}/`, SETTINGS, ...(grafoVersionado ? [] : [`${GRAFO}/`])]));
+    fs.writeFileSync(exc, blocoExclude(atual, [`${PASTA}/`, SETTINGS, `${WORKTREES}/`, ...(grafoVersionado ? [] : [`${GRAFO}/`])]));
   });
 
   const manifesto = { versao_kit: kit.versao, deny: registro.deny, allow: registro.allow, ...(registro.statusline ? { statusline: registro.statusline } : {}), criou_settings: criouSettings, criou_grafo: criouGrafo };
@@ -578,8 +580,9 @@ export function doctor(caminho, { log = console.log } = {}) {
       const exc = arquivoExclude(raiz);
       fs.existsSync(exc) && fs.readFileSync(exc, "utf8").includes(MARCA_INI) ? ok("exclude configurado") : erro("bloco do modo-deus ausente no .git/info/exclude");
 
-      const sujos = (git(raiz, "status", "--porcelain", "--", ".claude") || "").split("\n").filter((l) => l.includes(PASTA) || l.includes(SETTINGS));
-      sujos.length ? erro(`arquivos do kit aparecem no git status: ${sujos.join("; ")}`) : ok("git status limpo dos arquivos do kit");
+      // Nada do kit pode aparecer para o git do projeto: nem a pasta, nem o settings local, nem as worktrees, nem o grafo.
+      const sujos = (git(raiz, "status", "--porcelain", "--untracked-files=all", "--", PASTA, ".claude", GRAFO) || "").split("\n").filter((l) => [PASTA, SETTINGS, WORKTREES, GRAFO].some((k) => l.includes(k)));
+      sujos.length ? erro(`arquivos do kit aparecem no git status: ${sujos.slice(0, 5).join("; ")}`) : ok("git status limpo dos arquivos do kit");
 
       const det = detectar(raiz);
       const regrasTxt = fs.existsSync(regrasF) ? fs.readFileSync(regrasF, "utf8") : "";

@@ -11,10 +11,10 @@ cp -r exemplos/tarefas ~/tarefas-exemplo
 cd ~/tarefas-exemplo
 git init && git add -A && git commit -m "Projeto de exemplo"
 npm test
-agents-mode --perfil estrito
+agents-mode
 ```
 
-Abra o Claude Code nessa pasta e reinicie o app se o plugin acabou de ser instalado.
+Abra o Claude Code nessa pasta (reinicie o app se o kit acabou de ser instalado). O painel de agentes abre à direita, e `git status` continua limpo: nada do kit entra no repositório do exemplo.
 
 ## Pedidos para testar
 

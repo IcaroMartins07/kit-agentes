@@ -43,10 +43,26 @@ git clone https://github.com/IcaroMartins07/kit-agentes.git
 cd kit-agentes
 npm link                       # deixa o comando agents-mode disponível em qualquer pasta
 cd /caminho/do/seu/projeto
-agents-mode --perfil estrito   # plugin do kit, dependências, kit no projeto e conferência
+agents-mode                    # instala e configura tudo, com o painel de agentes
 ```
 
-Reinicie o app do Claude depois. Opções do `agents-mode`: `--perfil leve|estrito|deus`, `--times dev-mobile=ligado`, `--statusline`, `--sem-grafo`, `--escopo local|user` (das dependências) e `--dry-run` (só mostra). Pode rodar de novo quando quiser: o que já está instalado é atualizado.
+Reinicie o app do Claude (ou rode `/reload-plugins`). O painel de agentes abre sozinho à direita em cada sessão; `/agentes` mostra ou esconde.
+
+O `agents-mode` faz, nessa ordem: registra o marketplace do kit e instala o plugin `modo-deus`, instala o painel de agentes, instala as dependências (superpowers, graphify e os outros conectores), cria a configuração do projeto e roda o `doctor`. Pode rodar de novo quando quiser: o que já está instalado é atualizado.
+
+| Opção | O que muda |
+|---|---|
+| `--perfil leve\|estrito\|deus` | O rigor do monitor (padrão: `estrito`) |
+| `--mods todos` | Instala também os temas e o Prompt Master; `--mods painel-agentes,temas` escolhe; `--mods nenhum` não instala mod |
+| `--times dev-mobile=ligado` | Liga ou desliga times sob demanda |
+| `--statusline` | Liga a status line do kit no projeto |
+| `--sem-grafo` | Não monta o mapa do código |
+| `--escopo user` | Dependências para todos os projetos (padrão: só este) |
+| `--dry-run` | Só mostra o que faria |
+
+### O kit não entra no seu projeto
+
+O kit só auxilia: **nada dele vai para o git do projeto**. O que ele cria fica no `.git/info/exclude` (que vale só na sua máquina e não é versionado): `.modo-deus/` (regras, plano, telemetria), `graphify-out/` (mapa do código), `.claude/worktrees/` (onde os agentes trabalham) e `.claude/settings.local.json` (permissões). A cerca de segurança recusa `git add -f` desses caminhos, e o `doctor` avisa se algum deles aparecer no `git status`. Nos commits ficam só as mudanças de código das tarefas.
 
 <details>
 <summary>Passo a passo, sem o agents-mode</summary>
@@ -63,8 +79,6 @@ Sem clonar, só o plugin: `claude plugin marketplace add IcaroMartins07/kit-agen
 
 Remover de um projeto: `node instalar.mjs --remover /caminho/do/projeto` (o que é seu vai para `~/.claude/modo-deus/backups/`).
 </details>
-
-O instalador cria `.modo-deus/` no projeto (`REGRAS.md` com stack, comandos, convenções, integrações e territórios detectados; perfil; telemetria), aplica um deny-list no `.claude/settings.local.json` e monta o mapa do código em `graphify-out/`. Tudo fica fora do git do projeto.
 
 ### Perfis
 
@@ -88,13 +102,17 @@ Para a sessão inteira como Maestro: `claude --agent modo-deus:maestro`. Lista c
 
 ## Interface
 
-Os mods do kit mudam a cara do Claude Code e entram pelo mesmo marketplace:
+Os mods do kit mudam a cara do Claude Code. O `agents-mode` já instala o painel de agentes; para os outros:
 
 ```bash
-claude plugin install painel-agentes@kit-agentes --scope user   # painel com agentes, worktree, alterações, grafo, Orca e skills
-claude plugin install temas@kit-agentes --scope user            # temas e a cena das dunas (/tema)
-claude plugin install prompt-master@kit-agentes --scope user    # reescreve o prompt antes de enviar
+agents-mode --mods todos
 ```
+
+| Mod | O que faz |
+|---|---|
+| `painel-agentes` | Painel com as abas Agentes, Worktree, Alterações, Cérebro (grafo), Orca e Skill (liga e desliga skills, plugins e mods) |
+| `temas` | Temas e a cena das dunas (`/tema`) |
+| `prompt-master` | Reescreve o prompt antes de enviar |
 
 | Dunas de noite (modo escuro) | Dunas de dia (modo claro) |
 |---|---|

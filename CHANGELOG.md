@@ -2,6 +2,10 @@
 
 ## [não lançado]
 
+### 0.6.1 · agents-mode com o painel e o kit fora do git do projeto (2026-11-18)
+- `agents-mode` instala também o painel de agentes (padrão); `--mods todos|nenhum|<lista>` escolhe os mods de interface. A documentação usa só o `agents-mode` para instalar.
+- Nada do kit entra no git do projeto: `.claude/worktrees/` (worktrees dos agentes) entrou no `.git/info/exclude` junto com `.modo-deus/`, `graphify-out/` e o settings local; a cerca (V9) recusa `git add -f` desses caminhos; o `doctor` confere todos.
+
 ### 0.6.0 · pronto para o GitHub (2026-11-18)
 - Sete pastas: agents, commands, skills, hooks, mods, docs e testes, mais exemplos/. `agents-mode.mjs` na raiz; dependências em `hooks/conectores.json`; status line e painel do `/deus-status` em `hooks/ferramentas/`.
 - Saiu o legado (v1 em docs/referencia, `migrar-v1.mjs`, planos internos, o maestro histórico e a lista da v1), com cópia em `~/.claude/modo-deus/backups/legado-2026-11-18`.

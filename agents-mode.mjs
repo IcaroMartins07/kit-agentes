@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 // agents-mode: instala e configura o kit de agentes num projeto, de uma vez.
-//   1. plugin do kit: marketplace kit-agentes e modo-deus@kit-agentes (escopo user; atualiza se já existem),
-//      e os mods do kit que já estiverem instalados
-//   2. dependências: plugins obrigatórios e graphify (instalar.mjs dependencias)
-//   3. parte do projeto: REGRAS.md, config, deny-list, exclude, grafo (instalar.mjs)
-//   4. conferência: instalar.mjs doctor
+//   1. plugin do kit: marketplace kit-agentes e modo-deus@kit-agentes (escopo user; atualiza se já existem)
+//   2. mods de interface do kit: o painel de agentes por padrão (--mods escolhe), e atualiza os que já estiverem instalados
+//   3. dependências: plugins obrigatórios e graphify (instalar.mjs dependencias)
+//   4. parte do projeto: REGRAS.md, config, deny-list, exclude, grafo (instalar.mjs); nada disso entra no git do projeto
+//   5. conferência: instalar.mjs doctor
 //
 // Uso:
 //   agents-mode [caminho] [--perfil leve|estrito|deus] [--times dev-mobile=ligado,...] [--statusline]
-//               [--sem-grafo] [--escopo local|user] [--dry-run]
+//               [--sem-grafo] [--escopo local|user] [--mods painel-agentes,temas,...|todos|nenhum] [--dry-run]
 // Sem caminho, usa a pasta atual. --escopo vale só para as dependências.
 import fs from "node:fs";
 import os from "node:os";
@@ -20,13 +20,16 @@ const KIT = path.dirname(fileURLToPath(import.meta.url));
 const INSTALAR = path.join(KIT, "instalar.mjs");
 const MARKETPLACE = "kit-agentes";
 const PLUGIN = `modo-deus@${MARKETPLACE}`;
+// Mods de interface do kit (os do marketplace, menos o próprio plugin). O painel de agentes vem por padrão.
+const MODS_DO_KIT = JSON.parse(fs.readFileSync(path.join(KIT, ".claude-plugin", "marketplace.json"), "utf8")).plugins.map((p) => p.name).filter((n) => n !== "modo-deus");
+const MODS_PADRAO = ["painel-agentes"];
 
 export class ErroUso extends Error {}
 
 // Separa os argumentos de cada passo. Sem efeito colateral: testável.
 export function montarPassos(argv, { marketplaces = [], plugins = [] } = {}) {
   const proj = [], deps = [], inst = [];
-  let caminho = null, dry = false;
+  let caminho = null, dry = false, mods = MODS_PADRAO;
   const resto = [...argv];
   while (resto.length) {
     const a = resto.shift();
@@ -39,6 +42,12 @@ export function montarPassos(argv, { marketplaces = [], plugins = [] } = {}) {
       const v = resto.shift();
       if (!v || v.startsWith("-")) throw new ErroUso(`${a} precisa de um valor`);
       inst.push(a, v);
+    } else if (a === "--mods") {
+      const v = resto.shift();
+      if (!v || v.startsWith("-")) throw new ErroUso("--mods precisa de uma lista, todos ou nenhum");
+      mods = v === "todos" ? MODS_DO_KIT : v === "nenhum" ? [] : v.split(",").map((x) => x.trim()).filter(Boolean);
+      const errado = mods.find((m) => !MODS_DO_KIT.includes(m));
+      if (errado) throw new ErroUso(`mod desconhecido: ${errado} (há: ${MODS_DO_KIT.join(", ")})`);
     } else if (a === "--statusline" || a === "--sem-grafo") inst.push(a);
     else if (a === "-h" || a === "--help") throw new ErroUso("");
     else if (a.startsWith("-")) throw new ErroUso(`opção desconhecida: ${a}`);
@@ -55,13 +64,14 @@ export function montarPassos(argv, { marketplaces = [], plugins = [] } = {}) {
     plugins.includes(PLUGIN)
       ? { descricao: "atualizar o plugin modo-deus", bin: "claude", args: ["plugin", "update", PLUGIN] }
       : { descricao: "instalar o plugin modo-deus", bin: "claude", args: ["plugin", "install", PLUGIN, "--scope", "user"] },
-    // Mods do kit já instalados (temas, prompt-master...) relidos da pasta atual do kit.
+    // Mods escolhidos que faltam são instalados; os do kit que já estão instalados são atualizados.
+    ...mods.filter((m) => !plugins.includes(`${m}@${MARKETPLACE}`)).map((m) => ({ descricao: `instalar o mod ${m}`, bin: "claude", args: ["plugin", "install", `${m}@${MARKETPLACE}`, "--scope", "user"] })),
     ...plugins.filter((id) => id.endsWith(`@${MARKETPLACE}`) && id !== PLUGIN).map((id) => ({ descricao: `atualizar o mod ${id.split("@")[0]}`, bin: "claude", args: ["plugin", "update", id] })),
     { descricao: "dependências (plugins e graphify)", bin: "node", args: [INSTALAR, "dependencias", ...proj, ...deps, ...seco] },
     { descricao: "kit no projeto", bin: "node", args: [INSTALAR, ...proj, ...inst, ...seco] },
     { descricao: "conferência (doctor)", bin: "node", args: [INSTALAR, "doctor", ...proj] },
   ];
-  return { caminho, dry, passos };
+  return { caminho, dry, passos, mods };
 }
 
 // installed_plugins.json guarda os ids em "plugins"; known_marketplaces.json, os nomes na raiz.
@@ -87,7 +97,7 @@ function main() {
   } catch (e) {
     if (!(e instanceof ErroUso)) throw e;
     if (e.message) console.error(`agents-mode: ${e.message}`);
-    console.error("uso: agents-mode [caminho] [--perfil leve|estrito|deus] [--times t=modo,...] [--statusline] [--sem-grafo] [--escopo local|user] [--dry-run]");
+    console.error("uso: agents-mode [caminho] [--perfil leve|estrito|deus] [--times t=modo,...] [--statusline] [--sem-grafo] [--escopo local|user] [--mods painel-agentes,temas,...|todos|nenhum] [--dry-run]");
     process.exit(e.message ? 2 : 0);
   }
   console.log(`agents-mode · kit em ${KIT}\nprojeto: ${plano.caminho}${plano.dry ? " (simulação)" : ""}\n`);
@@ -101,7 +111,9 @@ function main() {
       process.exit(st);
     }
   }
-  console.log("\nagents-mode: pronto. Reinicie o app do Claude para carregar o plugin atualizado.");
+  console.log("\nagents-mode: pronto. Reinicie o app do Claude (ou rode /reload-plugins) para carregar o kit.");
+  if (plano.mods.includes("painel-agentes")) console.log("O painel de agentes abre sozinho à direita em cada sessão; /agentes mostra ou esconde.");
+  console.log("Nada do kit entra no git do projeto: .modo-deus/, graphify-out/, .claude/worktrees/ e o settings local ficam no .git/info/exclude.");
 }
 
 // Rodado direto (node agents-mode.mjs) ou pelo link do npm (o caminho pode ser um symlink).

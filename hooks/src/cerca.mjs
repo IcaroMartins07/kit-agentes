@@ -6,6 +6,8 @@ import path from "node:path";
 import { Bloqueio, barra } from "./comum.mjs";
 
 const PRINCIPAIS = ["main", "master"];
+// O que é do kit no projeto: fica fora do git (exclude) e não pode ser versionado nem à força.
+const DO_KIT = /(^|[\\/])(\.modo-deus|graphify-out|\.claude[\\/]worktrees)([\\/]|$)|(^|[\\/])\.claude[\\/]settings\.local\.json$/;
 
 // Arquivo de segredo? .env e variantes, menos os de exemplo; chaves e certificados.
 export function ehSegredo(p) {
@@ -98,6 +100,7 @@ export function checarCerca(entrada, ctx) {
       if (destino.some((r) => PRINCIPAIS.includes(r.split(":").pop().replace(/^refs\/heads\//, "")))) bloq("push para a branch principal");
       if (!destino.length && naPrincipal) bloq(`push estando na branch principal (${branch})`);
     }
+    if (w[0] === "git" && sub === "add" && w.some((x) => x === "-f" || x === "--force" || /^-[a-zA-Z]*f[a-zA-Z]*$/.test(x)) && w.some((x) => DO_KIT.test(x))) bloq("versionar arquivo do kit (.modo-deus, graphify-out, worktrees ou settings local): o kit só auxilia, não entra no git do projeto");
     if (w[0] === "git" && sub === "reset" && w.includes("--hard")) bloq("git reset --hard");
     if (w[0] === "git" && sub === "clean" && w.some((x) => /^-[a-zA-Z]*f/.test(x) || x === "--force")) bloq("git clean -f");
     if (w[0] === "git" && sub === "branch" && w.some((x) => x === "-D" || (x === "--delete" && w.includes("--force")))) bloq("remoção forçada de branch");

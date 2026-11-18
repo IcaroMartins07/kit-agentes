@@ -1,6 +1,6 @@
 # mods/
 
-Mods do Claude Code guardados com o kit, em duas pastas. Estar aqui não instala nada: os do kit entram pelo marketplace `kit-agentes` (`claude plugin install <nome>@kit-agentes`) e os de terceiros têm o comando no `LEIA.md` de cada um.
+Mods do Claude Code guardados com o kit, em duas pastas. Estar aqui não instala nada: os do kit entram com o `agents-mode` (o painel de agentes por padrão; `agents-mode --mods todos` instala todos) e os de terceiros têm o comando no `LEIA.md` de cada um.
 
 ## `kit/`: criados no kit
 

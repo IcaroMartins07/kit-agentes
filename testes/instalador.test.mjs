@@ -436,3 +436,12 @@ test("REGRAS.md registra convenções, integrações (só nomes de variáveis) e
   for (const x of ["Lint: ESLint (eslint.config.js)", "Formatação: Prettier (.prettierrc)", "TypeScript em modo strict", "Hooks de commit: husky", "Stripe (pagamento)", "AWS SDK", "`DATABASE_URL`", "`STRIPE_SECRET_KEY`", "| Auditoria | `npm audit` |", "## Desempenho"]) assert.ok(r.includes(x), x);
   assert.ok(!r.includes("sk_test_segredo"), "valor de variável de ambiente vazou para o REGRAS.md");
 });
+
+test("nada do kit aparece para o git do projeto: pasta, settings local, grafo e worktrees dos agentes", () => {
+  instalar(repo, { log: silencio });
+  escrever(".claude/worktrees/agent-x/src/a.ts", "export const a = 1\n");
+  escrever("graphify-out/graph.json", "{}");
+  assert.equal(status(), "", "git status deveria ficar limpo");
+  const exc = fs.readFileSync(path.join(repo, ".git", "info", "exclude"), "utf8");
+  for (const p of [".modo-deus/", ".claude/settings.local.json", ".claude/worktrees/", "graphify-out/"]) assert.ok(exc.includes(p), p);
+});

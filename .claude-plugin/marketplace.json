@@ -8,7 +8,7 @@
     {
       "name": "modo-deus",
       "description": "Kit de agentes: Maestro, times de Desenvolvimento, QA e Revisão, guardrails, monitoramento contra fuga e alucinação e autoaprimoramento das skills.",
-      "version": "0.6.0",
+      "version": "0.6.1",
       "source": "./",
       "category": "development"
     },
