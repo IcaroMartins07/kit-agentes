@@ -45,8 +45,8 @@ function transcricao(...skills) {
   return f;
 }
 
-function rodar(hook, entrada, { env = {} } = {}) {
-  return spawnSync(process.execPath, [HOOK(hook)], {
+function rodar(hook, entrada, { env = {}, args = [] } = {}) {
+  return spawnSync(process.execPath, [HOOK(hook), ...args], {
     input: JSON.stringify({ session_id: "s1", cwd: repo, ...entrada }),
     encoding: "utf8",
     env: { ...process.env, CLAUDE_PROJECT_DIR: "", MODO_DEUS_SEM_GRAPHIFY: "1", ...env },
@@ -263,7 +263,6 @@ test("SessionStart injeta CLAUDE.md base, REGRAS.md e times; projeto sem kit nã
   const r = rodar("sessao", { source: "startup" });
   assert.equal(r.status, 0);
   assert.match(r.stdout, /# modo-deus ativo · perfil estrito/);
-  assert.match(r.stdout, /Mapa do projeto: graphify primeiro/);
   assert.match(r.stdout, /## Regras deste projeto/);
   assert.match(r.stdout, /\*\*front\*\*: `src\/components\/\*\*`/);
   assert.match(r.stdout, /Times sob demanda: dev-mobile=auto/);
@@ -304,16 +303,46 @@ test("desempenho do PreToolUse (mediana de 9 execuções)", (t) => {
   for (const [k, v] of Object.entries(r)) assert.ok(v < 400, `${k}: ${v} ms`);
 });
 
-test("subagente do kit recebe as regras gerais: SubagentStart injeta e a sessão grava REGRAS-GERAIS.md", () => {
+// O Claude Code troca por uma prévia de 2 KB e um caminho de arquivo a saída de hook com mais de 10 mil
+// caracteres. O CLAUDE.md base (13,7 KB) e a saída da sessão (16 KB) chegavam assim: os agentes nunca viam as
+// regras inteiras. Agora cada injeção é uma parte que cabe, e as partes remontam o arquivo.
+const LIMITE_HOOK = 9500; // bytes, com folga sob os 10 mil
+const PARTES = 3;
+test("regras gerais chegam inteiras: cada injeção cabe no limite do hook e as partes remontam o CLAUDE.md", () => {
   const base = fs.readFileSync(new URL("../docs/modelos/CLAUDE.md", import.meta.url), "utf8").trim();
-  const ini = rodar("evento", { hook_event_name: "SubagentStart", agent_type: "modo-deus:dev-front", agent_id: "g1" });
-  const ctx = JSON.parse(ini.stdout.trim().split("\n")[0]).hookSpecificOutput;
-  assert.equal(ctx.hookEventName, "SubagentStart");
-  assert.equal(ctx.additionalContext, base);
-  // agente de fora do kit não recebe nada
-  assert.equal(rodar("evento", { hook_event_name: "SubagentStart", agent_type: "Explore", agent_id: "g2" }).stdout.trim(), "");
-  rodar("sessao", { hook_event_name: "SessionStart", source: "startup" });
+  const corpo = (texto) => texto.replace(/^# CLAUDE\.md base do modo-deus \(parte \d de \d\)\n\n/, "").trim();
+  for (const [evento, extra, ler] of [
+    ["SessionStart", { source: "startup" }, (o) => o],
+    ["SubagentStart", { agent_type: "modo-deus:dev-front", agent_id: "g1" }, (o) => (o.trim() ? JSON.parse(o).hookSpecificOutput.additionalContext : "")],
+  ]) {
+    const saidas = Array.from({ length: PARTES }, (_, i) => rodar("regras", { hook_event_name: evento, ...extra }, { args: [String(i + 1)] }));
+    for (const s of saidas) {
+      assert.equal(s.status, 0, s.stderr);
+      assert.ok(Buffer.byteLength(s.stdout) < LIMITE_HOOK, `${evento}: ${Buffer.byteLength(s.stdout)} bytes`);
+    }
+    const partes = saidas.map((s) => ler(s.stdout)).filter((t) => t.trim());
+    assert.ok(partes.length >= 2, evento);
+    assert.equal(partes.map(corpo).join("\n\n"), base.replace(/^# CLAUDE\.md base do modo-deus\n\n/, ""), `${evento}: as partes remontam o arquivo`);
+    if (evento === "SubagentStart") assert.equal(JSON.parse(saidas[0].stdout).hookSpecificOutput.hookEventName, "SubagentStart");
+  }
+  // agente de fora do kit e projeto sem kit não recebem nada
+  assert.equal(rodar("regras", { hook_event_name: "SubagentStart", agent_type: "Explore", agent_id: "g2" }, { args: ["1"] }).stdout, "");
+  const fora = path.join(tmp, "fora3");
+  fs.mkdirSync(fora, { recursive: true });
+  git(fora, "init", "-q");
+  assert.equal(rodar("regras", { hook_event_name: "SessionStart", cwd: fora }, { args: ["1"] }).stdout, "");
+  // a sessão cabe no limite e não repete o CLAUDE.md; o SubagentStart do evento.mjs não injeta mais
+  const sessao = rodar("sessao", { hook_event_name: "SessionStart", source: "startup" });
+  assert.ok(Buffer.byteLength(sessao.stdout) < LIMITE_HOOK, `sessao: ${Buffer.byteLength(sessao.stdout)} bytes`);
+  assert.doesNotMatch(sessao.stdout, /Mapa do projeto: graphify primeiro/);
+  assert.equal(rodar("evento", { hook_event_name: "SubagentStart", agent_type: "modo-deus:dev-front", agent_id: "g3" }).stdout.trim(), "");
   assert.equal(fs.readFileSync(path.join(repo, ".modo-deus", "REGRAS-GERAIS.md"), "utf8"), base + "\n");
+  // hooks.json registra as partes nos dois eventos
+  const hj = JSON.parse(fs.readFileSync(path.join(KIT, "hooks", "hooks.json"), "utf8")).hooks;
+  for (const ev of ["SessionStart", "SubagentStart"]) {
+    const cmds = hj[ev].flatMap((g) => g.hooks.map((h) => h.command));
+    for (let i = 1; i <= PARTES; i++) assert.ok(cmds.some((c) => c.includes("regras.mjs") && c.endsWith(` ${i}`)), `${ev} parte ${i}`);
+  }
 });
 
 // O kit só auxilia: nada dele entra no git do projeto, nem à força.

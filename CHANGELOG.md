@@ -8,6 +8,7 @@ Linha de base, medida no teste do portfólio (kit 0.6.0) com a ferramenta nova: 
 - Bloqueios falsos (cerca de 30 dos 67 do portfólio): escrita na pasta temporária fora do projeto não conta para V2 nem para a trava; `>` dentro de aspas ou de heredoc não é redirecionamento; `$VAR` do próprio comando é expandida; V9 não lê padrão de grep nem mensagem de commit como arquivo de segredo, e avalia o merge pela branch de onde roda (`cd`, `git -C`, `switch`).
 - A recusa do contrato traz o modelo do bloco json do papel.
 - Contrato lê a entrega feita pelo `SubagentHandback`: o `last_assistant_message` chegava vazio, então todas as 17 entregas do portfólio foram recusadas uma vez e o V5/V6 nunca rodou.
+- Regras gerais chegam inteiras: o CLAUDE.md base (13,7 KB) e a saída da sessão (16 KB) passavam do limite de 10 mil caracteres do hook, e o Claude Code entregava só uma prévia de 2 KB e o caminho de um arquivo, na sessão e nos subagentes. Agora `hooks/src/regras.mjs` injeta o arquivo em partes de até 8 mil caracteres (registrado três vezes no `SessionStart` e no `SubagentStart`), e o `sessao.mjs` fica só com o `REGRAS.md` e os avisos.
 - Contexto menor: a volta da revisão vai para um agente novo (branch da tarefa reaberta sem `-C`), não para o antigo retomado; relatório final de no máximo 10 linhas antes do bloco json; o Maestro grava o `mapa` de cada tarefa (arquivos que o grafo apontou) e o prompt leva esse mapa.
 
 ### 0.7.0 · mais rápido e mais barato, sem perder qualidade (2026-11-19)

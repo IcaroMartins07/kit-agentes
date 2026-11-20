@@ -1,4 +1,4 @@
-// SessionStart: injeta o CLAUDE.md base, as regras do projeto e os avisos; reconstrói o grafo
+// SessionStart: injeta as regras do projeto e os avisos (o CLAUDE.md base vem do regras.mjs); reconstrói o grafo
 // em segundo plano quando ele está ausente ou mais velho que o último commit.
 import fs from "node:fs";
 import path from "node:path";
@@ -18,9 +18,8 @@ out.push(`# modo-deus ativo · perfil ${config.perfil} · kit ${kit().versao}`);
 out.push("");
 try {
   const base = fs.readFileSync(path.join(KIT, "docs", "modelos", "CLAUDE.md"), "utf8").trim();
-  out.push(base);
-  // Os subagentes não herdam o contexto desta sessão: a mesma base fica em .modo-deus/REGRAS-GERAIS.md,
-  // que todo agente do kit lê no passo "Regras" (e o SubagentStart também injeta).
+  // O CLAUDE.md base entra pelo regras.mjs, em partes que cabem no limite de saída do hook.
+  // A mesma base fica em .modo-deus/REGRAS-GERAIS.md, que o agente lê se as partes não vieram.
   const geral = path.join(raiz, PASTA, "REGRAS-GERAIS.md");
   const atual = fs.existsSync(geral) ? fs.readFileSync(geral, "utf8") : "";
   if (atual !== base + "\n") fs.writeFileSync(geral, base + "\n");

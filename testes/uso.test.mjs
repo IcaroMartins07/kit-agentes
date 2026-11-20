@@ -102,8 +102,8 @@ const transcricao = (...skills) => {
   fs.writeFileSync(f, skills.map((s) => JSON.stringify({ type: "assistant", message: { content: [{ type: "tool_use", name: "Skill", input: { skill: s } }] } })).join("\n") + "\n");
   return f;
 };
-const hook = (nome, entrada) =>
-  spawnSync(process.execPath, [path.join(KIT, "hooks", "src", `${nome}.mjs`)], {
+const hook = (nome, entrada, args = []) =>
+  spawnSync(process.execPath, [path.join(KIT, "hooks", "src", `${nome}.mjs`), ...args], {
     input: JSON.stringify({ session_id: "s", cwd: repo, ...entrada }),
     encoding: "utf8",
     env: { ...process.env, CLAUDE_PROJECT_DIR: "", MODO_DEUS_SEM_GRAPHIFY: "1" },
@@ -158,7 +158,9 @@ test("contrato de saída: todo agente do kit que entrega é cobrado no encerrame
 });
 
 test("início da sessão injeta as regras que mandam usar skills, grafo e vigia", () => {
-  const r = hook("sessao", { source: "startup" });
-  assert.equal(r.status, 0);
-  for (const trecho of [/Mapa do projeto: graphify primeiro/, /siga a skill `vigia`/, /## Regras deste projeto/]) assert.match(r.stdout, trecho);
+  // o CLAUDE.md base vem em partes (regras.mjs 1, 2, 3); as regras do projeto, do sessao.mjs
+  const saidas = [hook("sessao", { source: "startup" }), ...["1", "2", "3"].map((n) => hook("regras", { hook_event_name: "SessionStart", source: "startup" }, [n]))];
+  for (const r of saidas) assert.equal(r.status, 0);
+  const tudo = saidas.map((r) => r.stdout).join("\n");
+  for (const trecho of [/Mapa do projeto: graphify primeiro/, /siga a skill `vigia`/, /## Regras deste projeto/]) assert.match(tudo, trecho);
 });

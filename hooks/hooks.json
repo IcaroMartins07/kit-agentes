@@ -1,5 +1,5 @@
 {
-  "description": "modo-deus: contexto e grafo no início da sessão, cerca (V9), território (V2), trava de fase, monitor (V1, V3–V8, V10, V11) e telemetria. Só age em projetos com o kit instalado (.modo-deus/config.json).",
+  "description": "modo-deus: contexto (regras em partes que cabem no limite do hook) e grafo no início da sessão e do subagente, cerca (V9), território (V2), trava de fase, monitor (V1, V3–V8, V10, V11) e telemetria. Só age em projetos com o kit instalado (.modo-deus/config.json).",
   "hooks": {
     "SessionStart": [
       {
@@ -9,6 +9,21 @@
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/src/sessao.mjs\"",
             "timeout": 20
+          },
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/src/regras.mjs\" 1",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/src/regras.mjs\" 2",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/src/regras.mjs\" 3",
+            "timeout": 5
           }
         ]
       }
@@ -54,6 +69,21 @@
           {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/src/evento.mjs\"",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/src/regras.mjs\" 1",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/src/regras.mjs\" 2",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/src/regras.mjs\" 3",
             "timeout": 5
           }
         ]

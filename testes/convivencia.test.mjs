@@ -138,7 +138,7 @@ test("hooks.json só referencia ${CLAUDE_PLUGIN_ROOT} e arquivos que existem", (
       for (const h of g.hooks) {
         n++;
         assert.equal(h.type, "command", evento);
-        const m = h.command.match(/^node "\$\{CLAUDE_PLUGIN_ROOT\}\/(hooks\/src\/[\w-]+\.mjs)"$/);
+        const m = h.command.match(/^node "\$\{CLAUDE_PLUGIN_ROOT\}\/(hooks\/src\/[\w-]+\.mjs)"( \d)?$/);
         assert.ok(m, `${evento}: comando fora do padrão: ${h.command}`);
         assert.ok(fs.existsSync(path.join(KIT, m[1])), `${evento}: ${m[1]} não existe`);
       }

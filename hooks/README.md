@@ -4,10 +4,11 @@ Os guardrails do kit: hooks do Claude Code em node, sem dependências. Só agem 
 
 | Quando | Script | O que faz |
 |---|---|---|
-| Início da sessão | [`src/sessao.mjs`](src/sessao.mjs) | Injeta as regras gerais (`docs/modelos/CLAUDE.md`) e o `REGRAS.md` do projeto, grava `.modo-deus/REGRAS-GERAIS.md` para os subagentes e atualiza o grafo |
+| Início da sessão e do subagente | [`src/regras.mjs`](src/regras.mjs) | Injeta as regras gerais (`docs/modelos/CLAUDE.md`) em partes de até 8 mil caracteres, cortadas entre seções: o Claude Code troca por uma prévia de 2 KB a saída de hook com mais de 10 mil. Registrado três vezes por evento (`regras.mjs 1`, `2`, `3`); no subagente, só nos agentes do kit. |
+| Início da sessão | [`src/sessao.mjs`](src/sessao.mjs) | Injeta o `REGRAS.md` do projeto e os avisos, grava `.modo-deus/REGRAS-GERAIS.md` para os subagentes e atualiza o grafo |
 | A cada mensagem | [`src/prompt.mjs`](src/prompt.mjs) | Uma linha de lembrete: skill da fase e grafo antes de varrer pastas |
 | Antes de cada ferramenta | [`src/pre.mjs`](src/pre.mjs) | Na ordem: cerca (V9, [`cerca.mjs`](src/cerca.mjs)), território (V2, [`territorio.mjs`](src/territorio.mjs)), trava de fase ([`trava.mjs`](src/trava.mjs)), contrato do plano ([`plano-hook.mjs`](src/plano-hook.mjs)) e monitor ([`vigia.mjs`](src/vigia.mjs)) |
-| Falha, início e fim de subagente, fim da sessão | [`src/evento.mjs`](src/evento.mjs) | Telemetria, regras gerais para o subagente, contrato de saída e as regras V5, V6 e V12 |
+| Falha, início e fim de subagente, fim da sessão | [`src/evento.mjs`](src/evento.mjs) | Telemetria (com o `uso` de cada subagente), contrato de saída e as regras V5, V6 e V12 |
 | `/retro` | [`src/retro.mjs`](src/retro.mjs) | Coleta e diagnóstico da retrospectiva |
 
 Peças comuns: [`src/comum.mjs`](src/comum.mjs) (projeto, config, telemetria) e [`src/plano.mjs`](src/plano.mjs) (validação do `plano.json` e dos contratos). O deny-list que o instalador aplica no projeto é [`settings.deny.json`](settings.deny.json). O que fazer em cada alerta V1–V12 está na skill [`vigia`](../skills/proprias/vigia/SKILL.md).

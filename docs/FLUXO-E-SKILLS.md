@@ -60,7 +60,7 @@ Os hooks estão ligados em `hooks/hooks.json`. Só agem em projetos com `.modo-d
 
 | Momento | Hook | O que faz |
 |---|---|---|
-| Início da sessão | `hooks/src/sessao.mjs` | Injeta `docs/modelos/CLAUDE.md` (regras gerais) e o `.modo-deus/REGRAS.md`, avisa campos sem preencher e reconstrói o grafo |
+| Início da sessão | `hooks/src/sessao.mjs` e `hooks/src/regras.mjs` | Injeta `docs/modelos/CLAUDE.md` (regras gerais, em partes que cabem no limite do hook) e o `.modo-deus/REGRAS.md`, avisa campos sem preencher e reconstrói o grafo |
 | Antes de cada ferramenta | `hooks/src/pre.mjs` | Na ordem: cerca (V9, `cerca.mjs`), território (V2, `territorio.mjs`), trava de fase (`trava.mjs`), contrato do plano e monitor (V1, V3, V7, V8, V10, V11, `vigia.mjs`) |
 | Falha, início ou fim de subagente | `hooks/src/evento.mjs` | Telemetria, relógio do V8 e contrato de saída (V5, V6) |
 
@@ -218,7 +218,7 @@ Ordenadas por impacto.
 
 | # | O que mudou | Onde |
 |---|---|---|
-| L1 | As regras gerais chegam aos subagentes por dois caminhos. O `SubagentStart` injeta o `CLAUDE.md` base em todo agente `modo-deus:*`. A sessão grava a mesma base em `.modo-deus/REGRAS-GERAIS.md`, e todo Dev e QA lê esse arquivo no passo "Regras". | `hooks/src/evento.mjs` (bloco "regras gerais do kit para o subagente"); `hooks/src/sessao.mjs`; passo 2 de `agents/dev/*.md` e `agents/qa/*.md`; teste em `testes/hooks.test.mjs` |
+| L1 | As regras gerais chegam aos subagentes por dois caminhos. O `SubagentStart` injeta o `CLAUDE.md` base em todo agente `modo-deus:*`, em partes de até 8 mil caracteres (antes ia inteiro, passava do limite de 10 mil do hook e chegava só uma prévia de 2 KB). A sessão grava a mesma base em `.modo-deus/REGRAS-GERAIS.md`, e todo Dev e QA lê esse arquivo no passo "Regras". | `hooks/src/regras.mjs`; `hooks/src/sessao.mjs`; passo 2 de `agents/dev/*.md` e `agents/qa/*.md`; teste em `testes/hooks.test.mjs` |
 | L2 | O instalador detecta as convenções: ESLint, Prettier, Biome, EditorConfig, Ruff, Black, mypy, flake8, golangci-lint, rustfmt, Dart analyzer, Stylelint, TypeScript strict, husky, lint-staged e commitlint. O resultado vai para a seção "Convenções do projeto" do `REGRAS.md`. O `CLAUDE.md` base §2 manda ler 2 ou 3 arquivos vizinhos e imitar. Cada Dev ganhou o passo **Padrões** no passo 3. O Maestro preenche o que ficou aberto (passo 0 do Plano). | `instalar.mjs` (`CONFIGS`, `detectar`); `docs/modelos/REGRAS.md`; `docs/modelos/CLAUDE.md` §2; `skills/proprias/modo-deus/SKILL.md`, seção 2, passo 0 |
 | L3 | O instalador detecta SDKs de serviços externos (Node e Python) e os nomes das variáveis do `.env.example`, nunca os valores. Eles vão para a nova seção "Integrações" do `REGRAS.md`. O `CLAUDE.md` base §6 traz a regra de integração: cliente do projeto, credencial por ambiente, timeout e simulação em teste. O `revisor-seguranca` confere integrações novas. | `instalar.mjs` (`INTEGRACOES_NODE`, `INTEGRACOES_PY`); `agents/review/revisor-seguranca.md`, passo 5; teste em `testes/instalador.test.mjs` |
 | L4 | A skill `performance-optimization` entrou no kit e foi para `dev-front`, `dev-back`, `dev-db` e `revisor`. O `REGRAS.md` ganhou a seção "Desempenho" (caminhos críticos e orçamentos) e um item no DoD. O `qa-regressao` roda o orçamento quando há comando para ele. O `revisor` tem o passo 6, Desempenho. | `kit.json`; `.claude-plugin/plugin.json`; "Foco" dos agentes Dev; `agents/qa/qa-regressao.md`; `agents/review/revisor.md` |
