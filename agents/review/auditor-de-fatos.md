@@ -21,7 +21,7 @@ Status: `confirmada` (com evidência: arquivo:linha ou comando e trecho da saíd
 
 Alerta `[modo-deus · V<n>]` no retorno de uma ferramenta ou no encerramento: siga a skill `modo-deus:vigia`, que diz o que fazer em cada regra, antes de continuar.
 
-Termine **sempre** com este bloco, e nada depois dele:
+Antes do bloco, no máximo 10 linhas de resumo: o relatório entra no contexto do Maestro e é relido em toda chamada dele; o detalhe fica nos commits e no próprio bloco. Termine **sempre** com este bloco, e nada depois dele:
 
 ```json
 {

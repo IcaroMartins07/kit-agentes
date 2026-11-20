@@ -75,6 +75,7 @@ Só há duas paradas. Entre elas, não peça licença: decida, registre no plano
       "id": "T1", "titulo": "Rota de callback OAuth e vínculo de usuário", "time": "dev-back",
       "classe": "complexa", "esforco": "high",
       "escopo": ["src/server/auth/**"], "depende_de": [], "criterios": ["CA2"],
+      "mapa": ["src/server/auth/session.ts", "src/server/users/repo.ts", "src/server/auth/session.test.ts"],
       "pronto_quando": "callback cria ou reaproveita o usuário e devolve sessão",
       "como_testar": "teste de integração do callback com provedor simulado",
       "status": "pendente", "rodadas_revisao": 0
@@ -112,7 +113,9 @@ Status do plano: `rascunho → aprovado → executando → revisao → concluido
 
 - Um subagente por tarefa, pelo nome do time (`modo-deus:dev-back`, `modo-deus:qa-e2e`…), com `effort` igual ao `esforco` da tarefa. Este manual é a instrução explícita para definir o esforço.
 - O prompt de cada tarefa leva: caminho absoluto da raiz do projeto, branch da feature, id, título, critérios de aceite completos, escopo, `pronto_quando`, `como_testar`, os comandos do `REGRAS.md` e, quando a tarefa tocar nisso, as Convenções, Integrações e Caminhos críticos que valem para ela. Nada de "veja o plano": o subagente começa do zero, numa worktree sem `graphify-out/` (ele usa o grafo da raiz).
-- Prompt de QA não leva detalhes da implementação; leva só os critérios.
+- **Mapa.** Ao montar o plano, rode o grafo uma vez por tarefa (`graphify query "<título e escopo>" --budget 1500`, ou `graphify affected "<símbolo>"`) e grave em `mapa` os arquivos que o agente deve abrir primeiro: os do escopo, os vizinhos do mesmo tipo (padrão a imitar) e os testes deles, até uns 10. O prompt leva o mapa. No teste do portfólio nenhum subagente consultou o grafo e foram 301 buscas de texto e 176 leituras: o mapa pronto troca essa varredura por uma consulta sua.
+- Prompt de QA não leva detalhes da implementação; leva só os critérios (o `mapa` de uma tarefa QA aponta testes vizinhos e interfaces, nunca o corpo do código da tarefa Dev).
+- **Entrega curta.** Peça no prompt: "relatório final com no máximo 10 linhas antes do bloco json". O relatório entra no seu contexto e é relido em toda chamada sua até o fim da feature; os detalhes ficam nos commits e em `observacoes`.
 - Paralelize tarefas sem dependência. Marque `em_andamento` ao despachar.
 - Se o agente do time não existir nesta instalação, pare e diga ao usuário qual falta; não faça a tarefa você mesmo.
 
@@ -136,7 +139,8 @@ Status do plano: `rascunho → aprovado → executando → revisao → concluido
 - Despache `revisor` e `revisor-seguranca` em paralelo com: branch da feature, spec, plano e o diff (`git diff <principal>...<feature>`).
 - Cada um termina com um bloco ```json `{"veredito": "aprovado"|"reprovado", "itens": [...]}`; o hook não deixa terminar sem ele.
 - Passe aos revisores também as pastas de prints do `qa-regressao` (`.modo-deus/prints/`). Eles não abrem navegador.
-- Só itens `alta` e `media` viram `itens_revisao` e voltam ao time dono; a tarefa sobe `rodadas_revisao` e passa a esforço high. Itens `baixa` não geram retrabalho nem tarefa nova: vão para a lista **Sugestões** do relatório final, com a `categoria`, e o usuário escolhe se quer.
+- Só itens `alta` e `media` viram `itens_revisao` e voltam ao time dono; a tarefa sobe `rodadas_revisao` e passa a esforço high.
+- **Volta da revisão (e de item de QA ou da regressão) = agente novo, não o antigo retomado.** Remova a worktree antiga da tarefa (`git worktree remove <caminho>`) e despache um agente novo do mesmo time com: "rodada N", a branch `<feature>-T<n>` (o trabalho anterior está nos commits dela), os itens com arquivo, linha e motivo, os CAs, o `mapa` e o comando de teste. Não use mensagem para retomar o agente da rodada anterior: ele relê o contexto inteiro dele a cada chamada (no portfólio, um dev-front retomado chegou a 214 mil tokens por chamada e ficou 105 min parado esperando). Itens `baixa` não geram retrabalho nem tarefa nova: vão para a lista **Sugestões** do relatório final, com a `categoria`, e o usuário escolhe se quer.
 - **Máximo de 2 rodadas por tarefa.** Na 3ª, `status: "escalado"`: pare e mostre ao usuário o que travou.
 - Antes do PR, escreva o relatório final e despache `auditor-de-fatos` com ele. Afirmação `falsa` ou `nao_confirmada`: corrija o relatório (ou volte à tarefa) antes de seguir.
 

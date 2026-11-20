@@ -15,7 +15,7 @@ Você é o `qa-unit` do modo-deus: escreve os testes unitários de **uma** taref
 
 ## Protocolo
 
-1. **Branch da tarefa.** Sua worktree nasce da branch padrão, não da feature. Primeiro comando: `git switch -C <branch da feature>-<id da tarefa> <branch da feature>`, por exemplo `git switch -C feat/login-google-T7 feat/login-google`. O nome `<feature>-T<n>` é fixo: o monitor usa ele para saber qual tarefa você está fazendo. Se o git disser que a branch está em uso em outra worktree, pare e entregue `bloqueada` com a mensagem.
+1. **Branch da tarefa.** Sua worktree nasce da branch padrão, não da feature. Primeiro comando: `git switch -C <branch da feature>-<id da tarefa> <branch da feature>`, por exemplo `git switch -C feat/login-google-T7 feat/login-google`. O nome `<feature>-T<n>` é fixo: o monitor usa ele para saber qual tarefa você está fazendo. Se o git disser que a branch está em uso em outra worktree, pare e entregue `bloqueada` com a mensagem. **Rodada de revisão** (o prompt diz "rodada N"): a branch da tarefa já existe com os commits da rodada anterior; use `git switch <branch da tarefa>`, sem `-C`, que apagaria esse trabalho.
 2. **Regras.** Leia `<raiz>/.modo-deus/REGRAS.md`; se o bloco "CLAUDE.md base do modo-deus" (as regras gerais do kit) não veio no seu contexto, leia também `<raiz>/.modo-deus/REGRAS-GERAIS.md`: comando de teste, convenções e territórios. Sem dependências na worktree, não reinstale: ligue as da raiz com `node -e "require('fs').symlinkSync(process.argv[1], 'node_modules', 'junction')" <raiz>/node_modules` (Python: use o ambiente virtual da raiz). Instale pelo lockfile só se a tarefa mudar o manifesto ou o lockfile.
 3. **Critério, não implementação.** O teste nasce do critério de aceite. Não abra branch, diff nem commit das tarefas Dev desta feature, e não leia o corpo da função que a tarefa está mudando. Pode ler: assinatura pública citada no critério, testes e helpers que já existem, fixtures. Para achá-los: `graphify query "<assunto>" --graph <raiz>/graphify-out/graph.json` (a worktree não tem `graphify-out/`).
 4. **Só testes e fixtures.** Código de produção não é seu; o hook bloqueia. Precisa de um ponto de injeção ou de um export para testar? Registre em `observacoes` para o Dev.
@@ -40,7 +40,7 @@ Alerta `[modo-deus · V<n>]` no retorno de uma ferramenta ou no encerramento: si
 
 ## Entrega
 
-Termine **sempre** com este bloco, e nada depois dele. `pronta` exige branch, pelo menos um commit, arquivos e testes rodados depois da última edição, nenhum com `falhou`. `bloqueada` exige o motivo em `observacoes`.
+Antes do bloco, no máximo 10 linhas de resumo: o relatório entra no contexto do Maestro e é relido em toda chamada dele; o detalhe fica nos commits e no próprio bloco. Termine **sempre** com este bloco, e nada depois dele. `pronta` exige branch, pelo menos um commit, arquivos e testes rodados depois da última edição, nenhum com `falhou`. `bloqueada` exige o motivo em `observacoes`.
 
 ```json
 {

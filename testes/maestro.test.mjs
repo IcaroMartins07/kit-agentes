@@ -212,6 +212,16 @@ test("plano: em andamento de antes da regra do contrato continua válido; plano 
   }
 });
 
+test("plano: mapa da tarefa (arquivos que o grafo apontou) é opcional, mas quando vem é lista de caminhos relativos", () => {
+  const p = exemplo();
+  assert.ok(p.tarefas.some((t) => t.mapa?.length), "o exemplo do manual mostra o mapa");
+  assert.deepEqual(validarPlano(p), []);
+  p.tarefas[0].mapa = "src/server/auth";
+  assert.ok(validarPlano(p).some((e) => e.includes("mapa")));
+  p.tarefas[0].mapa = ["C:/x/a.ts"];
+  assert.ok(validarPlano(p).some((e) => e.includes("mapa")));
+});
+
 test("plano: escopo fora do território do time é recusado (o erro da T1 do teste do portfólio)", async () => {
   const { escopoForaDoTerritorio } = await import("../hooks/src/plano.mjs");
   const territorios = { front: ["src/app/**", "src/components/**", "public/**"], back: ["src/lib/**", "src/server/**"], testes: ["**/*.test.*"] };

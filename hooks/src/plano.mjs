@@ -113,6 +113,8 @@ export function validarPlano(plano, { kit = kitPadrao(), config = {}, territorio
 
     if (!lista(t?.escopo).length || !t.escopo.every(ehTexto)) e.push(`${nome}: escopo lista os arquivos ou globs que a tarefa pode tocar`);
     if (lista(t?.escopo).some((p) => p.startsWith("/") || /^[A-Za-z]:/.test(p) || p.includes(".."))) e.push(`${nome}: escopo usa caminhos relativos à raiz, sem ..`);
+    // mapa: os arquivos que o grafo apontou para a tarefa, que vão no prompt (o agente começa por eles em vez de varrer pastas)
+    if (t?.mapa !== undefined && (!Array.isArray(t.mapa) || !t.mapa.every((p) => ehTexto(p) && !p.startsWith("/") && !/^[A-Za-z]:/.test(p) && !p.includes("..")))) e.push(`${nome}: mapa é a lista de arquivos (relativos à raiz) que o grafo apontou para a tarefa`);
     if (!lista(t?.criterios).length) e.push(`${nome}: criterios liga a tarefa a pelo menos um CA`);
     for (const c of lista(t?.criterios)) if (!idsCa.has(c)) e.push(`${nome}: critério ${c} não existe na spec`);
     if (!ehTexto(t?.pronto_quando)) e.push(`${nome}: pronto_quando obrigatório`);

@@ -36,7 +36,7 @@ Alerta `[modo-deus · V<n>]` no retorno de uma ferramenta ou no encerramento: si
 
 ## Entrega
 
-Termine **sempre** com este bloco, e nada depois dele. `suites` lista cada comando que rodou com o resultado real; `vermelho` exige as falhas.
+Antes do bloco, no máximo 10 linhas de resumo: o relatório entra no contexto do Maestro e é relido em toda chamada dele; o detalhe fica nos commits e no próprio bloco. Termine **sempre** com este bloco, e nada depois dele. `suites` lista cada comando que rodou com o resultado real; `vermelho` exige as falhas.
 
 ```json
 {
