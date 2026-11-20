@@ -3,6 +3,7 @@
 //   1. plugin do kit: marketplace kit-agentes e modo-deus@kit-agentes (escopo user; atualiza se já existem)
 //   2. mods de interface do kit: o painel de agentes por padrão (--mods escolhe), e atualiza os que já estiverem instalados
 //   3. dependências: plugins obrigatórios e graphify (instalar.mjs dependencias)
+//   3b. dependências do MCP Orca (node-pty e @xterm/headless em mcp-orca/), para os terminais dos agentes
 //   4. parte do projeto: REGRAS.md, config, deny-list, exclude, grafo (instalar.mjs); nada disso entra no git do projeto
 //   5. conferência: instalar.mjs doctor
 //
@@ -68,6 +69,9 @@ export function montarPassos(argv, { marketplaces = [], plugins = [] } = {}) {
     ...mods.filter((m) => !plugins.includes(`${m}@${MARKETPLACE}`)).map((m) => ({ descricao: `instalar o mod ${m}`, bin: "claude", args: ["plugin", "install", `${m}@${MARKETPLACE}`, "--scope", "user"] })),
     ...plugins.filter((id) => id.endsWith(`@${MARKETPLACE}`) && id !== PLUGIN).map((id) => ({ descricao: `atualizar o mod ${id.split("@")[0]}`, bin: "claude", args: ["plugin", "update", id] })),
     { descricao: "dependências (plugins e graphify)", bin: "node", args: [INSTALAR, "dependencias", ...proj, ...deps, ...seco] },
+    // npm install, não npm ci: idempotente e não apaga o node-pty que um daemon do MCP Orca em execução tem carregado.
+    // Roda dentro de mcp-orca/: com --prefix, a partir da raiz do kit (que também é pacote), o npm instala o kit lá dentro.
+    { descricao: "dependências do MCP Orca (terminais dos agentes)", bin: "npm", args: ["install", "--no-audit", "--no-fund"], cwd: path.join(KIT, "mcp-orca") },
     { descricao: "kit no projeto", bin: "node", args: [INSTALAR, ...proj, ...inst, ...seco] },
     { descricao: "conferência (doctor)", bin: "node", args: [INSTALAR, "doctor", ...proj] },
   ];
@@ -82,11 +86,11 @@ const chaves = (arq) => {
   } catch { return []; }
 };
 
-function rodar({ bin, args }) {
-  // No Windows o claude é um .cmd: precisa de shell. Os argumentos são do próprio kit, não do usuário.
+function rodar({ bin, args, cwd }) {
+  // No Windows o claude e o npm são .cmd: precisam de shell. Os argumentos são do próprio kit, não do usuário.
   const r = bin === "node"
     ? spawnSync(process.execPath, args, { stdio: "inherit" })
-    : spawnSync(bin, args.map((x) => (/\s/.test(x) ? `"${x}"` : x)), { stdio: "inherit", shell: process.platform === "win32" });
+    : spawnSync(bin, args.map((x) => (/\s/.test(x) ? `"${x}"` : x)), { stdio: "inherit", shell: process.platform === "win32", cwd });
   return r.status ?? 1;
 }
 
@@ -103,8 +107,8 @@ function main() {
   console.log(`agents-mode · kit em ${KIT}\nprojeto: ${plano.caminho}${plano.dry ? " (simulação)" : ""}\n`);
   for (const [i, p] of plano.passos.entries()) {
     console.log(`\n[${i + 1}/${plano.passos.length}] ${p.descricao}`);
-    // Na simulação, os passos do claude só são mostrados; os do instalador simulam sozinhos (--dry-run).
-    if (plano.dry && p.bin === "claude") { console.log(`  (simulação) ${p.bin} ${p.args.join(" ")}`); continue; }
+    // Na simulação, os passos do claude e do npm só são mostrados; os do instalador simulam sozinhos (--dry-run).
+    if (plano.dry && p.bin !== "node") { console.log(`  (simulação) ${p.bin} ${p.args.join(" ")}`); continue; }
     const st = rodar(p);
     if (st !== 0) {
       console.error(`\nagents-mode: o passo "${p.descricao}" falhou (saída ${st}). Corrija e rode de novo: os passos são idempotentes.`);

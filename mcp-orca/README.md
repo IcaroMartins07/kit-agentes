@@ -7,10 +7,11 @@ Em construção. Prontos: daemon, CLI e servidor MCP. Faltam a aba Terminais no 
 ## Instalar
 
 ```bash
-npm install --prefix mcp-orca
+cd mcp-orca
+npm install
 ```
 
-O `node-pty` traz binário pronto para Windows e macOS; no Linux compila na instalação (python, make e g++).
+O `agents-mode` já faz isso. O `node-pty` traz binário pronto para Windows e macOS; no Linux compila na instalação (python, make e g++).
 
 ## Usar
 

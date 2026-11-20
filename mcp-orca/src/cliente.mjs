@@ -35,7 +35,7 @@ async function daemon({ subir = true } = {}) {
   let info = lerInfo();
   if (await vivo(info)) return info;
   if (!subir) return null;
-  if (!fs.existsSync(path.join(SRC, "..", "node_modules", "node-pty"))) throw new Error("dependências do MCP Orca ausentes: rode npm install --prefix mcp-orca na pasta do kit");
+  if (!fs.existsSync(path.join(SRC, "..", "node_modules", "node-pty"))) throw new Error("dependências do MCP Orca ausentes: rode npm install dentro da pasta mcp-orca do kit (ou o agents-mode)");
   fs.mkdirSync(pasta(), { recursive: true });
   try { fs.rmSync(arqInfo()); } catch { /* sem daemon antigo */ }
   const log = fs.openSync(path.join(pasta(), "daemon.log"), "a");

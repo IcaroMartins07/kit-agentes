@@ -48,7 +48,7 @@ agents-mode                    # instala e configura tudo, com o painel de agent
 
 Reinicie o app do Claude (ou rode `/reload-plugins`). O painel de agentes abre sozinho à direita em cada sessão; `/agentes` mostra ou esconde.
 
-O `agents-mode` faz, nessa ordem: registra o marketplace do kit e instala o plugin `modo-deus`, instala o painel de agentes, instala as dependências (superpowers, graphify e os outros conectores), cria a configuração do projeto e roda o `doctor`. Pode rodar de novo quando quiser: o que já está instalado é atualizado.
+O `agents-mode` faz, nessa ordem: registra o marketplace do kit e instala o plugin `modo-deus`, instala o painel de agentes, instala as dependências (superpowers, graphify e os outros conectores) e as do MCP Orca (os terminais dos agentes), cria a configuração do projeto e roda o `doctor`. Pode rodar de novo quando quiser: o que já está instalado é atualizado.
 
 | Opção | O que muda |
 |---|---|
