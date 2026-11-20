@@ -2,7 +2,7 @@
 // (Write: content; Edit/MultiEdit: aplica as trocas no arquivo atual) e validado pelo contrato.
 import fs from "node:fs";
 import path from "node:path";
-import { Bloqueio, PASTA, relativo } from "./comum.mjs";
+import { Bloqueio, PASTA, relativo, lerRegras, territoriosDe } from "./comum.mjs";
 import { validarPlano } from "./plano.mjs";
 
 const ALVO = `${PASTA}/plano.json`;
@@ -37,7 +37,8 @@ export function checarPlano(entrada, ctx) {
   } catch (x) {
     throw new Bloqueio("plano", `plano.json não é JSON válido (${x.message}).`);
   }
-  const erros = validarPlano(plano, { config: ctx.config });
+  const regras = lerRegras(ctx.raiz);
+  const erros = validarPlano(plano, { config: ctx.config, territorios: regras ? territoriosDe(regras) : null });
   if (erros.length) throw new Bloqueio("plano", `plano.json fora do contrato:\n${erros.map((x) => `- ${x}`).join("\n")}\nCorrija e grave de novo. Formato na skill modo-deus.`);
   return plano;
 }

@@ -10,10 +10,10 @@ import { G, PALETTE, SPRITES, mascoteDe, spriteSvg } from './sprites'
 const PANE = 'agentes'
 const TITLE = 'Agentes'
 const MAIN = 'main'
-const MAIN_AGENT: Agent = { id: MAIN, name: 'Claude', type: 'principal', doing: 'Esperando você', status: 'waiting', changes: [], startedAt: 0, endedAt: 0, tokens: 0, plan: null, parentId: '', where: '', whereKind: '' }
+const MAIN_AGENT: Agent = { id: MAIN, name: 'Claude', type: 'principal', doing: 'Esperando você', status: 'waiting', changes: [], startedAt: 0, endedAt: 0, tokens: 0, cache: 0, plan: null, parentId: '', where: '', whereKind: '' }
 
 // Mude a tag quando os campos mudarem: o valor guardado sobrevive ao reload.
-const agents = atom({ plugin: 'painel-agentes', key: 'agents' } as const, [], { shape: 'agents-4' })
+const agents = atom({ plugin: 'painel-agentes', key: 'agents' } as const, [], { shape: 'agents-5' })
 // Relógio que redesenha as barras a cada segundo, só enquanto algo roda.
 const now = atom({ plugin: 'painel-agentes', key: 'now' } as const, 0)
 let tick: { cancel: () => void } | undefined
@@ -384,7 +384,7 @@ export const register: Register = on => {
     if (!('agentId' in e) || !e.agentId) {
       const t = await $.clock.now()
       // Um prompt novo é uma tarefa nova: zera tempo, tokens e plano. Uma continuação ("") segue somando.
-      await patch($, MAIN, a => (e.text || !a.startedAt ? { ...a, status: 'running', doing: 'Pensando…', startedAt: t, endedAt: 0, tokens: 0, plan: null } : { ...a, status: 'running', doing: 'Pensando…', endedAt: 0 }))
+      await patch($, MAIN, a => (e.text || !a.startedAt ? { ...a, status: 'running', doing: 'Pensando…', startedAt: t, endedAt: 0, tokens: 0, cache: 0, plan: null } : { ...a, status: 'running', doing: 'Pensando…', endedAt: 0 }))
       await startTicking($)
     }
     return next(e)
@@ -394,8 +394,10 @@ export const register: Register = on => {
     const r = yield* next(e)
     const u = r.usage
     if (u) {
-      const n = u.input_tokens + u.output_tokens + (u.cache_read_input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0)
-      await patch($, e.agentId ?? MAIN, a => ({ ...a, tokens: a.tokens + n }))
+      // Tokens novos (entrada, saída e cache gravado) separados da releitura de cache, que é barata e infla o número.
+      const n = u.input_tokens + u.output_tokens + (u.cache_creation_input_tokens ?? 0)
+      const lidos = u.cache_read_input_tokens ?? 0
+      await patch($, e.agentId ?? MAIN, a => ({ ...a, tokens: a.tokens + n, cache: (a.cache ?? 0) + lidos }))
     }
     return r
   })
@@ -403,7 +405,7 @@ export const register: Register = on => {
   on('agent.spawn', async ($, e, next) => {
     const r = await next(e)
     if (r.agentId) {
-      const agent: Agent = { id: r.agentId, name: e.name || e.description || e.subagentType, type: e.subagentType, doing: clip(e.description || 'Começando', 40), status: 'running', changes: [], startedAt: await $.clock.now(), endedAt: 0, tokens: 0, plan: null, parentId: e.parentAgentId ?? '', where: '', whereKind: '' }
+      const agent: Agent = { id: r.agentId, name: e.name || e.description || e.subagentType, type: e.subagentType, doing: clip(e.description || 'Começando', 40), status: 'running', changes: [], startedAt: await $.clock.now(), endedAt: 0, tokens: 0, cache: 0, plan: null, parentId: e.parentAgentId ?? '', where: '', whereKind: '' }
       await update($, agents, list => [...list.filter(a => a.id !== agent.id), agent].slice(-30))
       await startTicking($)
     }
@@ -540,7 +542,9 @@ export const register: Register = on => {
     // Sub-agentes de um agente: os que ele chamou (do principal, os desta tarefa).
     const childrenOf = (a: Agent) =>
       list.filter(c => c.id !== MAIN && (a.id === MAIN ? c.parentId === '' && main.startedAt > 0 && c.startedAt >= main.startedAt : c.parentId === a.id))
-    const tokensOf = (a: Agent) => (a.id === MAIN ? list.filter(c => c.id === MAIN || (main.startedAt > 0 && c.startedAt >= main.startedAt)).reduce((s, c) => s + c.tokens, 0) : a.tokens)
+    const daTarefa = (a: Agent) => (a.id === MAIN ? list.filter(c => c.id === MAIN || (main.startedAt > 0 && c.startedAt >= main.startedAt)) : [a])
+    const tokensOf = (a: Agent) => daTarefa(a).reduce((s, c) => s + c.tokens, 0)
+    const cacheOf = (a: Agent) => daTarefa(a).reduce((s, c) => s + (c.cache ?? 0), 0)
 
     // A barra de um agente, em pílula laranja (verde ao concluir, vermelha se falhou): o plano dele; senão, quantos
     // sub-agentes concluíram; sem nenhum dos dois, um trecho corre enquanto roda e a barra enche ao terminar. No terminal,
@@ -555,7 +559,10 @@ export const register: Register = on => {
       const figures = (
         <Box flexDirection="row" justifyContent="space-between">
           <Text dimColor size="footnote" tabular>⏱ {fmtTime(elapsed(a, t))}</Text>
-          <Text dimColor size="footnote" tabular>{fmtTokens(tokensOf(a))} tokens</Text>
+          <Box flexDirection="row" columnGap={1}>
+            {cacheOf(a) > 0 && <Text dimColor size="caption" tabular>{fmtTokens(cacheOf(a))} em cache ·</Text>}
+            <Text dimColor size="footnote" tabular>{fmtTokens(tokensOf(a))} tokens</Text>
+          </Box>
         </Box>
       )
       return (

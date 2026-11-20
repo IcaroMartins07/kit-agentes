@@ -252,3 +252,20 @@ Ordenadas por impacto.
 | Skills duplicadas | 14 skills soltas em `~/.claude/skills` que o plugin já traz foram para `~/.claude/skills-desativadas`. Ficaram em `~/.claude/skills` só as de fora do kit: orca, maestri, graphify, flow-handoff e synced. | `node instalar.mjs doctor` sem aviso de duplicadas |
 
 Os 263 testes passam e a validação estrita do plugin também. O kit 0.4.0 está instalado e passa a valer depois de reiniciar o app.
+
+---
+
+## 7. Mais rápido e mais barato na 0.7.0 (2026-11-19)
+
+O teste real num portfólio levou horas e muitos tokens. A telemetria mostrou para onde foram: 5 rodadas de revisão de 11 a 15 min, cada uma rodando de 13 a 22 scripts de navegador; 13 instalações de dependências e 11 servidores subidos; 11 dos 15 itens de revisão eram "baixa" e mesmo assim geraram retrabalho; 33 bloqueios de território por um plano com arquivo no time errado; e o painel somando a releitura de cache aos tokens.
+
+| Mudança | Onde |
+|---|---|
+| O revisor não abre navegador: lê o diff e os prints que o `qa-regressao` tira uma vez, em três larguras | `agents/review/revisor.md` (passo 3), `agents/qa/qa-regressao.md` (passo 7), `hooks/ferramentas/prints.mjs` |
+| Item `baixa` não reprova nem volta ao Dev: vira Sugestão no relatório final | `agents/review/revisor.md`, `skills/proprias/modo-deus/SKILL.md` (seção 6) |
+| Dependências da worktree por link às da raiz; Dev de front sem servidor só para olhar a tela | passo 2 de Dev e QA, "Foco do front"; `node_modules` no exclude do projeto |
+| Direção visual antes de codar (`.modo-deus/design.md`, escrita pelo Maestro com as skills de design) e crítica dos prints contra ela | `skills/proprias/modo-deus/SKILL.md` (Plano, passo 4b), `agents/dev/dev-front.md`, `agents/review/revisor.md`; categoria `visual` em `hooks/src/plano.mjs` e `hooks/src/retro.mjs` |
+| O validador recusa escopo fora do território do time | `hooks/src/plano.mjs` (`escopoForaDoTerritorio`), `hooks/src/plano-hook.mjs` |
+| Pedido amplo vira entregas menores; polimento visual sem mudar contrato é `simples` | `skills/proprias/modo-deus/SKILL.md` (Spec e Plano), `kit.json` |
+| Painel com tokens novos e cache separados; skills invocadas na telemetria | `mods/kit/painel-agentes/hooks/register.tsx`, `hooks/hooks.json`, `hooks/src/pre.mjs` |
+

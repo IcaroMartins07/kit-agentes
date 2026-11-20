@@ -13,7 +13,10 @@ export type Agent = {
   startedAt: number
   /** Quando parou; 0 enquanto roda. */
   endedAt: number
+  /** Tokens novos: entrada, saída e cache gravado. */
   tokens: number
+  /** Tokens relidos do cache (baratos), mostrados à parte. */
+  cache: number
   plan: Plan
   /** Quem o chamou: o id do agente pai; '' quando foi o Claude principal. */
   parentId: string

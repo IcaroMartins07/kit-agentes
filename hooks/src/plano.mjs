@@ -7,7 +7,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { kit as kitPadrao, casaGlob } from "./comum.mjs";
+import { kit as kitPadrao, casaGlob, territoriosDe } from "./comum.mjs";
 
 export const STATUS_PLANO = ["rascunho", "aprovado", "executando", "revisao", "concluido", "escalado"];
 export const STATUS_TAREFA = ["pendente", "em_andamento", "pronta", "em_revisao", "reprovada", "concluida"];
@@ -30,9 +30,31 @@ function sobrepoe(a, b) {
 }
 
 // Tipo do problema apontado pela Revisão: a retro usa para achar a skill que deveria ter evitado.
-export const CATEGORIAS = ["padrao", "seguranca", "desempenho", "correcao", "teste", "escopo", "legibilidade"];
+export const CATEGORIAS = ["padrao", "seguranca", "desempenho", "correcao", "teste", "escopo", "legibilidade", "visual"];
 
-export function validarPlano(plano, { kit = kitPadrao(), config = {} } = {}) {
+// Um item de escopo ("src/app/**" ou "src/app/page.tsx") vira um caminho de exemplo para testar contra os territórios.
+const exemploDe = (escopo) => String(escopo).replace(/\/\*\*?$/, "/x.ts").replace(/\*\*?/g, "x");
+
+// territorios: { front: [globs], back: [...], testes: [...] }, do REGRAS.md do projeto; sem ele, não confere.
+export function escopoForaDoTerritorio(tarefa, territorios, kit = kitPadrao()) {
+  if (!territorios || !tarefa?.time) return [];
+  const def = kit.agentes?.[tarefa.time];
+  if (!def || def.somente_leitura) return [];
+  const meu = def.time === "qa" ? "testes" : def.territorio;
+  if (!territorios[meu]?.length) return []; // território não definido no REGRAS.md: nada a conferir
+  const casa = (rel, t) => (territorios[t] || []).some((g) => casaGlob(rel, g));
+  const erros = [];
+  for (const item of lista(tarefa.escopo)) {
+    const rel = exemploDe(item);
+    if (casa(rel, meu)) continue;
+    if (def.time === "qa") { erros.push(`${tarefa.id}: ${item} não está no território "testes" do ${tarefa.time}`); continue; }
+    const donos = Object.keys(territorios).filter((t) => t !== meu && t !== "testes" && casa(rel, t));
+    if (donos.length) erros.push(`${tarefa.id}: ${item} é do território ${donos.join(", ")}, não de ${meu} (${tarefa.time}); mova para uma tarefa do time dono`);
+  }
+  return erros;
+}
+
+export function validarPlano(plano, { kit = kitPadrao(), config = {}, territorios = null } = {}) {
   const e = [];
   if (!plano || typeof plano !== "object" || Array.isArray(plano)) return ["o plano precisa ser um objeto JSON"];
   if (plano.versao !== 1) e.push("versao deve ser 1");
@@ -74,6 +96,7 @@ export function validarPlano(plano, { kit = kitPadrao(), config = {} } = {}) {
   const ids = new Map();
   for (const [i, t] of tarefas.entries()) {
     const nome = t?.id || `tarefas[${i}]`;
+    e.push(...escopoForaDoTerritorio(t, territorios, kit));
     if (!/^T\d+$/.test(t?.id || "")) e.push(`${nome}: id deve ser T1, T2...`);
     else if (ids.has(t.id)) e.push(`${t.id} repetida`);
     else ids.set(t.id, t);
@@ -246,7 +269,9 @@ if (process.argv[1] && path.resolve(process.argv[1]).toLowerCase() === fileURLTo
     if (cmd === "validar") {
       const cfgF = path.join(path.dirname(path.resolve(arq)), "config.json");
       const config = fs.existsSync(cfgF) ? JSON.parse(fs.readFileSync(cfgF, "utf8")) : {};
-      erros = validarPlano(JSON.parse(txt), { config });
+      const regrasF = path.join(path.dirname(path.resolve(arq)), "REGRAS.md");
+      const territorios = fs.existsSync(regrasF) ? territoriosDe(fs.readFileSync(regrasF, "utf8")) : null;
+      erros = validarPlano(JSON.parse(txt), { config, territorios });
     } else if (cmd === "veredito") erros = lerVeredito(txt).erros;
     else if (cmd === "auditoria") erros = lerAuditoria(txt).erros;
     else erros = ["uso: node plano.mjs validar|veredito|auditoria <arquivo>"];

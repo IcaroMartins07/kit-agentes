@@ -48,7 +48,7 @@ if (bloqueio || falha || alerta || alertas.length || (monitor && !busca)) {
     agente: agente.nome,
     agent_id: agente.id,
     ferramenta,
-    alvo: String(i.file_path || i.notebook_path || i.command || i.pattern || "").slice(0, 200),
+    alvo: String(i.file_path || i.notebook_path || i.command || i.pattern || i.skill || "").slice(0, 200),
     resultado: bloqueio ? "bloqueado" : falha ? "erro_hook" : "ok",
     regra: bloqueio?.regra || alertas[0]?.regra || alerta?.regra || null,
     motivo: bloqueio?.message || (alertas.length ? alertas.map((a) => a.motivo).join(" | ") : null) || alerta?.alerta || falha?.message || null,

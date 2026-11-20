@@ -37,3 +37,4 @@ Peças comuns: [`src/comum.mjs`](src/comum.mjs) (projeto, config, telemetria) e 
 |---|---|
 | [`ferramentas/statusline.mjs`](ferramentas/statusline.mjs) | Status line do modo-deus (perfil, fase, tarefas e alertas). Liga com `instalar.mjs <projeto> --statusline`. |
 | [`ferramentas/painel-status.mjs`](ferramentas/painel-status.mjs) | Gera o resumo e o painel HTML do `/deus-status` |
+| [`ferramentas/prints.mjs`](ferramentas/prints.mjs) | Prints de uma página em 390, 768 e 1440 px com o Chrome ou o Edge da máquina, sem dependências. O `qa-regressao` tira uma vez; o revisor só olha. |

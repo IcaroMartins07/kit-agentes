@@ -26,6 +26,9 @@ const PASTA_ANTIGA = ".claude/modo-deus";
 const SETTINGS = ".claude/settings.local.json";
 // Onde o Claude Code cria as worktrees dos agentes (isolation: worktree): também ficam fora do git do projeto.
 const WORKTREES = ".claude/worktrees";
+// Nas worktrees, os agentes ligam as dependências da raiz por um link chamado node_modules; "node_modules/" (com barra)
+// no .gitignore do projeto não pega link, então o nome sem barra vai para o exclude.
+const LINK_DEPS = "node_modules";
 const MODOS_TIME = ["auto", "ligado", "desligado"];
 
 const home = () => process.env.MODO_DEUS_HOME || os.homedir();
@@ -463,7 +466,7 @@ export function instalar(caminho, { perfil = null, times = {}, dryRun = false, s
   fazer(`exclude  ${path.relative(raiz, exc).replace(/\\/g, "/")} (vale também para worktrees)`, () => {
     fs.mkdirSync(path.dirname(exc), { recursive: true });
     const atual = fs.existsSync(exc) ? fs.readFileSync(exc, "utf8") : "";
-    fs.writeFileSync(exc, blocoExclude(atual, [`${PASTA}/`, SETTINGS, `${WORKTREES}/`, ...(grafoVersionado ? [] : [`${GRAFO}/`])]));
+    fs.writeFileSync(exc, blocoExclude(atual, [`${PASTA}/`, SETTINGS, `${WORKTREES}/`, LINK_DEPS, ...(grafoVersionado ? [] : [`${GRAFO}/`])]));
   });
 
   const manifesto = { versao_kit: kit.versao, deny: registro.deny, allow: registro.allow, ...(registro.statusline ? { statusline: registro.statusline } : {}), criou_settings: criouSettings, criou_grafo: criouGrafo };

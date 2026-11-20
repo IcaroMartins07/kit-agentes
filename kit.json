@@ -1,7 +1,7 @@
 {
   "$comentario": "Fonte de verdade do kit. Lida pelo instalar.mjs, pelos hooks (F2) e pelo Maestro (F3). Modelos usam alias (opus/sonnet/haiku), que resolvem para a geração atual (5.5).",
   "nome": "modo-deus",
-  "versao": "0.6.1",
+  "versao": "0.7.0",
   "node_minimo": 18,
 
   "$conectores": "hooks/conectores.json",
@@ -57,7 +57,7 @@
   },
 
   "complexidade": {
-    "simples":  ["ajuste de texto ou estilo", "campo novo em formulário", "CRUD seguindo padrão existente", "teste unitário de função pura"],
+    "simples":  ["ajuste de texto ou estilo", "polimento visual sem mudar contrato", "campo novo em formulário", "CRUD seguindo padrão existente", "teste unitário de função pura"],
     "complexa": ["mudança de contrato entre camadas", "migração de dados", "concorrência ou cache", "autenticação ou autorização", "bug sem causa óbvia", "refatoração entre módulos", "pipeline de CI ou deploy"],
     "na_duvida": "complexa",
     "reprovada_na_revisao": "complexa"

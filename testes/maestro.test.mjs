@@ -202,3 +202,16 @@ test("plano: em andamento de antes da regra do contrato continua válido; plano 
     assert.deepEqual(validarPlano(p), [], status);
   }
 });
+
+test("plano: escopo fora do território do time é recusado (o erro da T1 do teste do portfólio)", async () => {
+  const { escopoForaDoTerritorio } = await import("../hooks/src/plano.mjs");
+  const territorios = { front: ["src/app/**", "src/components/**", "public/**"], back: ["src/lib/**", "src/server/**"], testes: ["**/*.test.*"] };
+  const erros = escopoForaDoTerritorio({ id: "T1", time: "dev-back", escopo: ["src/lib/**", "src/app/page.tsx", "next.config.ts"] }, territorios);
+  assert.equal(erros.length, 1, JSON.stringify(erros));
+  assert.match(erros[0], /src\/app\/page\.tsx é do território front/);
+  assert.deepEqual(escopoForaDoTerritorio({ id: "T2", time: "dev-front", escopo: ["src/app/**", "public/foto.webp"] }, territorios), []);
+  assert.match(escopoForaDoTerritorio({ id: "T3", time: "qa-unit", escopo: ["src/app/x.ts"] }, territorios)[0], /território "testes"/);
+  const p = exemplo();
+  p.tarefas[0].escopo = ["src/components/LoginForm.tsx"];
+  assert.ok(validarPlano(p, { territorios: { front: ["src/components/**"], back: ["src/server/**"], testes: ["cypress/**"] } }).some((e) => e.includes("território front")));
+});

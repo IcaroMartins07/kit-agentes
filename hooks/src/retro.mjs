@@ -36,6 +36,7 @@ export const ALVO_DA_CATEGORIA = {
   teste: "agentes QA, qa-cypress e superpowers:test-driven-development",
   escopo: "plano do Maestro (skill modo-deus) e code-simplification",
   legibilidade: "skill code-simplification e §4 do CLAUDE.md base",
+  visual: "direção visual do Maestro (.modo-deus/design.md) e as skills de design do dev-front (impeccable, frontend-design)",
   sem_categoria: "leia os motivos e classifique antes de propor",
 };
 const lerJson = (f) => {

@@ -2,6 +2,16 @@
 
 ## [não lançado]
 
+### 0.7.0 · mais rápido e mais barato, sem perder qualidade (2026-11-19)
+Vem do teste real no portfólio: 6 tarefas, 5 rodadas de revisão de 11 a 15 min com navegador, 13 instalações de dependências, 11 servidores e 33 bloqueios de território.
+- Revisor sem navegador: lê o diff e os prints que o `qa-regressao` tira uma vez, em três larguras (`hooks/ferramentas/prints.mjs`, sem dependências).
+- Item de revisão `baixa` não reprova nem vira tarefa: vai para Sugestões no relatório final. Só `alta` e `media` voltam ao Dev.
+- Dependências da worktree por link às da raiz, sem reinstalar; o Dev de front não sobe servidor só para olhar a tela.
+- Direção visual antes de codar: o Maestro escreve `.modo-deus/design.md` com as skills de design quando o pedido fala de visual, e o revisor critica os prints contra ela (categoria nova `visual`, com alvo na retro).
+- Validador do plano recusa escopo fora do território do time.
+- Pedido amplo vira entregas menores; polimento visual sem mudar contrato é `simples`.
+- Painel 0.3.0 separa tokens novos de releitura de cache; a telemetria registra as skills invocadas.
+
 ### 0.6.1 · agents-mode com o painel e o kit fora do git do projeto (2026-11-18)
 - `agents-mode` instala também o painel de agentes (padrão); `--mods todos|nenhum|<lista>` escolhe os mods de interface. A documentação usa só o `agents-mode` para instalar.
 - Nada do kit entra no git do projeto: `.claude/worktrees/` (worktrees dos agentes) entrou no `.git/info/exclude` junto com `.modo-deus/`, `graphify-out/` e o settings local; a cerca (V9) recusa `git add -f` desses caminhos; o `doctor` confere todos.

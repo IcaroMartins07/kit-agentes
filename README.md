@@ -62,7 +62,7 @@ O `agents-mode` faz, nessa ordem: registra o marketplace do kit e instala o plug
 
 ### O kit não entra no seu projeto
 
-O kit só auxilia: **nada dele vai para o git do projeto**. O que ele cria fica no `.git/info/exclude` (que vale só na sua máquina e não é versionado): `.modo-deus/` (regras, plano, telemetria), `graphify-out/` (mapa do código), `.claude/worktrees/` (onde os agentes trabalham) e `.claude/settings.local.json` (permissões). A cerca de segurança recusa `git add -f` desses caminhos, e o `doctor` avisa se algum deles aparecer no `git status`. Nos commits ficam só as mudanças de código das tarefas.
+O kit só auxilia: **nada dele vai para o git do projeto**. O que ele cria fica no `.git/info/exclude` (que vale só na sua máquina e não é versionado): `.modo-deus/` (regras, plano, telemetria), `graphify-out/` (mapa do código), `.claude/worktrees/` (onde os agentes trabalham), o link `node_modules` que eles criam para reaproveitar as dependências, e `.claude/settings.local.json` (permissões). A cerca de segurança recusa `git add -f` desses caminhos, e o `doctor` avisa se algum deles aparecer no `git status`. Nos commits ficam só as mudanças de código das tarefas.
 
 <details>
 <summary>Passo a passo, sem o agents-mode</summary>

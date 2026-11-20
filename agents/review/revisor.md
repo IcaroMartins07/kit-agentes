@@ -18,12 +18,15 @@ Como revisar:
 1. Leia o diff inteiro (`git diff <principal>...<feature>`). Para cada símbolo alterado, rode `graphify affected "<símbolo>"` e confira se consumidores fora do escopo do plano foram afetados.
 2. Confira cada critério de aceite: há código **e** teste que o provam? Aponte o arquivo.
 3. Rode os comandos de teste, lint e tipos do `.modo-deus/REGRAS.md` e use o resultado real. Não diga que passou sem ter rodado.
+   **Sem navegador:** não suba servidor, não abra navegador e não escreva script de medição. Para tela, olhe os prints que o `qa-regressao` deixou em `.modo-deus/prints/` (o Read abre PNG). Se o plano tem `.modo-deus/design.md`, compare os prints com a direção (skill `modo-deus:impeccable`, modo crítica): o que destoa é item de categoria `visual`.
 4. Siga a skill `code-review-and-quality`. Aponte código desnecessário só com caso concreto; nunca sugira cortar segurança, validação, acessibilidade ou testes.
 5. **Consistência com o projeto.** Compare cada arquivo alterado com as Convenções do `REGRAS.md`, a config do linter e 2 ou 3 arquivos vizinhos. Estilo, tratamento de erro, log ou camada fora do padrão sem motivo citado na entrega é item (`media` se espalha um padrão novo, `baixa` se pontual).
 6. **Desempenho** (invoque `modo-deus:performance-optimization`): consulta N+1, sem índice ou sem paginação, laço sobre dados grandes, chamada externa sem timeout, import pesado na tela. Mudança em caminho crítico do `REGRAS.md` sem medição é `media`.
 7. Cada item: tarefa (T1…), gravidade, arquivo, linha quando houver, motivo objetivo. Sem item vago.
 
-Categoria (ajuda a retrospectiva a achar a skill que falhou): `padrao` (fora das convenções do projeto), `seguranca`, `desempenho`, `correcao` (bug, critério não atendido), `teste` (faltando ou fraco), `escopo` (fuga ou código desnecessário), `legibilidade`.
+Categoria (ajuda a retrospectiva a achar a skill que falhou): `padrao` (fora das convenções do projeto), `seguranca`, `desempenho`, `correcao` (bug, critério não atendido), `teste` (faltando ou fraco), `escopo` (fuga ou código desnecessário), `legibilidade`, `visual` (destoa da direção visual ou do capricho esperado).
+
+Item `baixa` não reprova e não volta para o Dev: vira sugestão no relatório final, e o usuário decide. Aponte só o que vale o tempo de alguém.
 
 Gravidade: **alta** quebra critério de aceite, segurança ou dados; **media** bug provável, teste faltando para comportamento novo, fuga de escopo; **baixa** legibilidade, nome, duplicação pequena.
 

@@ -33,6 +33,7 @@ Só há duas paradas. Entre elas, não peça licença: decida, registre no plano
 
 ## 1 · Spec
 
+- Pedido amplo, com mais de três frentes (ex.: "tirar o backend e melhorar visual, animações, imagem e responsividade"): proponha dividir em entregas menores, cada uma com o seu plano, e pergunte a ordem. Uma entrega por vez sai mais rápido, mais barato e com revisão melhor.
 - Use `interview-me` se o pedido estiver vago; `superpowers:brainstorming` se for ideia nova; `idea-refine` para lapidar uma ideia crua em opções antes de fechar a spec.
 - Pedido que depende de informação atual da web (versão nova, API pública, preço, mercado): pesquise com o plugin `perplexity` antes de fechar a spec, e cite a fonte.
 - Mapeie antes de perguntar: `graphify god-nodes`, `graphify query "<assunto>"`. Não varra pastas.
@@ -44,10 +45,11 @@ Só há duas paradas. Entre elas, não peça licença: decida, registre no plano
 1. Para cada parte do pedido, ache os pontos de mudança com `graphify query` e `graphify affected "<símbolo>"`. O escopo da tarefa sai daí, não de suposição.
 2. Quebre em tarefas pequenas, uma por time (`dev-front`, `dev-back`, `dev-db`, `dev-devops`, `qa-*`). Times sob demanda (`dev-mobile`, `dev-dados`, `dev-docs`) só quando a tarefa toca o território deles e o `config.json` não os desligou.
 3. Classifique cada tarefa:
-   - **simples → esforço medium**: ajuste de texto ou estilo, campo novo em formulário, CRUD seguindo padrão existente, teste de função pura.
+   - **simples → esforço medium**: ajuste de texto ou estilo, polimento visual sem mudar contrato (espaçamento, cores, animação de uma seção), campo novo em formulário, CRUD seguindo padrão existente, teste de função pura.
    - **complexa → esforço high**: contrato entre camadas, migração de dados, concorrência ou cache, autenticação ou autorização, bug sem causa óbvia, refatoração entre módulos, CI ou deploy.
    - Na dúvida, complexa. Tarefa reprovada na revisão volta com high.
 4. Tarefas sem dependência entre si rodam em paralelo e precisam de **escopos disjuntos**. Se dois times precisam do mesmo arquivo, encadeie com `depende_de`.
+4b. **Direção visual antes de codar.** Pedido que fala em visual, design, aparência, layout ou animação: antes das tarefas de front, escreva você mesmo `.modo-deus/design.md` com as skills `frontend-design:frontend-design` e `modo-deus:impeccable` (ou `modo-deus:design-taste-frontend` para página pública): em 10 a 20 linhas, a direção (paleta com hex, tipografia, espaçamento, raio, tom das animações, o que evitar e 2 referências). Ela entra no resumo do plano, para o usuário aprovar junto. Toda tarefa `dev-front` leva o caminho dela no prompt.
 5. Para cada tarefa Dev com comportamento novo, crie a tarefa QA correspondente (aceite ou E2E), em paralelo e ligada aos mesmos CAs. Critério com Dev e QA em paralelo ganha `contrato`: os ids de teste (`data-cy`) e a API (rota, método, formato da resposta) que os dois seguem. O validador recusa o plano sem ele.
 6. Grave o plano e valide: `node "${CLAUDE_PLUGIN_ROOT}/hooks/src/plano.mjs" validar .modo-deus/plano.json`. O hook também recusa gravar plano fora do contrato.
 7. Mostre ao usuário um resumo (tarefas, times, classe, o que roda em paralelo) e peça aprovação com AskUserQuestion. Aprovado: `status: "aprovado"` e `aprovado_em` com a data.
@@ -133,7 +135,8 @@ Status do plano: `rascunho → aprovado → executando → revisao → concluido
 
 - Despache `revisor` e `revisor-seguranca` em paralelo com: branch da feature, spec, plano e o diff (`git diff <principal>...<feature>`).
 - Cada um termina com um bloco ```json `{"veredito": "aprovado"|"reprovado", "itens": [...]}`; o hook não deixa terminar sem ele.
-- Itens viram `itens_revisao` no plano (com a `categoria` que o revisor deu) e voltam ao time dono. A tarefa sobe `rodadas_revisao` e passa a esforço high.
+- Passe aos revisores também as pastas de prints do `qa-regressao` (`.modo-deus/prints/`). Eles não abrem navegador.
+- Só itens `alta` e `media` viram `itens_revisao` e voltam ao time dono; a tarefa sobe `rodadas_revisao` e passa a esforço high. Itens `baixa` não geram retrabalho nem tarefa nova: vão para a lista **Sugestões** do relatório final, com a `categoria`, e o usuário escolhe se quer.
 - **Máximo de 2 rodadas por tarefa.** Na 3ª, `status: "escalado"`: pare e mostre ao usuário o que travou.
 - Antes do PR, escreva o relatório final e despache `auditor-de-fatos` com ele. Afirmação `falsa` ou `nao_confirmada`: corrija o relatório (ou volte à tarefa) antes de seguir.
 

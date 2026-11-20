@@ -441,7 +441,11 @@ test("nada do kit aparece para o git do projeto: pasta, settings local, grafo e 
   instalar(repo, { log: silencio });
   escrever(".claude/worktrees/agent-x/src/a.ts", "export const a = 1\n");
   escrever("graphify-out/graph.json", "{}");
+  // o link das dependências que os agentes criam na worktree (junction no Windows, symlink no resto)
+  fs.mkdirSync(path.join(tmp, "deps-da-raiz"));
+  fs.symlinkSync(path.join(tmp, "deps-da-raiz"), path.join(repo, ".claude", "worktrees", "agent-x", "node_modules"), "junction");
+  fs.symlinkSync(path.join(tmp, "deps-da-raiz"), path.join(repo, "node_modules"), "junction"); // como fica na raiz de uma worktree
   assert.equal(status(), "", "git status deveria ficar limpo");
   const exc = fs.readFileSync(path.join(repo, ".git", "info", "exclude"), "utf8");
-  for (const p of [".modo-deus/", ".claude/settings.local.json", ".claude/worktrees/", "graphify-out/"]) assert.ok(exc.includes(p), p);
+  for (const p of [".modo-deus/", ".claude/settings.local.json", ".claude/worktrees/", "graphify-out/", "node_modules"]) assert.ok(exc.includes(p), p);
 });

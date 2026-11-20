@@ -166,3 +166,15 @@ test("atualizar-terceiros: --commit de um pacote só; erro de origem não derrub
   assert.ok(r2.find((r) => r.entrada.pacote === "pacote-b").erro);
   assert.ok(!r2.find((r) => r.entrada.pacote === "pacote-a").erro);
 });
+
+// ================= prints (hooks/ferramentas/prints.mjs) =================
+test("prints: três larguras por padrão, um arquivo por largura, url validada e navegador achado", async () => {
+  const { planoDePrints, acharNavegador, LARGURAS } = await import("../hooks/ferramentas/prints.mjs");
+  const p = planoDePrints("http://localhost:3000", "saida");
+  assert.deepEqual(p.map((x) => x.largura), LARGURAS);
+  assert.ok(p[0].args.includes("--headless=new") && p[0].args.at(-1) === "http://localhost:3000");
+  assert.ok(p.every((x) => x.args.some((a) => a === `--screenshot=${x.arquivo}`)));
+  assert.throws(() => planoDePrints("localhost:3000", "saida"), /http/);
+  assert.equal(acharNavegador(() => false, "win32", {}), null);
+  assert.equal(acharNavegador((c) => c === "/x/chrome", "linux", { CHROME_PATH: "/x/chrome" }), "/x/chrome");
+});
