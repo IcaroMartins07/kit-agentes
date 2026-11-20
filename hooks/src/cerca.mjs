@@ -118,7 +118,12 @@ export function checarCerca(entrada, ctx) {
 
   for (const p of partes(semHeredoc(cmd))) {
     const w = palavras(p).map(expandir);
-    if (w[0] === "cd") { dir = path.resolve(dir, caminhoShell(w[1] || "~")); ramo = undefined; continue; }
+    if (w[0] === "cd") {
+      // cd para pasta que ainda não existe falha, e o resto roda onde estava.
+      const destino = path.resolve(dir, caminhoShell(w[1] || "~"));
+      if (fs.existsSync(destino)) { dir = destino; ramo = undefined; }
+      continue;
+    }
     const opcoes = w[0] === "git" ? w.slice(1) : [];
     let iSub = 0;
     while (iSub < opcoes.length && opcoes[iSub].startsWith("-")) iSub += /^-[Cc]$/.test(opcoes[iSub]) ? 2 : 1;

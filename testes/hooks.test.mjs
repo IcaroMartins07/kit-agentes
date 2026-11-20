@@ -359,6 +359,7 @@ test("V9 · merge vale pela branch de onde ele roda (cd, git -C, switch)", () =>
     assert.equal(pre("Bash", { command: "git merge feat" }).status, 2, "na principal continua barrado");
     assert.equal(pre("Bash", { command: `cd ${barraT(integ)} && git checkout main && git merge feat` }).status, 2, "voltou para a principal");
     assert.equal(pre("Bash", { command: `cd ${barraT(repo)} && git merge feat` }).status, 2, "cd para a principal");
+    assert.equal(pre("Bash", { command: `cd ${barraT(path.join(tmp, "nao-existe"))}; git merge feat` }).status, 2, "cd que falha deixa o merge na principal");
   } finally {
     git(repo, "checkout", "-q", "feat");
     git(repo, "worktree", "remove", "--force", integ);
