@@ -7,7 +7,7 @@
 //   5. conferência: instalar.mjs doctor
 //
 // Uso:
-//   agents-mode [caminho] [--perfil leve|estrito|deus] [--times dev-mobile=ligado,...] [--statusline]
+//   agents-mode [caminho] [--perfil leve|estrito|deus] [--times dev-mobile=ligado,...] [--statusline] [--enxuto]
 //               [--sem-grafo] [--escopo local|user] [--mods painel-agentes,temas,...|todos|nenhum] [--dry-run]
 // Sem caminho, usa a pasta atual. --escopo vale só para as dependências.
 import fs from "node:fs";
@@ -48,7 +48,7 @@ export function montarPassos(argv, { marketplaces = [], plugins = [] } = {}) {
       mods = v === "todos" ? MODS_DO_KIT : v === "nenhum" ? [] : v.split(",").map((x) => x.trim()).filter(Boolean);
       const errado = mods.find((m) => !MODS_DO_KIT.includes(m));
       if (errado) throw new ErroUso(`mod desconhecido: ${errado} (há: ${MODS_DO_KIT.join(", ")})`);
-    } else if (a === "--statusline" || a === "--sem-grafo") inst.push(a);
+    } else if (a === "--statusline" || a === "--sem-grafo" || a === "--enxuto") inst.push(a);
     else if (a === "-h" || a === "--help") throw new ErroUso("");
     else if (a.startsWith("-")) throw new ErroUso(`opção desconhecida: ${a}`);
     else if (caminho) throw new ErroUso("informe um caminho só");
@@ -97,7 +97,7 @@ function main() {
   } catch (e) {
     if (!(e instanceof ErroUso)) throw e;
     if (e.message) console.error(`agents-mode: ${e.message}`);
-    console.error("uso: agents-mode [caminho] [--perfil leve|estrito|deus] [--times t=modo,...] [--statusline] [--sem-grafo] [--escopo local|user] [--mods painel-agentes,temas,...|todos|nenhum] [--dry-run]");
+    console.error("uso: agents-mode [caminho] [--perfil leve|estrito|deus] [--times t=modo,...] [--statusline] [--enxuto] [--sem-grafo] [--escopo local|user] [--mods painel-agentes,temas,...|todos|nenhum] [--dry-run]");
     process.exit(e.message ? 2 : 0);
   }
   console.log(`agents-mode · kit em ${KIT}\nprojeto: ${plano.caminho}${plano.dry ? " (simulação)" : ""}\n`);

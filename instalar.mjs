@@ -5,6 +5,7 @@
 // Uso:
 //   node instalar.mjs [caminho] [--perfil leve|estrito|deus] [--times dev-mobile=ligado,...] [--dry-run]
 //   node instalar.mjs [caminho] --statusline       também grava a status line do kit no .claude/settings.local.json
+//   node instalar.mjs [caminho] --enxuto           contexto menor no projeto: sem conectores do claude.ai, descrição de skill curta
 //   node instalar.mjs --remover [caminho] [--dry-run]
 //   node instalar.mjs doctor [caminho]
 //   node instalar.mjs dependencias [caminho] [--escopo local|user] [--dry-run]     plugins obrigatórios e graphify (nunca o caveman)
@@ -30,6 +31,9 @@ const WORKTREES = ".claude/worktrees";
 // no .gitignore do projeto não pega link, então o nome sem barra vai para o exclude.
 const LINK_DEPS = "node_modules";
 const MODOS_TIME = ["auto", "ligado", "desligado"];
+// --enxuto: contexto menor só neste projeto. Sem os conectores do claude.ai (Canva, Gmail…), que pesavam na sessão
+// do Maestro, e com a descrição de cada skill curta na lista que toda sessão e todo subagente recebem (os nomes ficam).
+const ENXUTO = { disableClaudeAiConnectors: true, skillListingMaxDescChars: 250 };
 
 const home = () => process.env.MODO_DEUS_HOME || os.homedir();
 
@@ -75,7 +79,7 @@ function grafoDesatualizado(raiz) {
 class ErroUso extends Error {}
 
 function args(argv) {
-  const o = { comando: "instalar", caminho: process.cwd(), perfil: null, times: {}, dryRun: false, semGrafo: false, statusline: false };
+  const o = { comando: "instalar", caminho: process.cwd(), perfil: null, times: {}, dryRun: false, semGrafo: false, statusline: false, enxuto: false };
   const resto = [...argv];
   while (resto.length) {
     const a = resto.shift();
@@ -89,6 +93,7 @@ function args(argv) {
       if (!["local", "user"].includes(o.escopo)) throw new ErroUso("--escopo precisa ser local ou user");
     }
     else if (a === "--statusline") o.statusline = true;
+    else if (a === "--enxuto") o.enxuto = true;
     else if (a === "--perfil") {
       o.perfil = resto.shift();
       if (!o.perfil || o.perfil.startsWith("-")) throw new ErroUso("--perfil precisa de um valor");
@@ -359,7 +364,7 @@ function executor(dryRun, log) {
   };
 }
 
-export function instalar(caminho, { perfil = null, times = {}, dryRun = false, semGrafo = false, statusline = false, log = console.log } = {}) {
+export function instalar(caminho, { perfil = null, times = {}, dryRun = false, semGrafo = false, statusline = false, enxuto = false, log = console.log } = {}) {
   const raiz = raizDoRepo(caminho);
   const pasta = path.join(raiz, PASTA);
   if (versionado(raiz, PASTA)) throw new ErroUso(`${PASTA} já é versionado pelo projeto; não vou sobrescrever`);
@@ -402,7 +407,7 @@ export function instalar(caminho, { perfil = null, times = {}, dryRun = false, s
 
   // Permissões: deny-list fixo e allowlist (comandos do REGRAS.md + consultas ao grafo e ao git).
   // Só registra o que o kit acrescentou, para remover depois sem tocar no que é do usuário.
-  const registro = { deny: anterior?.deny || [], allow: anterior?.allow || [], statusline: anterior?.statusline || null };
+  const registro = { deny: anterior?.deny || [], allow: anterior?.allow || [], statusline: anterior?.statusline || null, enxuto: anterior?.enxuto || {} };
   let criouSettings = anterior?.criou_settings || false;
   if (versionado(raiz, SETTINGS)) {
     log(`AVISO    ${SETTINGS} é versionado pelo projeto; deny-list e allowlist não aplicados${statusline ? " (nem a status line)" : ""}`);
@@ -434,6 +439,13 @@ export function instalar(caminho, { perfil = null, times = {}, dryRun = false, s
         }
         registro.statusline = cmd;
       } else log(`AVISO    ${SETTINGS} já tem statusLine do usuário; mantida (apague-a para usar a do kit)`);
+    }
+    // Contexto enxuto (opcional, --enxuto): só grava a chave que o usuário não definiu, e registra para o --remover.
+    if (enxuto) {
+      for (const [k, v] of Object.entries(ENXUTO)) {
+        if (s.dados[k] === undefined) { s.dados[k] = v; registro.enxuto[k] = v; mudancas.push(k); }
+        else if (registro.enxuto[k] === undefined) log(`AVISO    ${SETTINGS} já tem ${k} do usuário; mantido`);
+      }
     }
     if (mudancas.length) {
       fazer(`settings ${SETTINGS}: ${mudancas.join(", ")}`, () => {
@@ -469,7 +481,7 @@ export function instalar(caminho, { perfil = null, times = {}, dryRun = false, s
     fs.writeFileSync(exc, blocoExclude(atual, [`${PASTA}/`, SETTINGS, `${WORKTREES}/`, LINK_DEPS, ...(grafoVersionado ? [] : [`${GRAFO}/`])]));
   });
 
-  const manifesto = { versao_kit: kit.versao, deny: registro.deny, allow: registro.allow, ...(registro.statusline ? { statusline: registro.statusline } : {}), criou_settings: criouSettings, criou_grafo: criouGrafo };
+  const manifesto = { versao_kit: kit.versao, deny: registro.deny, allow: registro.allow, ...(registro.statusline ? { statusline: registro.statusline } : {}), ...(Object.keys(registro.enxuto).length ? { enxuto: registro.enxuto } : {}), criou_settings: criouSettings, criou_grafo: criouGrafo };
   fazer("manifesto instalados.json", () => fs.writeFileSync(manifestoF, JSON.stringify(manifesto, null, 2) + "\n"));
 
   log("");
@@ -503,6 +515,7 @@ export function remover(caminho, { dryRun = false, log = console.log } = {}) {
         else if (s.dados.permissions) delete s.dados.permissions[chave];
       }
       if (manifesto.statusline && s.dados.statusLine?.command === manifesto.statusline) delete s.dados.statusLine;
+      for (const [k, v] of Object.entries(manifesto.enxuto || {})) if (s.dados[k] === v) delete s.dados[k];
       if (s.dados.permissions && !Object.keys(s.dados.permissions).length) delete s.dados.permissions;
       if (manifesto.criou_settings && !Object.keys(s.dados).length) fs.rmSync(path.join(raiz, SETTINGS));
       else fs.writeFileSync(path.join(raiz, SETTINGS), JSON.stringify(s.dados, null, 2) + "\n");
@@ -712,7 +725,7 @@ if (process.argv[1] && mesmoArquivo(process.argv[1], fileURLToPath(import.meta.u
   } catch (e) {
     if (!(e instanceof ErroUso)) throw e;
     if (e.message) console.error(`erro: ${e.message}`);
-    console.error("uso: node instalar.mjs [caminho] [--perfil leve|estrito|deus] [--times dev-mobile=ligado,...] [--sem-grafo] [--statusline] [--dry-run]\n     node instalar.mjs --remover [caminho] [--dry-run]\n     node instalar.mjs doctor [caminho]\n     node instalar.mjs dependencias [caminho] [--escopo local|user] [--dry-run]");
+    console.error("uso: node instalar.mjs [caminho] [--perfil leve|estrito|deus] [--times dev-mobile=ligado,...] [--sem-grafo] [--statusline] [--enxuto] [--dry-run]\n     node instalar.mjs --remover [caminho] [--dry-run]\n     node instalar.mjs doctor [caminho]\n     node instalar.mjs dependencias [caminho] [--escopo local|user] [--dry-run]");
     process.exitCode = 1;
   }
 }

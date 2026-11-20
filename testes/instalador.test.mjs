@@ -449,3 +449,33 @@ test("nada do kit aparece para o git do projeto: pasta, settings local, grafo e 
   const exc = fs.readFileSync(path.join(repo, ".git", "info", "exclude"), "utf8");
   for (const p of [".modo-deus/", ".claude/settings.local.json", ".claude/worktrees/", "graphify-out/", "node_modules"]) assert.ok(exc.includes(p), p);
 });
+
+// --enxuto: no projeto, sem conectores do claude.ai (Canva, Gmail…) e com a descrição de cada skill curta na lista.
+// No teste do portfólio a sessão começava com 96 mil tokens e cada subagente recebia 30 mil caracteres de lista de skills.
+test("--enxuto liga o contexto enxuto só no projeto, sem trocar o que o usuário definiu, e o --remover tira", () => {
+  const settings = () => lerJson(".claude/settings.local.json");
+  instalar(repo, { log: silencio });
+  assert.equal(settings().disableClaudeAiConnectors, undefined, "sem a flag, nada muda");
+
+  instalar(repo, { enxuto: true, log: silencio });
+  assert.equal(settings().disableClaudeAiConnectors, true);
+  assert.equal(settings().skillListingMaxDescChars, 250);
+  assert.deepEqual(lerJson(".modo-deus/instalados.json").enxuto, { disableClaudeAiConnectors: true, skillListingMaxDescChars: 250 });
+  instalar(repo, { log: silencio });
+  assert.equal(settings().disableClaudeAiConnectors, true, "reinstalar sem a flag mantém");
+  assert.equal(status(), "");
+
+  remover(repo, { log: silencio });
+  assert.ok(!fs.existsSync(path.join(repo, ".claude/settings.local.json")) || settings().disableClaudeAiConnectors === undefined);
+
+  // valor do usuário fica
+  escrever(".claude/settings.local.json", JSON.stringify({ skillListingMaxDescChars: 600 }));
+  const log = [];
+  instalar(repo, { enxuto: true, log: (l) => log.push(l) });
+  assert.equal(settings().skillListingMaxDescChars, 600);
+  assert.equal(settings().disableClaudeAiConnectors, true);
+  assert.ok(log.some((l) => /skillListingMaxDescChars do usuário/.test(l)));
+  remover(repo, { log: silencio });
+  assert.equal(settings().skillListingMaxDescChars, 600);
+  assert.equal(settings().disableClaudeAiConnectors, undefined);
+});

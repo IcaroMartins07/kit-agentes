@@ -56,6 +56,7 @@ O `agents-mode` faz, nessa ordem: registra o marketplace do kit e instala o plug
 | `--mods todos` | Instala também os temas e o Prompt Master; `--mods painel-agentes,temas` escolhe; `--mods nenhum` não instala mod |
 | `--times dev-mobile=ligado` | Liga ou desliga times sob demanda |
 | `--statusline` | Liga a status line do kit no projeto |
+| `--enxuto` | Contexto menor só neste projeto: sem os conectores do claude.ai e com a descrição de cada skill curta na lista que a sessão e os subagentes recebem (no `.claude/settings.local.json`; o `--remover` tira) |
 | `--sem-grafo` | Não monta o mapa do código |
 | `--escopo user` | Dependências para todos os projetos (padrão: só este) |
 | `--dry-run` | Só mostra o que faria |

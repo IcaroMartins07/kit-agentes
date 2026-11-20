@@ -5,14 +5,14 @@ import path from "node:path";
 import { montarPassos, ErroUso } from "../agents-mode.mjs";
 
 test("agents-mode: instala o plugin, as dependências, o kit no projeto e confere, cada passo com os seus argumentos", () => {
-  const { passos, caminho, dry } = montarPassos(["proj", "--perfil", "deus", "--escopo", "user", "--statusline", "--dry-run"]);
+  const { passos, caminho, dry } = montarPassos(["proj", "--perfil", "deus", "--escopo", "user", "--statusline", "--enxuto", "--dry-run"]);
   assert.equal(caminho, path.resolve("proj"));
   assert.equal(dry, true);
   assert.deepEqual(passos.map((p) => p.descricao), ["registrar o marketplace do kit", "instalar o plugin modo-deus", "instalar o mod painel-agentes", "dependências (plugins e graphify)", "kit no projeto", "conferência (doctor)"]);
   assert.deepEqual(passos[2].args, ["plugin", "install", "painel-agentes@kit-agentes", "--scope", "user"], "o painel de agentes vem por padrão");
   const [, , , deps, inst, doc] = passos.map((p) => p.args.slice(1));
   assert.deepEqual(deps, ["dependencias", caminho, "--escopo", "user", "--dry-run"]);
-  assert.deepEqual(inst, [caminho, "--perfil", "deus", "--statusline", "--dry-run"]);
+  assert.deepEqual(inst, [caminho, "--perfil", "deus", "--statusline", "--enxuto", "--dry-run"]);
   assert.deepEqual(doc, ["doctor", caminho]);
 });
 
