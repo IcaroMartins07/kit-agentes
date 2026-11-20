@@ -1,5 +1,5 @@
 {
-  "name": "palco",
+  "name": "mcp-orca",
   "private": true,
   "type": "module",
   "description": "Orquestrador de agentes do kit: um terminal por agente (claude, codex, gemini ou qualquer comando), controlado por CLI e MCP.",
@@ -7,7 +7,7 @@
     "node": ">=18"
   },
   "bin": {
-    "palco": "src/cli.mjs"
+    "mcp-orca": "src/cli.mjs"
   },
   "license": "MIT",
   "dependencies": {

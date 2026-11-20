@@ -132,7 +132,7 @@ Detalhes e mods de terceiros em [mods/](mods). O que um mod não alcança: a bar
 | [`mods/`](mods) | Mods de interface: `kit/` (do kit) e `terceiros/` |
 | [`docs/`](docs) | O fluxo explicado, os modelos de `CLAUDE.md` e `REGRAS.md` e as imagens |
 | [`testes/`](testes) | A suíte do kit (`npm test`) e as avaliações das skills |
-| [`palco/`](palco) | O orquestrador: um terminal por agente (claude, codex, gemini ou qualquer comando), pela CLI `palco`. Em construção |
+| [`mcp-orca/`](mcp-orca) | MCP Orca, o orquestrador: um terminal por agente (claude, codex, gemini ou qualquer comando), pela CLI `mcp-orca`. Em construção |
 | [`exemplos/`](exemplos) | Um projeto pequeno para testar o `/deus` de ponta a ponta |
 
 Na raiz: `kit.json` (perfis, agentes, territórios, skills), `instalar.mjs`, `agents-mode.mjs`, o manifesto do plugin em `.claude-plugin/` e o [CHANGELOG](CHANGELOG.md).

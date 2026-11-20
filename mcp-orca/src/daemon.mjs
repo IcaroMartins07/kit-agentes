@@ -1,4 +1,4 @@
-// Daemon do palco: guarda os terminais vivos entre um comando e outro (e depois que a sessão do Claude fecha).
+// Daemon do MCP Orca: guarda os terminais vivos entre um comando e outro (e depois que a sessão do Claude fecha).
 // Escuta só no endereço local e exige o token de daemon.json em cada pedido. A CLI sobe o daemon sozinha.
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -12,7 +12,7 @@ const token = crypto.randomBytes(24).toString("hex");
 const end = endereco();
 
 const srv = http.createServer(async (req, res) => {
-  if (req.headers["x-palco-token"] !== token) {
+  if (req.headers["x-mcp-orca-token"] !== token) {
     res.writeHead(401).end();
     return;
   }

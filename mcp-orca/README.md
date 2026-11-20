@@ -1,13 +1,13 @@
-# palco
+# MCP Orca
 
-O orquestrador do kit: cada agente roda no seu próprio terminal, como no Orca, sem precisar do Orca. Um daemon local guarda os terminais vivos (inclusive depois que a sessão do Claude fecha); a CLI `palco` abre, lista, lê e manda texto para eles.
+O orquestrador do kit: cada agente roda no seu próprio terminal, como no Orca, sem precisar do Orca. Um daemon local guarda os terminais vivos (inclusive depois que a sessão do Claude fecha); a CLI `mcp-orca` abre, lista, lê e manda texto para eles. O comando se chama `mcp-orca`, não `orca`, para não brigar com a CLI do Orca de verdade (que a aba Orca do painel usa).
 
 Em construção. Esta é a primeira parte: daemon e CLI. Depois vêm o servidor MCP (para o Claude comandar os terminais), a aba Terminais no painel de agentes (no lugar da aba Orca) e a instalação das IAs.
 
 ## Instalar
 
 ```bash
-npm install --prefix palco
+npm install --prefix mcp-orca
 ```
 
 O `node-pty` traz binário pronto para Windows e macOS; no Linux compila na instalação (python, make e g++).
@@ -15,14 +15,14 @@ O `node-pty` traz binário pronto para Windows e macOS; no Linux compila na inst
 ## Usar
 
 ```bash
-node palco/src/cli.mjs abrir --cli claude --cwd ../meu-projeto --nome front   # devolve o id, ex.: t1
-node palco/src/cli.mjs abrir --cli codex --cwd ../meu-projeto
-node palco/src/cli.mjs abrir --cmd aider --arg --yes                           # qualquer CLI
-node palco/src/cli.mjs listar
-node palco/src/cli.mjs ler t1 --linhas 30                                      # a tela como ela aparece
-node palco/src/cli.mjs enviar t1 "roda os testes"                              # texto + Enter
-node palco/src/cli.mjs fechar t1
-node palco/src/cli.mjs parar                                                   # encerra o daemon e os terminais
+node mcp-orca/src/cli.mjs abrir --cli claude --cwd ../meu-projeto --nome front   # devolve o id, ex.: t1
+node mcp-orca/src/cli.mjs abrir --cli codex --cwd ../meu-projeto
+node mcp-orca/src/cli.mjs abrir --cmd aider --arg --yes                           # qualquer CLI
+node mcp-orca/src/cli.mjs listar
+node mcp-orca/src/cli.mjs ler t1 --linhas 30                                      # a tela como ela aparece
+node mcp-orca/src/cli.mjs enviar t1 "roda os testes"                              # texto + Enter
+node mcp-orca/src/cli.mjs fechar t1
+node mcp-orca/src/cli.mjs parar                                                   # encerra o daemon e os terminais
 ```
 
 `--json` em qualquer comando devolve JSON, que é o que o painel e o MCP vão usar.
@@ -35,6 +35,6 @@ node palco/src/cli.mjs parar                                                   #
 | [`src/daemon.mjs`](src/daemon.mjs) | Guarda os terminais. Escuta só num endereço local (named pipe no Windows, socket Unix nos outros) e exige o token de `daemon.json` em cada pedido |
 | [`src/terminais.mjs`](src/terminais.mjs) | Um PTY (`node-pty`) por agente e uma tela virtual (`@xterm/headless`) que guarda o que ele mostra |
 | [`src/perfis.mjs`](src/perfis.mjs) | Como abrir cada IA. No Windows, as CLIs do npm (`.cmd`) passam pelo `cmd.exe` |
-| [`src/local.mjs`](src/local.mjs) | Pasta (`PALCO_HOME` ou `~/.claude/palco`), endereço e arquivo do token |
+| [`src/local.mjs`](src/local.mjs) | Pasta (`MCP_ORCA_HOME` ou `~/.claude/mcp-orca`), endereço e arquivo do token |
 
 O texto do `enviar` vai direto para o processo do terminal, nunca por um shell. O daemon não abre porta de rede: o acesso pelo celular vai passar pelo Remote Control do Claude, não por um servidor exposto.

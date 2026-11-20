@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-// palco: terminais de agentes (claude, codex, gemini ou qualquer comando) controlados pela linha de comando.
+// MCP Orca: terminais de agentes (claude, codex, gemini ou qualquer comando) controlados pela linha de comando.
 //
-//   palco abrir (--cli claude|codex|gemini | --cmd <comando> [--arg <a>]...) [--nome <n>] [--cwd <pasta>]
-//   palco listar
-//   palco ler <id> [--linhas <n>]
-//   palco enviar <id> <texto> [--sem-enter]
-//   palco fechar <id>
-//   palco parar                     encerra o daemon e todos os terminais
+//   mcp-orca abrir (--cli claude|codex|gemini | --cmd <comando> [--arg <a>]...) [--nome <n>] [--cwd <pasta>]
+//   mcp-orca listar
+//   mcp-orca ler <id> [--linhas <n>]
+//   mcp-orca enviar <id> <texto> [--sem-enter]
+//   mcp-orca fechar <id>
+//   mcp-orca parar                     encerra o daemon e todos os terminais
 //   --json em qualquer comando: saída em JSON (para o painel e o MCP)
 import fs from "node:fs";
 import http from "node:http";
@@ -38,7 +38,7 @@ function opcoes(argv) {
 
 function pedir(info, metodo, args) {
   return new Promise((ok, falha) => {
-    const req = http.request({ socketPath: info.endereco, path: "/", method: "POST", headers: { "x-palco-token": info.token } }, (res) => {
+    const req = http.request({ socketPath: info.endereco, path: "/", method: "POST", headers: { "x-mcp-orca-token": info.token } }, (res) => {
       let corpo = "";
       res.on("data", (c) => (corpo += c));
       res.on("end", () => {
@@ -78,7 +78,7 @@ async function main() {
   const [verbo, ...resto] = process.argv.slice(2);
   const o = opcoes(resto);
   const id = o.pos[0];
-  const precisaId = () => { if (!id) throw new Error(`uso: palco ${verbo} <id>`); return id; };
+  const precisaId = () => { if (!id) throw new Error(`uso: mcp-orca ${verbo} <id>`); return id; };
   let valor;
   if (verbo === "parar") {
     const info = await daemon({ subir: false });
@@ -89,10 +89,10 @@ async function main() {
     else if (verbo === "listar") valor = await pedir(info, "listar", []);
     else if (verbo === "ler") valor = await pedir(info, "ler", [precisaId(), o.linhas ? { linhas: Number(o.linhas) } : {}]);
     else if (verbo === "enviar") {
-      if (o.pos.length < 2) throw new Error("uso: palco enviar <id> <texto>");
+      if (o.pos.length < 2) throw new Error("uso: mcp-orca enviar <id> <texto>");
       valor = await pedir(info, "enviar", [precisaId(), o.pos.slice(1).join(" "), { enter: o.enter }]);
     } else if (verbo === "fechar") valor = await pedir(info, "fechar", [precisaId()]);
-    else throw new Error("uso: palco abrir|listar|ler|enviar|fechar|parar (veja o topo de palco/src/cli.mjs)");
+    else throw new Error("uso: mcp-orca abrir|listar|ler|enviar|fechar|parar (veja o topo de mcp-orca/src/cli.mjs)");
   }
   if (o.json) console.log(JSON.stringify(valor));
   else if (verbo === "listar") for (const t of valor.terminais) console.log(`${t.id}\t${t.estado}\t${t.nome}\t${t.cwd}`);
