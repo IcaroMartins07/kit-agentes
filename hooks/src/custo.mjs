@@ -10,20 +10,23 @@ export function usoDaTranscricao(arquivo) {
   try { txt = fs.readFileSync(arquivo, "utf8"); } catch { return null; }
   const tokens = { entrada: 0, cache_escrito: 0, cache_lido: 0, saida: 0 };
   const vistas = new Set();
-  let inicio = null, fim = null, espera = 0, chamadas = 0, contexto = 0, modelo = "";
+  let inicio = null, fim = null, espera = 0, chamadas = 0, contexto = 0, modelo = "", ocioso = false;
   for (const l of txt.split("\n")) {
     let e;
     try { e = JSON.parse(l); } catch { continue; } // linha vazia ou cortada no fim
     const t = Date.parse(e.timestamp);
     if (!Number.isNaN(t)) {
-      // Mensagem de texto do usuário depois do briefing = o Maestro retomando um agente que estava parado.
-      const retomada = e.type === "user" && fim !== null && !(Array.isArray(e.message?.content) && e.message.content.some((c) => c?.type === "tool_result"));
-      if (retomada) espera += Math.max(0, t - fim);
+      // Espera: o que vem depois do fim do turno (end_turn) até a próxima mensagem, e o intervalo antes de uma
+      // mensagem de texto (o Maestro retomando um subagente, a pessoa respondendo, aviso de subagente concluído).
+      const mensagem = e.type === "user" && !(Array.isArray(e.message?.content) && e.message.content.some((c) => c?.type === "tool_result"));
+      if (fim !== null && (ocioso || mensagem)) espera += Math.max(0, t - fim);
+      if (mensagem) ocioso = false;
       inicio ??= t;
       fim = Math.max(fim ?? t, t); // linhas gravadas fora de ordem não andam o relógio para trás
     }
     const m = e.message;
     if (e.type !== "assistant" || !m) continue;
+    if (m.stop_reason) ocioso = m.stop_reason === "end_turn";
     for (const c of m.content || []) if (c?.type === "tool_use") chamadas++;
     // O Claude Code grava uma mensagem em várias linhas com o mesmo id e o mesmo usage.
     if (!m.usage || vistas.has(m.id)) continue;

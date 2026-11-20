@@ -42,6 +42,24 @@ test("custo: separa tempo ativo da espera pelo Maestro e não conta duas vezes a
   assert.equal(u.modelo, "claude-sonnet-5-5");
 });
 
+test("custo: na sessão principal, o tempo parado depois do fim do turno é espera, não trabalho", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "modo-deus-custo-"));
+  const f = path.join(dir, "sessao.jsonl");
+  const linhas = [
+    { type: "user", timestamp: em(0), message: { role: "user", content: "faz a tarefa" } },
+    { type: "assistant", timestamp: em(60), message: { id: "a1", stop_reason: "end_turn", usage: usage(1, 1, 1, 1), content: [{ type: "text", text: "feito" }] } },
+    { type: "system", timestamp: em(61) },
+    { type: "queue-operation", timestamp: em(61 + 2 * 3600) }, // duas horas depois a pessoa volta
+    { type: "attachment", timestamp: em(62 + 2 * 3600), attachment: { type: "hook_success" } },
+    { type: "user", timestamp: em(62 + 2 * 3600), message: { role: "user", content: "e agora isto" } },
+    { type: "assistant", timestamp: em(122 + 2 * 3600), message: { id: "a2", stop_reason: "end_turn", usage: usage(1, 1, 1, 1), content: [{ type: "text", text: "ok" }] } },
+  ];
+  fs.writeFileSync(f, linhas.map((l) => JSON.stringify(l)).join("\n") + "\n");
+  const u = usoDaTranscricao(f);
+  assert.equal(u.minutos_ativos, 2);
+  assert.equal(u.minutos_espera, 120);
+});
+
 test("custo: a ferramenta resume a sessão por agente, com o tipo do meta e o total", () => {
   const sessao = transcricao(); // a "sessão principal"
   const sub = path.join(path.dirname(sessao), "agent-x", "subagents");
