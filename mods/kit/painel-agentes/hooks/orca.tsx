@@ -171,11 +171,11 @@ const SPRITES: Record<string, string[]> = {
   antigravity: ['....p....', '...ppp...', '..ppbpp..', 'yypbbbpyy', '.yppbppy.', '..ppppp..', '...ppp...', '....p....', '.........'],
   agente: ['....o....', '....d....', '.ddddddd.', '.dllllld.', '.dlblbld.', '.dllllld.', '.dlooold.', '.ddddddd.', '..d...d..'],
 }
-const spriteFor = (type: string) => {
+export const spriteFor = (type: string) => {
   const t = type.toLowerCase()
   return SPRITES[t.includes('claude') ? 'claude' : t.includes('codex') ? 'codex' : t.includes('antigravity') || t === 'agy' ? 'antigravity' : 'agente']!
 }
-const spriteSvg = (rows: string[], px: number) =>
+export const spriteSvg = (rows: string[], px: number) =>
   `<svg xmlns="http://www.w3.org/2000/svg" width="${9 * px}" height="${9 * px}" shape-rendering="crispEdges">${rows
     .flatMap((row, y) => [...row].map((ch, x) => (PAL[ch] ? `<rect x="${x * px}" y="${y * px}" width="${px}" height="${px}" fill="${PAL[ch]}"/>` : '')))
     .join('')}</svg>`

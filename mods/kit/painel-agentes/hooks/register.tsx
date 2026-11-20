@@ -5,6 +5,7 @@ import type { Agent, Change, Graph, Plan } from '../types'
 import { ROW_PX, nodeIcon, rowSvg, rowWidth } from './filetree-icons'
 import { carregar, renderGestor } from './gerenciador'
 import { ORCA_PANE, loadOrcaLogo, openOrcaPane, renderOrcaPane, startOrcaPolling, stopOrcaPolling, tintLogo } from './orca'
+import { renderTerminais, startTermsPolling, stopTermsPolling } from './terminais'
 import { G, PALETTE, SPRITES, mascoteDe, spriteSvg } from './sprites'
 
 const PANE = 'agentes'
@@ -472,7 +473,9 @@ export const register: Register = on => {
   })
 
   on('ui.close', { id: PANE }, async ($, e, next) => {
-    if ((await read($, tab)) === 'orca') stopOrcaPolling()
+    const aberta = await read($, tab)
+    if (aberta === 'orca') stopOrcaPolling()
+    if (aberta === 'terminais') stopTermsPolling()
     const r = await next(e)
     $.ui.invalidate('ui.render')
     return r
@@ -623,13 +626,16 @@ export const register: Register = on => {
       { id: 'alteracoes', label: 'Alterações', count: changes.length },
       { id: 'cerebro', label: 'Cérebro', count: 0 },
       { id: 'orca', label: 'Orca', count: 0 },
+      { id: 'terminais', label: 'Terminais', count: 0 },
       { id: 'skill', label: 'Skill', count: 0 },
     ] as const
     const goTo = async (id: (typeof tabs)[number]['id']) => {
       if (current === 'orca' && id !== 'orca') stopOrcaPolling()
+      if (current === 'terminais' && id !== 'terminais') stopTermsPolling()
       await update($, tab, () => id)
       if (id === 'arquivos') await loadWorktree($)
       if (id === 'orca') void startOrcaPolling($).catch(() => undefined)
+      if (id === 'terminais') await startTermsPolling($).catch(() => undefined)
     }
     const tabBar = (
       <Box flexDirection="column" marginBottom={1}>
@@ -986,11 +992,11 @@ export const register: Register = on => {
     )
 
     if (isWidget) return <Box flexDirection="column">{header}</Box>
-    const body = current === 'orca' ? await renderOrcaPane($, e) : current === 'skill' ? await renderGestor($, e) : current === 'cerebro' ? brainTab : current === 'alteracoes' ? changesTab : current === 'arquivos' ? filesTab : agentsTab
+    const body = current === 'orca' ? await renderOrcaPane($, e) : current === 'terminais' ? await renderTerminais($, e) : current === 'skill' ? await renderGestor($, e) : current === 'cerebro' ? brainTab : current === 'alteracoes' ? changesTab : current === 'arquivos' ? filesTab : agentsTab
     return (
       <Box flexDirection="column" paddingX={isNarrow ? 0 : 1} paddingY={1} overflow="hidden">
         {tabBar}
-        {current === 'orca' || current === 'skill' ? null : header}
+        {current === 'orca' || current === 'terminais' || current === 'skill' ? null : header}
         {body}
       </Box>
     )

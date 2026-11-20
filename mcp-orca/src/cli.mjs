@@ -4,7 +4,7 @@
 //   mcp-orca abrir (--cli claude|codex|gemini | --cmd <comando> [--arg <a>]...) [--nome <n>] [--cwd <pasta>]
 //   mcp-orca listar
 //   mcp-orca ler <id> [--linhas <n>]
-//   mcp-orca enviar <id> <texto> [--sem-enter]
+//   mcp-orca enviar <id> [--sem-enter] [--] <texto>     depois de -- tudo é texto, mesmo começando com --
 //   mcp-orca fechar <id>
 //   mcp-orca parar                     encerra o daemon e todos os terminais
 //   --json em qualquer comando: saída em JSON (para o painel e o MCP)
@@ -20,7 +20,8 @@ function opcoes(argv) {
       if (v === undefined) throw new Error(`${a} precisa de um valor`);
       return v;
     };
-    if (a === "--json") o.json = true;
+    if (a === "--") { o.pos.push(...argv.slice(i + 1)); break; } // daqui em diante é texto, mesmo que comece com --
+    else if (a === "--json") o.json = true;
     else if (a === "--sem-enter") o.enter = false;
     else if (a === "--arg") o.args.push(valor());
     else if (["--cli", "--cmd", "--nome", "--cwd", "--linhas"].includes(a)) o[a.slice(2)] = valor();

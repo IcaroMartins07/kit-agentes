@@ -36,7 +36,7 @@
     {
       "name": "painel-agentes",
       "description": "Mod: painel global com abas Agentes (pixel art), Worktree (árvore no estilo do File Tree), Alterações, Cérebro (graphify), Orca e Skill (liga e desliga skills, plugins e mods; /gerenciador).",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "source": "./mods/kit/painel-agentes",
       "category": "mod"
     }

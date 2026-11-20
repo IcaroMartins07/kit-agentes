@@ -52,6 +52,8 @@ export type OrcaAgent = { key: string; type: string; state: string; name: string
 export type OrcaTerminal = { handle: string; title: string; agentType: string; agentName: string; lastOutputAt: number }
 export type OrcaWorktree = { id: string; name: string; repo: string; path: string; branch: string; status: string; terminals: number; preview: string; agents: OrcaAgent[]; terms: OrcaTerminal[] }
 export type OrcaView = { at: number; worktrees: OrcaWorktree[] }
+/** Um terminal do MCP Orca (`mcp-orca listar --json`). */
+export type TermInfo = { id: string; nome: string; cli: string | null; cwd: string; estado: string; inicio: number }
 
 declare module 'claude-code' {
   interface PluginState {
@@ -61,7 +63,7 @@ declare module 'claude-code' {
       graph: Shaped<Graph | null>
       graphError: string
       now: number
-      tab: 'agentes' | 'arquivos' | 'alteracoes' | 'cerebro' | 'orca' | 'skill'
+      tab: 'agentes' | 'arquivos' | 'alteracoes' | 'cerebro' | 'orca' | 'terminais' | 'skill'
       /** O que a aba Skill mostra: skills, plugins e mods, cada um ligado ou não. */
       gestor: Shaped<Gestor>
       /** git status --porcelain do worktree: código (M, A, D, ??) e caminho. */
@@ -83,6 +85,11 @@ declare module 'claude-code' {
       orcaTerm: string
       orcaScreen: Shaped<{ handle: string; status: string; lines: string[] } | null>
       graphHtml: string
+      /** Aba Terminais: os terminais do MCP Orca, o escolhido e a tela dele. */
+      terms: Shaped<TermInfo[] | null>
+      termsError: string
+      termSel: string
+      termTela: Shaped<{ id: string; estado: string; linhas: string[] } | null>
     }
   }
 }

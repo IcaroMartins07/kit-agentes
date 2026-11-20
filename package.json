@@ -11,7 +11,8 @@
     "agents-mode": "node agents-mode.mjs"
   },
   "bin": {
-    "agents-mode": "agents-mode.mjs"
+    "agents-mode": "agents-mode.mjs",
+    "mcp-orca": "mcp-orca/src/cli.mjs"
   },
   "license": "MIT"
 }

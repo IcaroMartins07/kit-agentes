@@ -57,6 +57,11 @@ test("MCP Orca: abre um terminal, lista, manda texto, lê a tela e fecha", { ski
   });
   assert.ok(tela, "o processo recebeu a linha");
 
+  // Depois de "--", tudo é texto: uma mensagem que começa com -- não vira opção da CLI (é o que a aba do painel manda).
+  const r = spawnSync(process.execPath, [CLI, "enviar", id, "--json", "--", "--help agora"], { encoding: "utf8", env: { ...process.env, MCP_ORCA_HOME: home }, timeout: 20000 });
+  assert.equal(r.status, 0, r.stderr);
+  assert.ok(esperar(() => orca("ler", id).linhas.includes("eco: --help agora")), "texto depois de -- chega como texto");
+
   orca("fechar", id);
   const depois = esperar(() => orca("listar").terminais.find((x) => x.id === id)?.estado === "encerrado");
   assert.ok(depois, "fechado aparece como encerrado");

@@ -2,7 +2,7 @@
 
 O orquestrador do kit: cada agente roda no seu próprio terminal, como no Orca, sem precisar do Orca. Um daemon local guarda os terminais vivos (inclusive depois que a sessão do Claude fecha); a CLI `mcp-orca` abre, lista, lê e manda texto para eles. O comando se chama `mcp-orca`, não `orca`, para não brigar com a CLI do Orca de verdade (que a aba Orca do painel usa).
 
-Em construção. Prontos: daemon, CLI e servidor MCP. Faltam a aba Terminais no painel de agentes (no lugar da aba Orca) e a instalação das IAs.
+Prontos: daemon, CLI, servidor MCP e a aba **Terminais** do painel de agentes. Falta instalar as IAs pelo próprio MCP Orca (hoje: `npm install -g @anthropic-ai/claude-code`, `@openai/codex` ou `@google/gemini-cli`).
 
 ## Instalar
 
@@ -43,6 +43,10 @@ O plugin `modo-deus` registra o servidor `mcp-orca` (`.claude-plugin/plugin.json
 Exemplo: "abre o codex em C:\projeto como revisor e pede para ele revisar o último commit; me avisa quando ele responder".
 
 Pelo MCP só abre IA conhecida. Ferramenta MCP não passa pelos hooks do kit (cerca e território), então comando livre (`--cmd`) fica só na CLI, para você. Cada ferramenta pede a sua permissão como qualquer MCP, até você liberá-la.
+
+## No painel (aba Terminais)
+
+A aba **Terminais** do `painel-agentes` mostra os terminais como abas (com o mascote da IA), a tela do escolhido ao vivo e a caixa de mensagem embaixo; `+ claude`, `+ codex` e `+ gemini` abrem um agente na pasta da sessão, e `✕ fechar` encerra. Ela chama o comando `mcp-orca`, que o `npm link` do kit põe no PATH. A aba Orca continua lá para quem usa o Orca.
 
 ## Como funciona
 
