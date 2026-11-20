@@ -260,6 +260,21 @@ export function contratoDe(nome, kitDef = kitPadrao()) {
   return null;
 }
 
+// Modelo do bloco final de cada papel, mostrado quando o contrato recusa a resposta (a recusa custa uma
+// rodada inteira com o contexto do agente; com o modelo, ela não se repete).
+const MODELOS = {
+  entrega: { tarefa: "T1", status: "pronta", branch: "feat/x-T1", commits: ["abc1234"], arquivos: ["src/a.ts"], testes: [{ comando: "npm test", resultado: "passou", resumo: "12 passaram" }], observacoes: "" },
+  veredito: { veredito: "reprovado", itens: [{ tarefa: "T1", gravidade: "media", arquivo: "src/a.ts", linha: 10, motivo: "o quê e por quê", categoria: "correcao" }] },
+  auditoria: { afirmacoes: [{ texto: "a afirmação do relatório", status: "confirmada", evidencia: "src/a.ts:10" }] },
+  regressao: { resultado: "verde", suites: [{ comando: "npm test", resultado: "passou", resumo: "120 passaram" }], falhas: [] },
+};
+export function modeloDe(nome, kitDef = kitPadrao()) {
+  const def = kitDef.agentes[nome];
+  if (!def) return null;
+  const m = nome === "auditor-de-fatos" ? MODELOS.auditoria : def.time === "revisao" ? MODELOS.veredito : nome === "qa-regressao" ? MODELOS.regressao : MODELOS.entrega;
+  return "```json\n" + JSON.stringify(m, null, 2) + "\n```";
+}
+
 // ---------- CLI ----------
 if (process.argv[1] && path.resolve(process.argv[1]).toLowerCase() === fileURLToPath(import.meta.url).toLowerCase()) {
   const [cmd, arq] = process.argv.slice(2);

@@ -6,7 +6,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { KIT, lerEntrada, acharProjeto, lerConfig, registrar, monitorLigado, agenteDa } from "./comum.mjs";
-import { contratoDe } from "./plano.mjs";
+import { contratoDe, modeloDe } from "./plano.mjs";
 import { vigiarFalha, vigiarEntrega, marcarPendente, ocorrencia, textoAlertas, lerEstado, gravarEstado } from "./vigia.mjs";
 
 const entrada = lerEntrada();
@@ -68,7 +68,7 @@ if (ler) {
       registrar(proj.raiz, { sessao, evento: "SubagentStop", ...base, resultado: "bloqueado", regra: "contrato", motivo: erros.join("; ") });
       ocorrencia(proj.raiz, sessao, { tipo: "bloqueio", regra: "contrato", ...base, motivo: erros.join("; ").slice(0, 300) });
       const lista = erros.map((x) => `- ${x}`).join("\n");
-      process.stderr.write(`[modo-deus · contrato] Sua resposta final não segue o formato combinado:\n${lista}\nRefaça a resposta final terminando com o bloco json pedido.\n`);
+      process.stderr.write(`[modo-deus · contrato] Sua resposta final não segue o formato combinado:\n${lista}\nRefaça a resposta final terminando com o bloco json pedido, neste formato (troque os valores pelos seus):\n${modeloDe(agente)}\n`);
       process.exit(2);
     }
   }

@@ -6,7 +6,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { createRequire } from "node:module";
-import { kit, PASTA, ehCodigo, Bloqueio } from "./comum.mjs";
+import { kit, PASTA, ehCodigo, Bloqueio, semHeredoc, expansor, foraNoTemp } from "./comum.mjs";
 
 // ---------- skills invocadas, com leitura incremental da transcrição ----------
 // O cache fica em <raiz>/.modo-deus/cache/: os hooks do kit não escrevem fora da pasta do kit.
@@ -92,12 +92,15 @@ export function criarInvocou(entrada, raiz) {
 }
 
 // ---------- alvos de escrita pelo Bash ----------
-export function alvosDeEscrita(cmd) {
+export function alvosDeEscrita(comando) {
+  const expandir = expansor(comando);
+  // Texto entre aspas é dado (node -e "a > b"); só vale como alvo quando vem logo depois do ">".
+  const cmd = semHeredoc(comando).replace(/"(?:[^"\\]|\\.)*"|'[^']*'/g, (q, i, s) => (/>>?\s*$/.test(s.slice(0, i)) ? q.slice(1, -1) : "Q"));
   const alvos = [];
   for (const m of cmd.matchAll(/(^|[^0-9&>=-])>>?\s*([^\s;&|<>()]+)/g)) alvos.push(m[2]);
   for (const m of cmd.matchAll(/(^|[\s;&|])tee\s([^;&|<>()]*)/g)) alvos.push(...m[2].split(/\s+/).filter((x) => !x.startsWith("-")));
   if (/(^|[\s;&|])(sed|perl)\s+([^;&|]*\s)?-[A-Za-z]*i/.test(cmd)) alvos.push(...cmd.split(/[\s;&|]+/));
-  return alvos.map((a) => a.replace(/["']/g, "")).filter(Boolean);
+  return alvos.map((a) => expandir(a.replace(/["']/g, ""))).filter(Boolean);
 }
 
 const RE_PR = /gh\s+pr\s+create|glab\s+mr\s+create|git\s.*push.*merge_request\.create/;
@@ -130,7 +133,7 @@ export function checarTrava(entrada, ctx) {
   const i = entrada.tool_input || {};
   if (["Edit", "Write", "MultiEdit", "NotebookEdit"].includes(t)) {
     const arq = i.file_path || i.notebook_path || "";
-    if (ehCodigo(arq)) exigirConstrucao(`Edição de código (${arq})`);
+    if (ehCodigo(arq) && !foraNoTemp(ctx.raiz, ctx.trabalho, arq)) exigirConstrucao(`Edição de código (${arq})`);
     return;
   }
   if (t !== "Bash") return;
@@ -148,6 +151,6 @@ export function checarTrava(entrada, ctx) {
     const cod = arqs.find(ehCodigo);
     if (cod) exigirConstrucao(`Commit de código (${cod})`);
   }
-  const alvo = alvosDeEscrita(cmd).find(ehCodigo);
+  const alvo = alvosDeEscrita(cmd).find((a) => ehCodigo(a) && !foraNoTemp(ctx.raiz, ctx.trabalho, a));
   if (alvo) exigirConstrucao(`Escrita de código pelo Bash (${alvo})`);
 }

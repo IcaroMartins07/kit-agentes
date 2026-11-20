@@ -6,7 +6,7 @@ import os from "node:os";
 import path from "node:path";
 import { execFileSync, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { validarPlano, lerVeredito, lerAuditoria } from "../hooks/src/plano.mjs";
+import { validarPlano, lerVeredito, lerAuditoria, contratoDe, modeloDe } from "../hooks/src/plano.mjs";
 
 const KIT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const kit = JSON.parse(fs.readFileSync(path.join(KIT, "kit.json"), "utf8"));
@@ -129,6 +129,15 @@ test("hook: revisor não encerra sem veredito no formato; na segunda tentativa e
 test("hook: auditor também tem contrato; outros subagentes não", () => {
   assert.equal(hook("evento", { hook_event_name: "SubagentStop", agent_type: "modo-deus:auditor-de-fatos", last_assistant_message: "conferi" }).status, 2);
   assert.equal(hook("evento", { hook_event_name: "SubagentStop", agent_type: "Explore", last_assistant_message: "achei" }).status, 0);
+});
+
+test("o modelo mostrado na recusa passa no contrato de cada agente", () => {
+  const { agentes } = JSON.parse(ler("kit.json").replace(/^﻿/, ""));
+  for (const nome of Object.keys(agentes)) {
+    const ler_ = contratoDe(nome);
+    if (!ler_) continue;
+    assert.deepEqual(ler_(modeloDe(nome)).erros, [], nome);
+  }
 });
 
 // ---------- agentes ----------

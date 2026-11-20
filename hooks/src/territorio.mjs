@@ -9,7 +9,7 @@
 //    Arquivo de teste fora do território do Dev (cypress/, e2e/) é do QA.
 //    Arquivo que casa só com o território de outro time é bloqueado.
 //    Arquivo que não casa com nenhum território (package.json da raiz, configs) é permitido e registrado.
-import { Bloqueio, PASTA, casaGlob, lerRegras, territoriosDe, relativo } from "./comum.mjs";
+import { Bloqueio, PASTA, casaGlob, lerRegras, territoriosDe, relativo, caminhoShell, foraNoTemp } from "./comum.mjs";
 import { alvosDeEscrita } from "./trava.mjs";
 
 const ESCRITA = ["Edit", "Write", "MultiEdit", "NotebookEdit"];
@@ -17,7 +17,7 @@ const ESCRITA = ["Edit", "Write", "MultiEdit", "NotebookEdit"];
 function alvos(entrada) {
   const i = entrada.tool_input || {};
   if (ESCRITA.includes(entrada.tool_name)) return [i.file_path || i.notebook_path || ""].filter(Boolean);
-  if (entrada.tool_name === "Bash") return alvosDeEscrita(i.command || "").filter((a) => !/^\/dev\/(null|stdout|stderr)$/.test(a) && !/^&?\d$/.test(a));
+  if (entrada.tool_name === "Bash") return alvosDeEscrita(i.command || "").filter((a) => !/^\/dev\/(null|stdout|stderr)$/.test(a) && !/^&?\d$/.test(a)).map(caminhoShell);
   return [];
 }
 
@@ -36,7 +36,10 @@ export function checarTerritorio(entrada, ctx) {
     // vale relativo à própria worktree, que é uma cópia do projeto.
     const naWorktree = ctx.trabalho !== ctx.raiz ? relativo(ctx.trabalho, ctx.trabalho, a) : null;
     const alvo = naWorktree && !naWorktree.startsWith("..") ? naWorktree : relativo(ctx.raiz, ctx.trabalho, a);
-    if (alvo.startsWith("..") || /^[A-Za-z]:/.test(alvo)) throw new Bloqueio("V2", `${nome} tentou escrever fora do projeto (${a}).`);
+    if (alvo.startsWith("..") || /^[A-Za-z]:/.test(alvo)) {
+      if (foraNoTemp(ctx.raiz, ctx.trabalho, a)) continue; // scratchpad, logs e prints não mexem no projeto
+      throw new Bloqueio("V2", `${nome} tentou escrever fora do projeto (${a}).`);
+    }
 
     if (def.somente_leitura) throw new Bloqueio("V2", `${nome} é somente leitura e tentou escrever em ${alvo}. Devolva o item ao Maestro com arquivo, linha e motivo.`);
 

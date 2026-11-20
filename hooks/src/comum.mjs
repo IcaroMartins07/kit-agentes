@@ -1,6 +1,7 @@
-// Núcleo compartilhado pelos hooks do modo-deus. Só fs e path no topo: cada hook é um
+// Núcleo compartilhado pelos hooks do modo-deus. Só fs, os e path no topo: cada hook é um
 // processo novo e no Windows cada import custa tempo. child_process entra sob demanda.
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -78,6 +79,36 @@ export function ehCodigo(p) {
   const i = base.lastIndexOf(".");
   if (i <= 0) return false;
   return EXT_CODIGO.has(base.slice(i + 1).toLowerCase());
+}
+
+// ---------- comandos de shell ----------
+// Corpo de heredoc é dado (código, texto), não comando: fica só a linha de abertura (que pode ter "> arquivo").
+export const semHeredoc = (cmd) => cmd.replace(/<<-?\s*(['"]?)(\w+)\1([^\n]*)\n[\s\S]*?\n[ \t]*\2[ \t]*(?=\n|$)/g, (_, q, tag, resto) => " " + resto);
+
+// Variáveis atribuídas no próprio comando (S=/tmp/x && ... $S/a) e a expansão delas.
+export function expansor(cmd) {
+  const vars = {};
+  for (const m of cmd.matchAll(/(?:^|[\s;&|(])([A-Za-z_]\w*)=("[^"]*"|'[^']*'|[^\s;&|]+)/g)) vars[m[1]] = m[2].replace(/^["']|["']$/g, "");
+  return (s) => s.replace(/\$\{?([A-Za-z_]\w*)\}?/g, (x, n) => vars[n] ?? x);
+}
+
+// Caminho do Bash do Git no Windows (/c/Users/..., /tmp/...) para o do sistema.
+export function caminhoShell(p) {
+  if (process.platform !== "win32") return p;
+  if (/^\/tmp(\/|$)/.test(p)) return path.join(os.tmpdir(), p.slice(4));
+  const m = p.match(/^\/([a-zA-Z])(\/.*)?$/);
+  return m ? `${m[1].toUpperCase()}:${m[2] || "/"}` : p;
+}
+
+// Fora do projeto e dentro da pasta temporária do sistema (scratchpad, logs, prints): escrever ali não
+// mexe no projeto. O "fora do projeto" vem antes porque um projeto pode morar no temp (os testes do kit moram).
+export function foraNoTemp(raiz, trabalho, p) {
+  const abs = path.resolve(trabalho || raiz, caminhoShell(p));
+  const rel = path.relative(raiz, abs);
+  if (!rel.startsWith("..") && !path.isAbsolute(rel)) return false;
+  const a = barra(abs).toLowerCase();
+  const t = barra(os.tmpdir()).toLowerCase().replace(/\/$/, "");
+  return a.startsWith(t + "/") || a.startsWith("/tmp/") || /\/appdata\/local\/temp\//.test(a);
 }
 
 export function relativo(raiz, trabalho, p) {

@@ -197,6 +197,8 @@ espera(0, "V9 · Write normal em .md", () => pre("Write", { file_path: path.join
 
 // ================= V2 · território =================
 const arq = (r) => path.join(repo, r);
+// Caminho como o Bash do Git no Windows aceita (barras normais).
+const barraT = (p) => p.replace(/\\/g, "/");
 espera(0, "V2 · dev-front no próprio território", () => pre("Edit", { file_path: arq("src/components/Botao.tsx") }, { agente: "dev-front" }));
 espera(0, "V2 · dev-front em teste dentro do território (TDD)", () => pre("Edit", { file_path: arq("src/components/Botao.test.tsx") }, { agente: "dev-front" }));
 espera(2, "V2 · dev-front no território back", () => pre("Edit", { file_path: arq("src/server/api.ts") }, { agente: "dev-front" }));
@@ -319,3 +321,54 @@ espera(2, "V9 · git add -f de .modo-deus", () => pre("Bash", { command: "git ad
 espera(2, "V9 · git add --force das worktrees dos agentes", () => pre("Bash", { command: "git add --force .claude/worktrees" }));
 espera(2, "V9 · git add -f do grafo", () => pre("Bash", { command: "git add -f graphify-out/graph.json" }));
 espera(0, "V9 · git add normal do código passa", () => pre("Bash", { command: "git add src/app.ts" }));
+
+// ================= falsos positivos vistos no teste do portfólio (2026-11-18) =================
+// Pasta temporária do sistema (scratchpad, logs, prints) fora do projeto não é escrita no projeto.
+const scratch = (f) => path.join(tmp, "scratchpad", f);
+espera(0, "V2 · dev-front grava script no scratchpad pelo Write", () => pre("Write", { file_path: scratch("m.js"), content: "x" }, { agente: "dev-front" }));
+espera(0, "V2 · dev-front grava log no /tmp", () => pre("Bash", { command: "npx next dev -p 3102 > /tmp/dev3103.log 2>&1 &" }, { agente: "dev-front" }));
+espera(0, "V2 · revisor grava print no scratchpad", () => pre("Bash", { command: `node shot.cjs > "${barraT(scratch("print.png"))}"` }, { agente: "revisor" }));
+espera(0, "V2 · revisor grava pelo scratchpad numa variável", () => pre("Bash", { command: `S=${barraT(path.join(tmp, "scratchpad"))} && git log > $S/merge.log` }, { agente: "revisor" }));
+espera(0, "trava · sessão principal grava script de análise no scratchpad", () => pre("Bash", { command: `cat > ${barraT(scratch("uso.mjs"))} <<'EOF'\nconst a = 1\nEOF` }));
+espera(2, "V2 · revisor continua sem escrever no projeto pelo Bash", () => pre("Bash", { command: "echo x > README.md" }, { agente: "revisor" }));
+espera(2, "V2 · dev-front continua barrado fora do projeto, fora do temp", () => pre("Bash", { command: `echo x > ${barraT(path.join(os.homedir(), "x.ts"))}` }, { agente: "dev-front" }));
+// ">" dentro de aspas e de heredoc é código, não redirecionamento.
+espera(0, "V2 · revisor com > dentro de node -e", () => pre("Bash", { command: `node -e "if (scrollWidth > innerWidth+1) console.log(1)"` }, { agente: "revisor" }));
+espera(0, "V2 · revisor com > dentro de heredoc", () => pre("Bash", { command: "node - <<'EOF'\nconst ok = [...document.querySelectorAll('div')].filter(d => d.offsetWidth > 200)\nEOF" }, { agente: "revisor" }));
+espera(2, "V2 · alvo entre aspas depois do > ainda conta", () => pre("Bash", { command: `echo x > "src/server/a.ts"` }, { agente: "dev-front" }));
+
+// V9: padrão de busca e mensagem de commit não são leitura de segredo.
+espera(0, "V9 · grep com env no padrão, em pipe", () => pre("Bash", { command: `cat .gitignore | grep -nE "env|output|playwright"` }));
+espera(0, "V9 · grep com regex de .env no padrão", () => pre("Bash", { command: `grep -rn '^\\.env' .gitignore` }));
+espera(0, "V9 · grep com .env.local como padrão", () => pre("Bash", { command: `grep -n .env.local .gitignore` }));
+espera(0, "V9 · mensagem de commit que cita .env.example", () => pre("Bash", { command: `git commit -q -m "T1: remove Supabase; .env.example, admin e rotas"` }, { skills: ["incremental-implementation"] }));
+espera(0, "V9 · grep em heredoc com .env no texto", () => pre("Bash", { command: "node - <<'EOF'\nconst re = /^\\.env/\nEOF" }));
+espera(2, "V9 · cat de .env continua barrado", () => pre("Bash", { command: "cat .env" }));
+espera(2, "V9 · grep dentro do .env continua barrado", () => pre("Bash", { command: "grep KEY .env.local" }));
+espera(2, "V9 · grep -e no .env continua barrado", () => pre("Bash", { command: "grep -e KEY .env" }));
+
+test("V9 · merge vale pela branch de onde ele roda (cd, git -C, switch)", () => {
+  const integ = path.join(tmp, "integ");
+  git(repo, "worktree", "add", "-q", "-b", "integ", integ);
+  git(repo, "checkout", "-q", "main");
+  try {
+    assert.equal(pre("Bash", { command: `cd ${barraT(integ)} && git merge --no-ff feat` }).status, 0, "cd para a worktree de integração");
+    assert.equal(pre("Bash", { command: `I=${barraT(integ)}; cd "$I" && git merge feat` }).status, 0, "cd por variável");
+    assert.equal(pre("Bash", { command: `git -C ${barraT(integ)} merge feat` }).status, 0, "git -C");
+    assert.equal(pre("Bash", { command: "git switch -C feat-b feat && git merge --no-ff feat" }).status, 0, "branch nova antes do merge");
+    assert.equal(pre("Bash", { command: "git merge feat" }).status, 2, "na principal continua barrado");
+    assert.equal(pre("Bash", { command: `cd ${barraT(integ)} && git checkout main && git merge feat` }).status, 2, "voltou para a principal");
+    assert.equal(pre("Bash", { command: `cd ${barraT(repo)} && git merge feat` }).status, 2, "cd para a principal");
+  } finally {
+    git(repo, "checkout", "-q", "feat");
+    git(repo, "worktree", "remove", "--force", integ);
+  }
+});
+
+test("contrato: a recusa traz o modelo do bloco json do papel", () => {
+  const r = rodar("evento", { hook_event_name: "SubagentStop", agent_type: "modo-deus:dev-front", agent_id: "c1", last_assistant_message: "feito" });
+  assert.equal(r.status, 2);
+  assert.match(r.stderr, /```json\s*\{[\s\S]*"tarefa"[\s\S]*"testes"[\s\S]*```/);
+  const v = rodar("evento", { hook_event_name: "SubagentStop", agent_type: "modo-deus:revisor", agent_id: "c2", last_assistant_message: "ok" });
+  assert.match(v.stderr, /"veredito"/);
+});

@@ -3,7 +3,7 @@
 // (branch atual, caminho fora do repositório, segredo no conteúdo, variantes de .env).
 import fs from "node:fs";
 import path from "node:path";
-import { Bloqueio, barra } from "./comum.mjs";
+import { Bloqueio, barra, semHeredoc, expansor, caminhoShell } from "./comum.mjs";
 
 const PRINCIPAIS = ["main", "master"];
 // O que é do kit no projeto: fica fora do git (exclude) e não pode ser versionado nem à força.
@@ -45,8 +45,35 @@ function branchAtual(dir) {
   }
 }
 
-// Divide em comandos simples (;, &&, ||, |) para olhar cada um.
-const partes = (cmd) => cmd.split(/;|&&|\|\||\|/).map((s) => s.trim()).filter(Boolean);
+// Divide em comandos simples (;, &&, ||, |, quebra de linha) para olhar cada um, sem cortar dentro de aspas.
+function partes(cmd) {
+  const out = [];
+  let cur = "", q = null;
+  for (let i = 0; i < cmd.length; i++) {
+    const c = cmd[i];
+    if (q) {
+      if (c === "\\" && q === '"') { cur += c + (cmd[++i] ?? ""); continue; }
+      if (c === q) q = null;
+      cur += c;
+      continue;
+    }
+    if (c === '"' || c === "'") q = c;
+    else if (cmd.startsWith("&&", i) || cmd.startsWith("||", i)) { out.push(cur); cur = ""; i++; continue; }
+    else if (c === ";" || c === "|" || c === "\n") { out.push(cur); cur = ""; continue; }
+    cur += c;
+  }
+  out.push(cur);
+  return out.map((s) => s.trim()).filter(Boolean);
+}
+// Busca (grep, rg): o primeiro argumento, ou o que vem depois de -e, é padrão, não arquivo.
+const BUSCA = /^(e|f)?grep$|^rg$|^ag$/;
+function semPadraoDeBusca(w) {
+  const args = w.slice(1);
+  if (!BUSCA.test(w[0])) return args;
+  const e = args.findIndex((x) => /^-[a-zA-Z]*e$|^--regexp$/.test(x));
+  const i = e >= 0 ? e + 1 : args.findIndex((x) => !x.startsWith("-"));
+  return args.filter((_, j) => j !== i);
+}
 const palavras = (s) => s.match(/"[^"]*"|'[^']*'|\S+/g)?.map((w) => w.replace(/^["']|["']$/g, "")) || [];
 
 const DEPLOY = [
@@ -84,12 +111,21 @@ export function checarCerca(entrada, ctx) {
   const cmd = i.command || "";
   const s = segredoNoTexto(cmd);
   if (s) bloq(`Comando contém ${s}`);
-  const branch = branchAtual(ctx.trabalho);
-  const naPrincipal = branch && PRINCIPAIS.includes(branch);
+  // A branch é a de onde cada parte roda: segue o cd, o git -C e a troca de branch feita antes no mesmo comando.
+  const expandir = expansor(cmd);
+  let dir = ctx.trabalho;
+  let ramo; // undefined: lê do disco
 
-  for (const p of partes(cmd)) {
-    const w = palavras(p);
-    const sub = w[0] === "git" ? w.slice(1).find((x) => !x.startsWith("-") && !/^-C$/.test(x)) : null;
+  for (const p of partes(semHeredoc(cmd))) {
+    const w = palavras(p).map(expandir);
+    if (w[0] === "cd") { dir = path.resolve(dir, caminhoShell(w[1] || "~")); ramo = undefined; continue; }
+    const opcoes = w[0] === "git" ? w.slice(1) : [];
+    let iSub = 0;
+    while (iSub < opcoes.length && opcoes[iSub].startsWith("-")) iSub += /^-[Cc]$/.test(opcoes[iSub]) ? 2 : 1;
+    const sub = w[0] === "git" ? opcoes[iSub] : null;
+    const iC = opcoes.slice(0, iSub).indexOf("-C");
+    const branch = iC >= 0 ? branchAtual(path.resolve(dir, caminhoShell(opcoes[iC + 1]))) : ramo !== undefined ? ramo : branchAtual(dir);
+    const naPrincipal = branch && PRINCIPAIS.includes(branch);
 
     if (w[0] === "git" && sub === "push") {
       const resto = w.slice(w.indexOf("push") + 1);
@@ -120,10 +156,21 @@ export function checarCerca(entrada, ctx) {
     // leitura ou cópia de segredo pelo shell; criar .env a partir do exemplo é permitido
     if (/^cp\s+\S*\.env\.(example|sample|template|dist)\s+\S*\.env\s*$/.test(p)) continue;
     // git rm --cached .env (tirar do versionamento) é o caminho certo; git add .env não.
-    const seg = w.slice(1).find((x) => !x.startsWith("-") && ehSegredo(x));
+    // Texto com espaço ou sinais de regex (mensagem de commit, padrão) não é caminho de arquivo.
+    const seg = semPadraoDeBusca(w).find((x) => !x.startsWith("-") && !/[\s^|()[\]{}]/.test(x) && ehSegredo(x));
     const liberado = ["echo", "printf"].includes(w[0]) || (w[0] === "git" && sub === "rm");
     if (seg && !liberado) bloq(`acesso a arquivo de segredo pelo shell (${seg})`);
 
     for (const [re, nome] of DEPLOY) if (re.test(p)) bloq(nome);
+
+    // Troca de branch vale para as partes seguintes. checkout sem -b só conta se for para a principal:
+    // "git checkout arquivo" não pode passar por troca de branch.
+    if (iC < 0 && (sub === "switch" || sub === "checkout")) {
+      const resto = opcoes.slice(iSub + 1);
+      const iN = resto.findIndex((x) => /^-[cCbB]$/.test(x));
+      const nome = iN >= 0 ? resto[iN + 1] : resto.find((x) => !x.startsWith("-"));
+      if (resto.includes("--detach")) ramo = null;
+      else if (iN >= 0 || sub === "switch" || PRINCIPAIS.includes(nome)) ramo = nome;
+    }
   }
 }
