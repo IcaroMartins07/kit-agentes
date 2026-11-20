@@ -2,6 +2,12 @@
 
 ## [não lançado]
 
+### Medição de custo e bloqueios falsos (2026-11-20)
+Linha de base, medida no teste do portfólio (kit 0.6.0) com a ferramenta nova: 85 M tokens de cache lido, 3 M escritos, 0,7 M de saída, 1004 chamadas; a sessão principal sozinha leu 28 M, com contexto de até 378 K; o dev-front "de 124 min" trabalhou 19 e esperou o Maestro 105.
+- `hooks/ferramentas/custo.mjs`: custo por agente lido das transcrições. Cada `SubagentStop` grava `uso` (minutos ativos e de espera, chamadas, tokens, maior contexto) na telemetria.
+- Bloqueios falsos (cerca de 30 dos 67 do portfólio): escrita na pasta temporária fora do projeto não conta para V2 nem para a trava; `>` dentro de aspas ou de heredoc não é redirecionamento; `$VAR` do próprio comando é expandida; V9 não lê padrão de grep nem mensagem de commit como arquivo de segredo, e avalia o merge pela branch de onde roda (`cd`, `git -C`, `switch`).
+- A recusa do contrato traz o modelo do bloco json do papel.
+
 ### 0.7.0 · mais rápido e mais barato, sem perder qualidade (2026-11-19)
 Vem do teste real no portfólio: 6 tarefas, 5 rodadas de revisão de 11 a 15 min com navegador, 13 instalações de dependências, 11 servidores e 33 bloqueios de território.
 - Revisor sem navegador: lê o diff e os prints que o `qa-regressao` tira uma vez, em três larguras (`hooks/ferramentas/prints.mjs`, sem dependências).

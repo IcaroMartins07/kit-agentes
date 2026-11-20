@@ -138,7 +138,7 @@ function alvosEscrita(entrada) {
 // voltam ao modelo como <tool_use_error>. Lemos só os bytes novos da transcrição desde a última chamada.
 const RE_ALUC = /<tool_use_error>[\s\S]*?(does not exist|String to replace not found|not found in file|No such file|ENOENT|não existe|não encontrad)/i;
 
-function transcricaoDoAgente(entrada) {
+export function transcricaoDoAgente(entrada) {
   if (!entrada.agent_id) return entrada.transcript_path || null;
   if (entrada.agent_transcript_path) return entrada.agent_transcript_path;
   if (entrada.transcript_path && entrada.session_id)

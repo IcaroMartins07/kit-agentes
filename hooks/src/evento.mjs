@@ -7,7 +7,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { KIT, lerEntrada, acharProjeto, lerConfig, registrar, monitorLigado, agenteDa } from "./comum.mjs";
 import { contratoDe, modeloDe } from "./plano.mjs";
-import { vigiarFalha, vigiarEntrega, marcarPendente, ocorrencia, textoAlertas, lerEstado, gravarEstado } from "./vigia.mjs";
+import { vigiarFalha, vigiarEntrega, marcarPendente, ocorrencia, textoAlertas, lerEstado, gravarEstado, transcricaoDoAgente } from "./vigia.mjs";
+import { usoDaTranscricao } from "./custo.mjs";
 
 const entrada = lerEntrada();
 const proj = acharProjeto(entrada);
@@ -105,6 +106,8 @@ registrar(proj.raiz, {
   ...(contrato ? { resultado: "contrato_falhou", motivo: contrato.join("; ") } : {}),
   ...(vig.alertas.length ? { regra: vig.alertas[0].regra, alerta: true, motivo: vig.alertas.map((a) => a.motivo).join(" | ") } : {}),
   ultima_mensagem: entrada.last_assistant_message ? String(entrada.last_assistant_message).slice(0, 300) : undefined,
+  // Acumulado até aqui: um agente retomado pelo Maestro para de novo e grava o total atualizado.
+  ...(evento === "SubagentStop" ? { uso: usoDaTranscricao(transcricaoDoAgente(entrada)) || undefined } : {}),
 });
 // SubagentStop/Stop não têm additionalContext: o alerta vai como systemMessage (visto pelo usuário)
 // e fica na telemetria, onde o Maestro e o /deus-status o leem.
