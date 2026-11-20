@@ -46,6 +46,10 @@ jobs:
           command -v graphify || echo "graphify ausente (esperado)"
           command -v claude || echo "claude ausente (esperado)"
 
+      # node-pty traz binário pronto para Windows; no Linux compila (o runner tem python, make e g++).
+      - name: Dependências do palco
+        run: npm ci --prefix palco
+
       # testes/rodar.mjs monta a lista de arquivos: funciona do node 18 ao 22.
       - name: Testes
         run: npm test

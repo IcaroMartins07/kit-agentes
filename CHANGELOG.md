@@ -2,6 +2,9 @@
 
 ## [não lançado]
 
+### palco · orquestrador de agentes, parte 1 (2026-11-20)
+- `palco/`: daemon local e CLI `palco` (abrir, listar, ler, enviar, fechar, parar, com `--json`). Um terminal de verdade (node-pty, ConPTY no Windows) por agente, com claude, codex, gemini ou qualquer comando, e uma tela virtual (@xterm/headless) que devolve a tela como ela aparece. O daemon escuta só em named pipe ou socket Unix, com token; o texto enviado vai direto ao processo, sem shell. Testado com um agente de eco e com o `claude` real. Faltam o MCP, a aba Terminais no painel e a instalação das IAs.
+
 ### Medição de custo e bloqueios falsos (2026-11-20)
 Linha de base, medida no teste do portfólio (kit 0.6.0) com a ferramenta nova: 85 M tokens de cache lido, 3 M escritos, 0,7 M de saída, 1004 chamadas; a sessão principal sozinha leu 28 M, com contexto de até 378 K; o dev-front "de 124 min" trabalhou 19 e esperou o Maestro 105.
 - `hooks/ferramentas/custo.mjs`: custo por agente lido das transcrições. Cada `SubagentStop` grava `uso` (minutos ativos e de espera, chamadas, tokens, maior contexto) na telemetria.
