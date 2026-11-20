@@ -3,7 +3,8 @@
 ## [não lançado]
 
 ### MCP Orca · orquestrador de agentes, parte 1 (2026-11-20)
-- `mcp-orca/`: daemon local e CLI `mcp-orca` (abrir, listar, ler, enviar, fechar, parar, com `--json`). Um terminal de verdade (node-pty, ConPTY no Windows) por agente, com claude, codex, gemini ou qualquer comando, e uma tela virtual (@xterm/headless) que devolve a tela como ela aparece. O daemon escuta só em named pipe ou socket Unix, com token; o texto enviado vai direto ao processo, sem shell. Testado com um agente de eco e com o `claude` real. Faltam o MCP, a aba Terminais no painel e a instalação das IAs.
+- `mcp-orca/`: daemon local e CLI `mcp-orca` (abrir, listar, ler, enviar, fechar, parar, com `--json`). Um terminal de verdade (node-pty, ConPTY no Windows) por agente, com claude, codex, gemini ou qualquer comando, e uma tela virtual (@xterm/headless) que devolve a tela como ela aparece. O daemon escuta só em named pipe ou socket Unix, com token; o texto enviado vai direto ao processo, sem shell. Testado com um agente de eco e com o `claude` real. Faltam a aba Terminais no painel e a instalação das IAs.
+- Servidor MCP `mcp-orca` no plugin: `terminais_listar`, `terminal_abrir`, `terminal_ler`, `terminal_enviar` e `terminal_fechar`, falando com o mesmo daemon. Pelo MCP só abre claude, codex ou gemini: ferramenta MCP não passa pelos hooks do kit, então comando livre fica na CLI.
 
 ### Medição de custo e bloqueios falsos (2026-11-20)
 Linha de base, medida no teste do portfólio (kit 0.6.0) com a ferramenta nova: 85 M tokens de cache lido, 3 M escritos, 0,7 M de saída, 1004 chamadas; a sessão principal sozinha leu 28 M, com contexto de até 378 K; o dev-front "de 124 min" trabalhou 19 e esperou o Maestro 105.

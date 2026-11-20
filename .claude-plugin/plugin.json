@@ -57,5 +57,13 @@
     "./agents/review/revisor.md",
     "./agents/review/revisor-seguranca.md",
     "./agents/review/auditor-de-fatos.md"
-  ]
+  ],
+  "mcpServers": {
+    "mcp-orca": {
+      "command": "node",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/mcp-orca/src/mcp.mjs"
+      ]
+    }
+  }
 }

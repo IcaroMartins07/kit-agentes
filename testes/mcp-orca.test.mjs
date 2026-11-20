@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const KIT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -74,4 +74,61 @@ test("MCP Orca: perfis das IAs conhecidas e comando livre", { skip: !temDeps && 
   for (const cli of ["claude", "codex", "gemini"]) assert.equal(comandoDe({ cli }).nome, cli);
   assert.deepEqual(comandoDe({ cmd: "aider", args: ["--yes"] }).argv.slice(-2), ["aider", "--yes"]);
   assert.throws(() => comandoDe({ cli: "inexistente" }), /CLI desconhecida: inexistente/);
+});
+
+// ---------- servidor MCP (stdio, JSON-RPC por linha) ----------
+function mcp() {
+  const p = spawn(process.execPath, [path.join(KIT, "mcp-orca", "src", "mcp.mjs")], { env: { ...process.env, MCP_ORCA_HOME: home }, stdio: ["pipe", "pipe", "pipe"] });
+  let buf = "", n = 0;
+  const pendentes = new Map();
+  p.stdout.on("data", (d) => {
+    buf += d;
+    let i;
+    while ((i = buf.indexOf("\n")) >= 0) {
+      const l = buf.slice(0, i); buf = buf.slice(i + 1);
+      if (!l.trim()) continue;
+      const m = JSON.parse(l);
+      pendentes.get(m.id)?.(m);
+    }
+  });
+  const pedir = (method, params = {}) => new Promise((ok) => { const id = ++n; pendentes.set(id, ok); p.stdin.write(JSON.stringify({ jsonrpc: "2.0", id, method, params }) + "\n"); });
+  const ferramenta = async (name, args = {}) => (await pedir("tools/call", { name, arguments: args })).result;
+  return { pedir, ferramenta, notificar: (method) => p.stdin.write(JSON.stringify({ jsonrpc: "2.0", method }) + "\n"), fechar: () => p.kill() };
+}
+
+test("MCP Orca: servidor MCP lista as ferramentas e comanda os terminais pelo daemon", { skip: !temDeps && "rode npm install em mcp-orca/" }, async () => {
+  const s = mcp();
+  try {
+    const ini = await s.pedir("initialize", { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "teste", version: "1" } });
+    assert.equal(ini.result.serverInfo.name, "mcp-orca");
+    assert.equal(ini.result.protocolVersion, "2025-06-18");
+    assert.ok(ini.result.capabilities.tools);
+    s.notificar("notifications/initialized");
+    const nomes = (await s.pedir("tools/list")).result.tools.map((t) => t.name).sort();
+    assert.deepEqual(nomes, ["terminais_listar", "terminal_abrir", "terminal_enviar", "terminal_fechar", "terminal_ler"]);
+
+    // o agente de eco é aberto pela CLI (comando livre é do usuário); o MCP conversa com ele
+    const { id } = orca("abrir", "--cmd", process.execPath, "--arg", eco, "--nome", "eco-mcp", "--cwd", home);
+    const lista = JSON.parse((await s.ferramenta("terminais_listar")).content[0].text);
+    assert.ok(lista.terminais.some((t) => t.id === id && t.nome === "eco-mcp"));
+    assert.equal((await s.ferramenta("terminal_enviar", { id, texto: "oi do mcp" })).isError, undefined);
+    let tela = "";
+    for (let i = 0; i < 40 && !tela.includes("eco: oi do mcp"); i++) {
+      await new Promise((r) => setTimeout(r, 150));
+      tela = (await s.ferramenta("terminal_ler", { id })).content[0].text;
+    }
+    assert.match(tela, /eco: oi do mcp/);
+    assert.equal((await s.ferramenta("terminal_fechar", { id })).isError, undefined);
+
+    // pelo MCP só abre IA conhecida: comando livre não passa
+    const livre = await s.ferramenta("terminal_abrir", { cmd: "rm", args: ["-rf", "/"] });
+    assert.equal(livre.isError, true);
+    assert.match(livre.content[0].text, /cli/);
+    const erro = await s.ferramenta("terminal_ler", { id: "nao-existe" });
+    assert.equal(erro.isError, true);
+    assert.match(erro.content[0].text, /terminal nao-existe não existe/);
+    assert.equal((await s.pedir("tools/call", { name: "inventada", arguments: {} })).error.code, -32602);
+  } finally {
+    s.fechar();
+  }
 });
