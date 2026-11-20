@@ -30,7 +30,7 @@ const dirTele = (raiz) => path.join(raiz, PASTA, "telemetria");
 export const arqEstado = (raiz, sessao, id) => path.join(dirTele(raiz), `estado-${seguro(sessao || "sem-sessao")}-${seguro(id || "principal")}.json`);
 export const arqOcorrencias = (raiz, sessao) => path.join(dirTele(raiz), `ocorrencias-${seguro(sessao || "sem-sessao")}.jsonl`);
 
-const novoEstado = () => ({ inicio: Date.now(), chamadas: 0, ultimos: [], falhas: [], ids: [], erros: {}, v7: 0, pos: {}, escreveuTeste: false, v10: false, v8: false, proximo: null });
+const novoEstado = () => ({ inicio: Date.now(), chamadas: 0, ultimos: [], falhas: [], ids: [], erros: {}, v7: 0, pos: {}, escreveuTeste: false, v10: false, v8: false, proximo: null, parou: null, espera: 0 });
 
 export function lerEstado(raiz, sessao, id) {
   try {
@@ -233,7 +233,9 @@ export function vigiarPre(entrada, ctx) {
     if (ag.def && ag.id) {
       const classe = tarefa?.classe === "simples" ? "simples" : "complexa";
       const teto = cfg.tetos?.[classe] || { chamadas: 200, minutos: 90 };
-      const min = (Date.now() - est.inicio) / 60000;
+      // Tempo ativo: sem o intervalo em que o agente ficou parado esperando o Maestro retomá-lo.
+      if (est.parou) { est.espera = (est.espera || 0) + (Date.now() - est.parou); est.parou = null; }
+      const min = (Date.now() - est.inicio - (est.espera || 0)) / 60000;
       if (est.chamadas > teto.chamadas || min > teto.minutos) {
         const motivo = `${ag.nome} passou do teto da classe ${classe}${tarefa ? ` (${tarefa.id})` : ""}: ${est.chamadas} chamadas / ${Math.round(min)} min (teto ${teto.chamadas} / ${teto.minutos} min). Pare, entregue como "bloqueada" com o que tem e o que falta, e devolva ao Maestro para replanejar.`;
         if (!est.v8 && tarefa?.classe === "simples") {

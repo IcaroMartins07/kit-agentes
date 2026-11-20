@@ -41,6 +41,12 @@ if (evento === "PostToolUseFailure") {
 
 // (As regras gerais do kit chegam ao subagente pelo regras.mjs, em partes.)
 
+// ---------- SubagentStop: o agente parou; se o Maestro o retomar, o intervalo é espera, não conta no V8 ----------
+if (evento === "SubagentStop" && entrada.agent_id) {
+  const est = lerEstado(proj.raiz, sessao, entrada.agent_id);
+  if (est) gravarEstado(proj.raiz, sessao, entrada.agent_id, { ...est, parou: Date.now() });
+}
+
 // ---------- SubagentStart: relógio do V8 ----------
 if (evento === "SubagentStart" && monitorLigado(config) && entrada.agent_id && !lerEstado(proj.raiz, sessao, entrada.agent_id)) {
   gravarEstado(proj.raiz, sessao, entrada.agent_id, { inicio: Date.now(), chamadas: 0 });

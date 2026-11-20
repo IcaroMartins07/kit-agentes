@@ -8,7 +8,7 @@ import os from "node:os";
 import path from "node:path";
 import { execFileSync, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { gravarEstado } from "../hooks/src/vigia.mjs";
+import { gravarEstado, lerEstado } from "../hooks/src/vigia.mjs";
 import { gerarPainel } from "../hooks/ferramentas/painel-status.mjs";
 import { instalar, remover } from "../instalar.mjs";
 
@@ -290,6 +290,22 @@ test("V8 · subagente acima do teto: estrito alerta uma vez, deus bloqueia; dent
     r = pre(s, "Bash", { command: "npm run test" }, { agente: "dev-back", id: "v8d" });
     assert.equal(r.status, 2);
     assert.match(r.stderr, /V8.*classe complexa/);
+  } finally {
+    perfil("estrito");
+  }
+});
+
+test("V8 · tempo parado esperando o Maestro não conta no teto (o dev-front de 124 min do portfólio trabalhou 19)", () => {
+  const s = sessao();
+  try {
+    perfil("deus");
+    gravarEstado(repo, s, "v8e", { inicio: Date.now() - 200 * 60000, chamadas: 10 });
+    hook("evento", { session_id: s, hook_event_name: "SubagentStop", agent_type: "modo-deus:dev-back", agent_id: "v8e", last_assistant_message: "x" });
+    const est = lerEstado(repo, s, "v8e");
+    assert.equal(typeof est.parou, "number", "o SubagentStop marca quando o agente parou");
+    gravarEstado(repo, s, "v8e", { ...est, parou: Date.now() - 195 * 60000 }); // ficou 195 min esperando o Maestro
+    assert.equal(pre(s, "Bash", { command: "npm run test" }, { agente: "dev-back", id: "v8e" }).status, 0, "ativo: 5 min");
+    assert.equal(lerEstado(repo, s, "v8e").parou, null, "a retomada soma a espera e limpa a marca");
   } finally {
     perfil("estrito");
   }
