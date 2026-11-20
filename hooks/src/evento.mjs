@@ -57,11 +57,28 @@ if (evento === "SubagentStart" && monitorLigado(config) && entrada.agent_id && !
 // Agentes do kit só encerram entregando o bloco no formato do seu papel (entrega, regressão,
 // veredito, auditoria). Na segunda tentativa (stop_hook_active) deixa encerrar, para não
 // prender o subagente em laço, e registra.
+// Com o SubagentHandback o relatório vai na entrada da ferramenta e last_assistant_message chega vazio:
+// sem ler a transcrição, toda entrega era recusada uma vez e o V5/V6 nunca rodava.
+function textoFinal() {
+  if (entrada.last_assistant_message) return entrada.last_assistant_message;
+  let txt;
+  try { txt = fs.readFileSync(transcricaoDoAgente(entrada), "utf8"); } catch { return ""; }
+  let ultimo = "";
+  for (const l of txt.split("\n")) {
+    if (!l.includes('"SubagentHandback"')) continue;
+    try {
+      for (const c of JSON.parse(l).message?.content || []) if (c?.type === "tool_use" && c.name === "SubagentHandback") ultimo = String(c.input?.message || "");
+    } catch { /* linha cortada */ }
+  }
+  return ultimo;
+}
+
 const ler = evento === "SubagentStop" && (entrada.agent_type || "").startsWith("modo-deus:") ? contratoDe(agente) : null;
 let contrato = null;
 let resultado = null;
+const final = evento === "SubagentStop" ? textoFinal() : entrada.last_assistant_message;
 if (ler) {
-  resultado = ler(entrada.last_assistant_message);
+  resultado = ler(final);
   const { erros } = resultado;
   if (erros.length) {
     contrato = erros;
@@ -105,7 +122,7 @@ registrar(proj.raiz, {
   ...base,
   ...(contrato ? { resultado: "contrato_falhou", motivo: contrato.join("; ") } : {}),
   ...(vig.alertas.length ? { regra: vig.alertas[0].regra, alerta: true, motivo: vig.alertas.map((a) => a.motivo).join(" | ") } : {}),
-  ultima_mensagem: entrada.last_assistant_message ? String(entrada.last_assistant_message).slice(0, 300) : undefined,
+  ultima_mensagem: final ? String(final).slice(0, 300) : undefined,
   // Acumulado até aqui: um agente retomado pelo Maestro para de novo e grava o total atualizado.
   ...(evento === "SubagentStop" ? { uso: usoDaTranscricao(transcricaoDoAgente(entrada)) || undefined } : {}),
 });

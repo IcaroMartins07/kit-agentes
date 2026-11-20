@@ -366,6 +366,19 @@ test("V9 · merge vale pela branch de onde ele roda (cd, git -C, switch)", () =>
   }
 });
 
+test("contrato: entrega feita pelo SubagentHandback (last_assistant_message vazio) é lida da transcrição", () => {
+  const veredito = '```json\n{"veredito": "aprovado", "itens": []}\n```';
+  const t = path.join(tmp, "handback.jsonl");
+  fs.writeFileSync(t, [
+    { type: "assistant", message: { id: "h0", content: [{ type: "text", text: "conferi o diff" }] } },
+    { type: "assistant", message: { id: "h1", content: [{ type: "tool_use", id: "hb", name: "SubagentHandback", input: { message: `Aprovado.\n${veredito}` } }] } },
+  ].map((l) => JSON.stringify(l)).join("\n") + "\n");
+  const r = rodar("evento", { hook_event_name: "SubagentStop", agent_type: "modo-deus:revisor", agent_id: "h1", agent_transcript_path: t, last_assistant_message: "" });
+  assert.equal(r.status, 0, r.stderr);
+  const sem = rodar("evento", { hook_event_name: "SubagentStop", agent_type: "modo-deus:revisor", agent_id: "h2", agent_transcript_path: path.join(tmp, "nao-existe.jsonl"), last_assistant_message: "" });
+  assert.equal(sem.status, 2, "sem handback e sem mensagem continua recusado");
+});
+
 test("contrato: a recusa traz o modelo do bloco json do papel", () => {
   const r = rodar("evento", { hook_event_name: "SubagentStop", agent_type: "modo-deus:dev-front", agent_id: "c1", last_assistant_message: "feito" });
   assert.equal(r.status, 2);
