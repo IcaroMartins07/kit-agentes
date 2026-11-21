@@ -4,8 +4,6 @@ import type { EngineInterface, Register, RenderChildren } from 'claude-code'
 import type { Agent, Change, Graph, Plan } from '../types'
 import { ROW_PX, nodeIcon, rowSvg, rowWidth } from './filetree-icons'
 import { carregar, renderGestor } from './gerenciador'
-import { ORCA_PANE, loadOrcaLogo, openOrcaPane, renderOrcaPane, startOrcaPolling, stopOrcaPolling, tintLogo } from './orca'
-import { renderTerminais, startTermsPolling, stopTermsPolling } from './terminais'
 import { G, PALETTE, SPRITES, mascoteDe, spriteSvg } from './sprites'
 
 const PANE = 'agentes'
@@ -344,9 +342,7 @@ async function togglePane($: EngineInterface): Promise<void> {
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     await $.command.register({ name: 'agentes', description: 'Mostra ou esconde o painel de agentes e o segundo cérebro', immediate: true })
-    await $.command.register({ name: 'orca', description: 'Abre o Orca dentro do Claude: worktrees e agentes (Claude, Codex, Antigravity...); /orca largo abre em tela cheia', immediate: true })
     await $.command.register({ name: 'gerenciador', description: 'Abre a aba Skill do painel: ligue e desligue skills, plugins e mods', immediate: true })
-    void loadOrcaLogo($).catch(() => undefined)
     $.ui.status(undefined)
     await update($, agents, list => (list.some(a => a.id === MAIN) ? list : [MAIN_AGENT, ...list]))
     void loadGraph($).catch(() => undefined)
@@ -356,24 +352,11 @@ export const register: Register = on => {
     return next(e)
   })
 
-  on('command.run', { command: 'orca' }, async ($, e) => {
-    await openOrcaPane($, /larg|cheia|full/i.test(e.args ?? '') ? true : undefined)
-    return {} // sem linha vazia no chat: o painel já é a resposta
-  })
-
   on('command.run', { command: 'gerenciador' }, async $ => {
     await update($, tab, () => 'skill')
     await $.ui.open({ id: PANE, title: TITLE, columns: 48 })
     void carregar($).catch(() => undefined)
     return {} // sem linha no chat: o painel abrindo é a resposta
-  })
-
-  on('ui.render', { component: 'Pane', requestId: ORCA_PANE }, async ($, e) => renderOrcaPane($, e))
-
-  // Fechou o painel do Orca: para de consultar o Orca.
-  on('ui.close', { id: ORCA_PANE }, async ($, e, next) => {
-    stopOrcaPolling()
-    return next(e)
   })
 
   on('command.run', { command: 'agentes' }, async $ => {
@@ -473,9 +456,6 @@ export const register: Register = on => {
   })
 
   on('ui.close', { id: PANE }, async ($, e, next) => {
-    const aberta = await read($, tab)
-    if (aberta === 'orca') stopOrcaPolling()
-    if (aberta === 'terminais') stopTermsPolling()
     const r = await next(e)
     $.ui.invalidate('ui.render')
     return r
@@ -625,17 +605,11 @@ export const register: Register = on => {
       { id: 'arquivos', label: 'Worktree', count: 0 },
       { id: 'alteracoes', label: 'Alterações', count: changes.length },
       { id: 'cerebro', label: 'Cérebro', count: 0 },
-      { id: 'orca', label: 'Orca', count: 0 },
-      { id: 'terminais', label: 'Terminais', count: 0 },
       { id: 'skill', label: 'Skill', count: 0 },
     ] as const
     const goTo = async (id: (typeof tabs)[number]['id']) => {
-      if (current === 'orca' && id !== 'orca') stopOrcaPolling()
-      if (current === 'terminais' && id !== 'terminais') stopTermsPolling()
       await update($, tab, () => id)
       if (id === 'arquivos') await loadWorktree($)
-      if (id === 'orca') void startOrcaPolling($).catch(() => undefined)
-      if (id === 'terminais') await startTermsPolling($).catch(() => undefined)
     }
     const tabBar = (
       <Box flexDirection="column" marginBottom={1}>
@@ -992,11 +966,11 @@ export const register: Register = on => {
     )
 
     if (isWidget) return <Box flexDirection="column">{header}</Box>
-    const body = current === 'orca' ? await renderOrcaPane($, e) : current === 'terminais' ? await renderTerminais($, e) : current === 'skill' ? await renderGestor($, e) : current === 'cerebro' ? brainTab : current === 'alteracoes' ? changesTab : current === 'arquivos' ? filesTab : agentsTab
+    const body = current === 'skill' ? await renderGestor($, e) : current === 'cerebro' ? brainTab : current === 'alteracoes' ? changesTab : current === 'arquivos' ? filesTab : agentsTab
     return (
       <Box flexDirection="column" paddingX={isNarrow ? 0 : 1} paddingY={1} overflow="hidden">
         {tabBar}
-        {current === 'orca' || current === 'terminais' || current === 'skill' ? null : header}
+        {current === 'skill' ? null : header}
         {body}
       </Box>
     )

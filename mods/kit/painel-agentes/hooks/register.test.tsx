@@ -82,6 +82,33 @@ test('um subagente aparece com o que faz, o que alterou e o grafo', async ($, on
   }
 })
 
+test('o painel não tem as abas Orca e Terminais nem o resumo sob a barra da tarefa', async ($, on) => {
+  on('command.register', () => ({ value: { command: 'agentes' } }))
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  on('session.cwd', () => ({ value: '/proj' }))
+  on('fs.exists', () => ({ value: false }))
+  on('agent.spawn', () => ({ model: 'm', agentId: 'sub1' }))
+  on('agent.list', () => ({ value: [] }))
+  on('clock.now', () => ({ value: 1000 }))
+  on('clock.every', () => ({ value: undefined }))
+  on('ui.status', () => ({ value: undefined }))
+  on('tool.call', () => ({ result: {} }))
+  await $.session.start({ cwd: '/proj', surface: 'desktop', isInteractive: true })
+
+  const vazio = await $.ui.mount({ ...PANE, surface: 'desktop' })
+  expect(await vazio.find({ type: 'Text', text: /^Nenhum sub-agente nesta sessão\./ })).toBeTruthy()
+  expect(await vazio.find({ type: 'Text', text: /^Orca$/ })).toBeUndefined()
+  expect(await vazio.find({ type: 'Text', text: /^Terminais$/ })).toBeUndefined()
+  expect(await vazio.find({ type: 'Text', text: /^Agentes$/ })).toBeTruthy()
+  await vazio.unmount()
+
+  await $.agent.spawn({ prompt: 'p', description: 'Pesquisa', subagentType: 'Explore' } as never)
+  const cheio = await $.ui.mount({ ...PANE, surface: 'desktop' })
+  expect(await cheio.find({ type: 'Text', text: /^sub-agentes$/ })).toBeUndefined()
+  expect(await cheio.find({ type: 'Text', text: /^rodando$/ })).toBeUndefined()
+  await cheio.unmount()
+})
+
 test('acima do prompt não fica nada de nenhum mod; a barra de progresso fica só no painel', async ($, on) => {
   on('command.register', () => ({ value: { command: 'agentes' } }))
   on('session.start', (_, e) => ({ cwd: e.cwd }))
